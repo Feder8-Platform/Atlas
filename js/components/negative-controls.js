@@ -41,7 +41,9 @@ define(['knockout',
 		self.fields = {
 			id: {
 				propName: 'conceptId',
-				value: d => d.conceptId,
+				value: d => {
+					return d.conceptId
+				},
 				isColumn: true,
 				isFacet: false,
 				colIdx: 0,
@@ -69,180 +71,163 @@ define(['knockout',
 				label: 'Domain Id',
 				isField: true,
 			},
-			medlineCT: {
-				propName: 'medlineCt',
+			negativeControl: {
+				propName: 'negativeControl',
 				value: d => {
-					return d.medlineCt.toString()
-						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+					return d.negativeControl.toString() == "1" ? 'Y' : 'N';
 				},
 				isColumn: true,
-				isFacet: false,
+				isFacet: true,
 				colIdx: 3,
-				label: 'Medline CT',
+				label: 'Negative Control',
 				isField: true,
 			},
-			medlineCase: {
-				propName: 'medlineCase',
+			personCountRc: {
+				propName: 'personCountRc',
 				value: d => {
-					return d.medlineCase.toString()
+					return d.personCountRc.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 				isColumn: true,
 				isFacet: false,
 				colIdx: 4,
-				label: 'Medline Case',
+				label: 'Person Count RC',
 				isField: true,
 			},
-			medlineOther: {
-				propName: 'medlineOther',
+			personCountDc: {
+				propName: 'personCountDc',
 				value: d => {
-					return d.medlineOther.toString()
-						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-				},
-				isColumn: true,
-				isFacet: false,
-				colIdx: 4,
-				label: 'Medline Other',
-				isField: true,
-			},
-			semmeddbCtT: {
-				propName: 'semmeddbCtT',
-				value: d => {
-					return d.semmeddbCtT.toString()
+					return d.personCountDc.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 				isColumn: true,
 				isFacet: false,
 				colIdx: 5,
-				label: 'SemMedDB CT (True)',
+				label: 'Person Count DC',
 				isField: true,
-				visible: false,
 			},
-			semmeddbCaseT: {
-				propName: 'semmeddbCaseT',
+			descendantPmidCount: {
+				propName: 'descendantPmidCount',
 				value: d => {
-					return d.semmeddbCaseT.toString()
+					return d.descendantPmidCount.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 				isColumn: true,
 				isFacet: false,
 				colIdx: 6,
-				label: 'SemMedDB Case (True)',
+				label: 'Descendant PMID Count',
 				isField: true,
-				visible: false,
+				visible: true,
 			},
-			semmeddbOtherT: {
-				propName: 'semmeddbOtherT',
+			exactPmidCount: {
+				propName: 'exactPmidCount',
 				value: d => {
-					return d.semmeddbOtherT.toString()
-						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-				},
-				isColumn: true,
-				isFacet: false,
-				colIdx: 6,
-				label: 'SemMedDB Other (True)',
-				isField: true,
-				visible: false,
-			},
-			semmeddbCtF: {
-				propName: 'semmeddbCtF',
-				value: d => {
-					return d.semmeddbCtF.toString()
+					return d.exactPmidCount.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 				isColumn: true,
 				isFacet: false,
 				colIdx: 7,
-				label: 'SemMedDB CT (False)',
+				label: 'Exact PMID Count',
 				isField: true,
-				visible: false,
+				visible: true,
 			},
-			semmeddbCaseF: {
-				propName: 'semmeddbCaseF',
+			parentPmidCount: {
+				propName: 'parentPmidCount',
 				value: d => {
-					return d.semmeddbCaseF.toString()
+					return d.parentPmidCount.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 				isColumn: true,
 				isFacet: false,
 				colIdx: 8,
-				label: 'SemMedDB Case (False)',
+				label: 'Parent PMID Count',
 				isField: true,
-				visible: false,
+				visible: true,
 			},
-			semmeddbOtherF: {
-				propName: 'semmeddbOtherF',
+			ancestorPmidCount: {
+				propName: 'ancestorPmidCount',
 				value: d => {
-					return d.semmeddbOtherF.toString()
+					return d.ancestorPmidCount.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 				isColumn: true,
 				isFacet: false,
 				colIdx: 9,
-				label: 'SemMedDB Other (False)',
+				label: 'Ancestor PMID Count',
 				isField: true,
-				visible: false,
+				visible: true,
 			},
-			euSPC: {
-				propName: 'euSPC',
+			indication: {
+				propName: 'indication',
 				value: d => {
-					return d.euSPC.toString()
-						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+					return d.indication.toString() == "1" ? 'Y' : 'N';
+				},
+				isColumn: true,
+				isFacet: false,
+				colIdx: 10,
+				label: 'Indication',
+				isField: true,
+				visible: true,
+			},
+			drugInduced: {
+				propName: 'drugInduced',
+				value: d => {
+					return d.drugInduced.toString() == "1" ? 'Y' : 'N';
 				},
 				isColumn: true,
 				isFacet: false,
 				colIdx: 11,
-				label: 'EU SPC',
+				label: 'Drug Induced',
 				isField: true,
-				visible: false,
+				visible: true,
 			},
-			splicerADR: {
-				propName: 'splADR',
+			splicer: {
+				propName: 'splicer',
 				value: d => {
-					return d.splADR.toString()
+					return d.splicer.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 				isColumn: true,
 				isFacet: false,
 				colIdx: 12,
-				label: 'Splicer ADR',
+				label: 'Splicer',
 				isField: true,
+				visible: true,
 			},
-			aers: {
-				propName: 'aers',
+			faers: {
+				propName: 'faers',
 				value: d => {
-					return d.aers.toString()
+					return d.faers.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 				isColumn: true,
 				isFacet: false,
 				colIdx: 13,
-				label: 'AERS',
+				label: 'faers',
 				isField: true,
-
+				visible: true,
 			},
-			aersPRR: {
-				propName: 'aersPRR',
+			userExcluded: {
+				propName: 'userExcluded',
 				value: d => {
-					return (Math.ceil(d.aersPRR * 1000) / 1000)
-						.toFixed(4);
+					return d.userExcluded.toString() == "1" ? 'Y' : 'N';
 				},
 				isColumn: true,
 				isFacet: false,
 				colIdx: 14,
-				label: 'AERS PRR',
+				label: 'User Excluded',
 				isField: true,
 			},
-			prediction: {
-				propName: 'prediction',
+			userIncluded: {
+				propName: 'userIncluded',
 				value: d => {
-					return (Math.ceil(d.prediction * 1000) / 1000)
-						.toFixed(4);
+					return d.userIncluded.toString() == "1" ? 'Y' : 'N';
 				},
 				isColumn: true,
 				isFacet: false,
 				colIdx: 15,
-				label: 'Prediction',
+				label: 'User Included',
 				isField: true,
 			},
 			RC: {
@@ -406,108 +391,95 @@ define(['knockout',
 				data: d => d.domainId,
 			},
 			{
-				title: 'Medline CT',
+				title: 'Negative Control',
 				data: d => {
-					return d.medlineCt.toString()
+					return d.negativeControl.toString() == "1" ? 'Y' : 'N';
+				},
+			},
+			{
+				title: 'Person Count RC',
+				data: d => {
+					return d.personCountRc.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 			},
 			{
-				title: 'Medline Case',
+				title: 'Person Count DC',
 				data: d => {
-					return d.medlineCase.toString()
+					return d.personCountDc.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 			},
 			{
-				title: 'Medline Other',
+				title: 'Descendant PMID Count',
 				data: d => {
-					return d.medlineOther.toString()
-						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-				},
-			},
-			{
-				title: 'SemMedDB CT (True)',
-				data: d => {
-					return d.semmeddbCtT.toString()
-						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-				},
-				visible: false,
-			},
-			{
-				title: 'SemMedDB Case (True)',
-				data: d => {
-					return d.semmeddbCaseT.toString()
+					return d.descendantPmidCount.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 				visible: false,
 			},
 			{
-				title: 'SemMedDB Other (True)',
+				title: 'Exact PMID Count',
 				data: d => {
-					return d.semmeddbOtherT.toString()
+					return d.exactPmidCount.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 				visible: false,
 			},
 			{
-				title: 'SemMedDB CT (False)',
+				title: 'Parent PMID Count',
 				data: d => {
-					return d.semmeddbCtF.toString()
+					return d.parentPmidCount.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 				visible: false,
 			},
 			{
-				title: 'SemMedDB Case (False)',
+				title: 'Ancestor PMID Count',
 				data: d => {
-					return d.semmeddbCaseF.toString()
+					return d.ancestorPmidCount.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 				visible: false,
 			},
 			{
-				title: 'SemMedDB Other (False)',
+				title: 'Indication',
 				data: d => {
-					return d.semmeddbOtherF.toString()
-						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+					return d.indication.toString() == "1" ? 'Y' : 'N';
 				},
 				visible: false,
 			},
 			{
-				title: 'euSPC',
+				title: 'Drug Induced',
 				data: d => {
-					return d.euSPC.toString()
-						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+					return d.drugInduced.toString() == "1" ? 'Y' : 'N';
 				},
 				visible: false,
 			},
 			{
-				title: 'Splicer ADR',
+				title: 'Splicer',
 				data: d => {
-					return d.splADR.toString()
+					return d.splicer.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 			},
 			{
-				title: 'AERS',
+				title: 'FAERS',
 				data: d => {
-					return d.aers.toString()
+					return d.faers.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
 			},
 			{
-				title: 'AERS PRR',
+				title: 'User Excluded',
 				data: d => {
-					return (Math.ceil(d.aersPRR * 1000) / 1000)
-						.toFixed(4);
+					return d.userExcluded.toString() == "1" ? 'Y' : 'N';
 				},
 			},
 			{
-				title: 'Prediction',
+				title: 'User Included',
 				data: d => {
-					return (Math.ceil(d.prediction * 1000) / 1000)
-						.toFixed(4);
+					return d.userExcluded.toString() == "1" ? 'Y' : 'N';
 				},
 			},
 			{
@@ -530,20 +502,9 @@ define(['knockout',
 				[17, 'desc']
 			],
 			Facets: [{
-					'caption': 'Subset to candidate',
+					'caption': 'Negative Control',
 					'binding': d => {
-						if (d.medlineCt == 0 &&
-							d.medlineCase == 0 &&
-							d.medlineOther == 0 &&
-							d.splADR == 0 &&
-							d.aersPRR.toFixed(2) < 2.00 &&
-							d.prediction.toFixed(2) < 0.10) {
-							return 'Negative Controls';
-						} else if (d.prediction.toFixed(2) > 0.80) {
-							return 'Positive Controls'
-						} else {
-							return 'Other'
-						}
+						return d.negativeControl.toString() == "1" ? 'Yes' : 'No';
 					},
 				},
 				{
@@ -573,59 +534,17 @@ define(['knockout',
 					},
 				},
 				{
-					'caption': 'Medline CT',
+					'caption': 'User Included',
 					'binding': d => {
-						if (d.medlineCt == 0) {
-							return '0';
-						} else if (d.medlineCt > 0 && d.medlineCt <= 10) {
-							return '1-10'
-						} else {
-							return '11 +'
-						}
+						return d.userIncluded.toString() == "1" ? 'Yes' : 'No';
 					},
 				},
 				{
-					'caption': 'Medline Case',
+					'caption': 'User Excluded',
 					'binding': d => {
-						if (d.medlineCase == 0) {
-							return '0';
-						} else if (d.medlineCase > 0 && d.medlineCase <= 10) {
-							return '1-10'
-						} else {
-							return '11 +'
-						}
+						return d.userExcluded.toString() == "1" ? 'Yes' : 'No';
 					},
 				},
-				{
-					'caption': 'Medline Other',
-					'binding': d => {
-						if (d.medlineOther == 0) {
-							return '0';
-						} else if (d.medlineOther > 0 && d.medlineOther <= 10) {
-							return '1-10'
-						} else {
-							return '11 +'
-						}
-					},
-				},
-				{
-					'caption': 'Splicer ADR',
-					'binding': d => d.splADR,
-				},
-				{
-					'caption': 'AERS',
-					'binding': d => {
-						if (d.aers == 0) {
-							return '0';
-						} else if (d.aers > 0 && d.aers <= 10) {
-							return '1-10'
-						} else if (d.aers > 10 && d.aers <= 100) {
-							return '11-100'
-						} else {
-							return '100+'
-						}
-					},
-				}
 			]
 		};
 

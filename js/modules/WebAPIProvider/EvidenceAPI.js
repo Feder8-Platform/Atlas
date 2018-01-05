@@ -23,8 +23,8 @@ define(function (require, exports) {
                 conceptSetId: conceptSetId,
                 conceptSetName: conceptSetName,
                 conceptDomainId: conceptDomainId,
-                targetDomainId: targetDomainId,
-                conceptIds: conceptIds
+                outcomeOfInterest: targetDomainId,
+                conceptsOfInterest: conceptIds
             }),
             error: function (error) {
                 console.log("Error: " + error);
