@@ -50,11 +50,12 @@ define(['knockout',
 				},
 			},
 			{
-				title: 'Domain Id',
+				title: 'Domain',
 				data: d => d.domainId,
+				visible: false,
 			},
 			{
-				title: 'Negative Control',
+				title: 'Suggested Negative Control',
 				data: d => {
 					return d.negativeControl.toString() == "1" ? 'Y' : 'N';
 				},
@@ -74,23 +75,21 @@ define(['knockout',
 				},
 			},
 			{
-				title: 'Descendant PMID Count',
+				title: 'Publication Count (Descendant Concept Match)',
 				data: d => {
 					return d.descendantPmidCount.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
-				visible: false,
 			},
 			{
-				title: 'Exact PMID Count',
+				title: 'Publication Count (Exact Concept Match)',
 				data: d => {
 					return d.exactPmidCount.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
-				visible: false,
 			},
 			{
-				title: 'Parent PMID Count',
+				title: 'Publication Count (Parent Concept Match)',
 				data: d => {
 					return d.parentPmidCount.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -98,7 +97,7 @@ define(['knockout',
 				visible: false,
 			},
 			{
-				title: 'Ancestor PMID Count',
+				title: 'Publication Count (Ancestor Concept Match)',
 				data: d => {
 					return d.ancestorPmidCount.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -106,31 +105,41 @@ define(['knockout',
 				visible: false,
 			},
 			{
-				title: 'Indication',
+				title: 'Broad Concept',
 				data: d => {
-					return d.indication.toString() == "1" ? 'Y' : 'N';
+					return d.tooBroad.toString()
+						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
-				visible: false,
 			},
 			{
-				title: 'Drug Induced',
+				title: 'Pregnancy Concept',
+				data: d => {
+					return d.pregnancy.toString()
+						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+				},
+			},
+			{
+				title: 'Drug Induced Concept',
 				data: d => {
 					return d.drugInduced.toString() == "1" ? 'Y' : 'N';
 				},
-				visible: false,
 			},
 			{
-				title: 'Splicer',
+				title: 'Drug Indicated for Condition',
 				data: d => {
-					return d.splicer.toString()
-						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+					return d.indication.toString() == "1" ? 'Y' : 'N';
 				},
 			},
 			{
-				title: 'FAERS',
+				title: 'Found on Product Label',
 				data: d => {
-					return d.faers.toString()
-						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+					return d.splicer.toString() == "1" ? 'Y' : 'N';
+				},
+			},
+			{
+				title: 'Signal in FAERS',
+				data: d => {
+					return d.faers.toString() == "1" ? 'Y' : 'N';
 				},
 			},
 			{
@@ -145,14 +154,6 @@ define(['knockout',
 					return d.userExcluded.toString() == "1" ? 'Y' : 'N';
 				},
 			},
-			{
-				title: '<i id="dtNegCtrlRC" class="fa fa-database" aria-hidden="true"></i> RC',
-				data: d => d.recordCount,
-			},
-			{
-				title: '<i id="dtNegCtrlDRC" class="fa fa-database" aria-hidden="true"></i> DRC',
-				data: d => d.descendantRecordCount,
-			},
 		];
 
 		self.negControlOptions = {
@@ -161,51 +162,52 @@ define(['knockout',
 				['10', '25', '50', '100', 'All']
 			],
 			order: [
-				[16, 'asc'],
-				[17, 'desc']
+				[4, 'asc'],
+				[5, 'desc']
 			],
 			Facets: [{
-					'caption': 'Negative Control',
+					'caption': 'Suggested Negative Control',
 					'binding': d => {
 						return d.negativeControl.toString() == "1" ? 'Yes' : 'No';
 					},
 				},
 				{
-					'caption': 'Has Records',
+					'caption': 'Publication Count (Exact Concept Match)',
 					'binding': d => {
-						var val = d.recordCount;
+						var val = d.exactPmidCount;
 						if (val.replace)
 							val = parseInt(val.replace(/\,/g, '')); // Remove comma formatting and treat as int
 						if (val > 0) {
-							return 'true'
+							return '> 0'
 						} else {
-							return 'false'
+							return '<= 0'
 						}
 					},
 				},
 				{
-					'caption': 'Has Descendant Records',
+					'caption': 'Found on Product Label',
 					'binding': d => {
-						var val = d.descendantRecordCount;
+						var val = d.splicer;
 						if (val.replace)
 							val = parseInt(val.replace(/\,/g, '')); // Remove comma formatting and treat as int
 						if (val > 0) {
-							return 'true'
+							return 'Yes'
 						} else {
-							return 'false'
+							return 'No'
 						}
 					},
 				},
 				{
-					'caption': 'User Included',
+					'caption': 'Signal in FAERS',
 					'binding': d => {
-						return d.userIncluded.toString() == "1" ? 'Yes' : 'No';
-					},
-				},
-				{
-					'caption': 'User Excluded',
-					'binding': d => {
-						return d.userExcluded.toString() == "1" ? 'Yes' : 'No';
+						var val = d.faers;
+						if (val.replace)
+							val = parseInt(val.replace(/\,/g, '')); // Remove comma formatting and treat as int
+						if (val > 0) {
+							return 'Yes'
+						} else {
+							return 'No'
+						}
 					},
 				},
 			]
