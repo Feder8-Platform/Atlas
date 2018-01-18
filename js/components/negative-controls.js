@@ -94,7 +94,6 @@ define(['knockout',
 					return d.parentPmidCount.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
-				visible: false,
 			},
 			{
 				title: 'Publication Count (Ancestor Concept Match)',
@@ -102,20 +101,17 @@ define(['knockout',
 					return d.ancestorPmidCount.toString()
 						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 				},
-				visible: false,
 			},
 			{
 				title: 'Broad Concept',
 				data: d => {
-					return d.tooBroad.toString()
-						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+					return d.tooBroad.toString() == "1" ? 'Y' : 'N';
 				},
 			},
 			{
 				title: 'Pregnancy Concept',
 				data: d => {
-					return d.pregnancy.toString()
-						.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+					return d.pregnancy.toString() == "1" ? 'Y' : 'N';
 				},
 			},
 			{
@@ -151,7 +147,7 @@ define(['knockout',
 			{
 				title: 'User Included',
 				data: d => {
-					return d.userExcluded.toString() == "1" ? 'Y' : 'N';
+					return d.userIncluded.toString() == "1" ? 'Y' : 'N';
 				},
 			},
 		];
@@ -297,7 +293,7 @@ define(['knockout',
 			// Call the ajax service to generate the results
 			var negativeControlsJob = evidenceAPI.generateNegativeControls(service.sourceKey(), self.conceptSet()
 				.id, self.conceptSet()
-				.name(), self.conceptDomainId(), self.targetDomainId(), self.conceptIds());
+				.name(), self.conceptDomainId(), self.targetDomainId(), self.conceptIds(), service.conceptsToInclude(), service.conceptsToExclude());
 
 			// Mark as pending results
 			self.getSourceInfo(service.sourceKey())
@@ -395,6 +391,9 @@ define(['knockout',
 							evidenceSources[i].executionDuration(execDuration);
 							evidenceSources[i].status(gi[0].status);
 							evidenceSources[i].isValid(gi[0].isValid);
+							var giParams = JSON.parse(gi[i].params);
+							evidenceSources[i].conceptsToInclude = ko.observable(giParams.conceptsToInclude);
+							evidenceSources[i].conceptsToExclude = ko.observable(giParams.conceptsToExclude);
 
 							if (gi[0].status == "RUNNING") {
 								self.pollForInfo();

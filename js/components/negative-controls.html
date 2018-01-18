@@ -7,39 +7,60 @@
 	<div data-bind="if: !$component.loadingEvidenceSources()">
 		<div class="heading">
 			<b>Explore Evidence:</b> Evidence comes from the
-			<a href="http://www.ohdsi.org/web/wiki/doku.php?id=documentation:laertes_etl"></a>LAERTES evidence base</a>. The evidence base is comprised of evidence found in published literature, product labels and spontaneous reports. Use the evidence sources below to find out what evidence has been associated to the concepts included in this concept set. Report any missing evidence to the OHDSI forums here.
+			<a href="https://github.com/OHDSI/CommonEvidenceModel"></a>Common Evidence Model</a>. The evidence base is comprised of evidence found in published literature, product labels and spontaneous reports. Use the evidence sources below to find out what evidence has been associated to the concepts included in this concept set.
 		</div>
 		<br/>
-		<div class="heading">Available Evidence Sources</div>
-		<table class="cohort-generate-sources">
-			<thead>
-				<th></th>
-				<th>Source Name</th>
-				<th>Generation Status</th>
-				<th>Generated</th>
-				<th>Generation Duration</th>
-				<th></th>
-			</thead>
-			<tbody data-bind="foreach:$component.evidenceSources">
-				<tr data-bind="css: { 'selected': $component.negativeControls() && $component.negativeControls().sourceKey == $data.sourceKey}">
-					<td>
-						<div class="btn btn-sm btn-primary" data-bind="visible:!$component.isSourceRunning($data), attr: {'disabled':$component.canGenerate()==false}, click:$component.generate"><i class="fa fa-play"></i>&nbsp;&nbsp;Generate</div>
-						<div class="btn btn-sm btn-warning" data-bind="visible:$component.isSourceRunning($data)"><i class="fa fa-spinner fa-spin"></i></div>
-					</td>
-					<td data-bind="text:sourceName"></td>
-					<td class="statusIndicator">
-						<span data-bind="text: status"></span>
-					</td>
-					<td data-bind="text: startTime">
-					</td>
-					<td data-bind="text: executionDuration">
-					</td>
-					<td class="rightaligned">
-						<div class="btn btn-sm btn-primary" data-bind="visible:!$component.isSourceRunning($data) && isValid, click:$component.loadResults"><i class="fa fa-eye"></i>&nbsp;View Evidence</div>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+		<div class="heading">Evidence Sources</div>
+		<div class="paddedWrapper" data-bind="foreach:$component.evidenceSources">
+			<div class="panel panel-default">
+				<div class="panel-heading" data-bind="text:sourceName"></div>
+				<div class="panel-body">
+					<div class="form-group">
+						<div class="heading">Concepts To Include <small class="form-text text-muted">(Enter a list of comma-delimited concept IDs or leave blank)</small></div>
+						<textarea class="form-control" rows="1" id="conceptsToInclude" aria-describedby="conceptsToIncludeHelp" data-bind="textInput: $data.conceptsToInclude"></textarea>
+					</div>
+					<div class="form-group">
+						<div class="heading">Concepts To Exclude <small class="form-text text-muted">(Enter a list of comma-delimited concept IDs or leave blank)</small></div>
+						<textarea class="form-control" rows="1" id="conceptsToExclude" data-bind="textInput: $data.conceptsToExclude"></textarea>
+					</div>
+					<div class="form-group">
+						<table style="width: 100%">
+						<tr>
+							<td style="width: 120px">
+								<div class="btn btn-sm btn-primary" data-bind="visible:!$component.isSourceRunning($data), attr: {'disabled':$component.canGenerate()==false}, click:$component.generate"><i class="fa fa-play"></i>&nbsp;&nbsp;Generate</div>
+								<div class="btn btn-sm btn-warning" data-bind="visible:$component.isSourceRunning($data)"><i class="fa fa-spinner fa-spin"></i></div>
+							</td>	
+							<td>
+								<table style="width: 100%">
+									<thead>
+										<th>Generation Status</th>
+										<th>Generated</th>
+										<th>Generation Duration</th>
+									</thead>
+									<tbody>
+										<tr data-bind="css: { 'selected': $component.negativeControls() && $component.negativeControls().sourceKey == $data.sourceKey}">
+											<td class="statusIndicator">
+												<span data-bind="text: status"></span>
+											</td>
+											<td class="statusIndicator">
+												<span data-bind="text: startTime"></span>
+											</td>
+											<td class="statusIndicator">
+												<span data-bind="text: executionDuration"></span>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</td>
+							<td style="width: 120px; padding-left: 20px;">
+								<div class="btn btn-sm btn-primary" data-bind="visible:!$component.isSourceRunning($data) && isValid, click:$component.loadResults"><i class="fa fa-eye"></i>&nbsp;View Evidence</div>
+							</td>							
+						</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
 <div class="loading" data-bind="if:$component.loadingResults()">loading evidence</div>
