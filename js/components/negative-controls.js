@@ -392,12 +392,16 @@ define(['knockout',
 							evidenceSources[i].status(gi[0].status);
 							evidenceSources[i].isValid(gi[0].isValid);
 							var giParams = JSON.parse(gi[i].params);
-							evidenceSources[i].conceptsToInclude = ko.observable(giParams.conceptsToInclude);
-							evidenceSources[i].conceptsToExclude = ko.observable(giParams.conceptsToExclude);
+							evidenceSources[i].conceptsToInclude = ko.observable(giParams.conceptsToInclude != null ? giParams.conceptsToInclude : 0);
+							evidenceSources[i].conceptsToExclude = ko.observable(giParams.conceptsToExclude != null ? giParams.conceptsToExclude : 0);
+							
 
 							if (gi[0].status == "RUNNING") {
 								self.pollForInfo();
 							}
+						} else {
+							evidenceSources[i].conceptsToInclude = ko.observable(0);
+							evidenceSources[i].conceptsToExclude = ko.observable(0);
 						}
 					});
 					self.evidenceSources(evidenceSources);
