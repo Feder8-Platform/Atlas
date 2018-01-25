@@ -51,11 +51,37 @@ define(['knockout', 'text!./cohort-definition-browser.html', 'appConfig', 'webap
 			]
 		};
 
-		self.renderCohortDefinitionLink = function (s, p, d) {
-			return '<span class="linkish">' + d.name + '</span>';
+        self.renderCohortDefinitionLink = function (s, p, d) {
+            return '<span class="linkish">' + d.name + '</span>';
+        }
+
+        self.exportButton = function (s, p, d) {
+            return '<span id="export" class="linkish">Export</span>';
+        }
+
+        self.onClick = function(d){
+            $.ajax({
+                type: "GET",
+                url: self.config.api.url + 'cohortdefinition/'+d.id,
+                contentType: "application/json; charset=utf-8",
+                success: function (result) {
+                    var data = "text/json;charset=utf-8,"+ko.toJSON(JSON.parse(result.expression));
+                    var link = document.createElement('a');
+                    link.href="data:" + data;
+                    link.download=d.name.split(' ').join('_')+".cohort";
+                    link.style.display = "none";
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            });
 		}
 
-		self.rowClick = function (d) {
+		self.rowClick = function (d, e) {
+        	if(e.originalEvent.target.getAttribute('id') === "export"){
+        		self.onClick(d);
+        		return;
+			}
 			self.selected(d.id);
 		}
 
@@ -84,7 +110,11 @@ define(['knockout', 'text!./cohort-definition-browser.html', 'appConfig', 'webap
 			{
 				title: 'Author',
 				data: 'createdBy'
-			}
+			},
+            {
+                title: 'Export',
+                render: self.exportButton
+            }
 		];
 
 	}

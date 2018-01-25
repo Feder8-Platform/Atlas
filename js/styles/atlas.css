@@ -1988,3 +1988,68 @@ span.new-role {
 .list-inline>li {
 	vertical-align: middle;
 }
+
+/* The Modal (background) */
+.modal {
+	display: none;
+	position: fixed;
+	z-index: 1;
+	padding-top: 100px;
+	left: 0;
+	top: 0;
+	overflow: auto;
+	background-color: black;
+}
+
+/* Modal Content */
+.modal-content {
+	position: relative;
+	background-color: #fefefe;
+	margin: auto;
+	padding: 0;
+	max-width: 250px;
+}
+.modal-content button, .modal-content input {
+	display: inline-block;
+	margin: 5px;
+	width: 96%;
+}
+/* The Close Button */
+.close {
+	color: white;
+	position: absolute;
+	top: 10px;
+	right: 25px;
+	font-size: 35px;
+	font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+	color: #999;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.drop-zone {
+	min-height: 250px;
+	margin: 5px;
+	border: 5px darkblue dashed;
+}
+
+.drop-zone {
+	min-height: 250px;
+	margin: 5px;
+	border: 5px #337ab7 dashed;
+}
+
+.drop-zone.dragged-over {
+	background: #49ADFF;
+}
+
+.drop-zone .fa {
+	width: 100%;
+	color: #337ab7;
+	text-align: center;
+	margin-top: 35%;
+}

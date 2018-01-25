@@ -94,6 +94,7 @@ requirejs.config({
 		"cohort-definitions": "components/cohort-definitions",
 		"cohort-definition-manager": "components/cohort-definition-manager",
 		"cohort-definition-browser": "components/cohort-definition-browser",
+        "cohort-definition-upload": "components/cohort-definition-upload",
 		"cohort-comparison-browser": "components/cohort-comparison-browser",
 		"cohort-comparison-print-friendly": "components/cohort-comparison-print-friendly",
 		"cohort-comparison-r-code": "components/cohort-comparison-r-code",
