@@ -131,7 +131,7 @@
         <!-- /ko -->
       </div>
       <div role="tabpanel" data-bind="css: { active: $component.tabMode() == 'export' }" class="tab-pane">
-        <ul class="nav nav-pills">
+        <ul class="nav nav-pills" style="display: inline-block">
           <li role="presentation" data-bind="css: { active: $component.exportTabMode() == 'printfriendly' }, click: function() { $component.exportTabMode('printfriendly'); }">
             <a>Text View</a>
           </li>
@@ -148,6 +148,8 @@
             <a>SQL</a>
           </li>
         </ul>
+
+        <button class="btn btn-sm btn-primary pull-right" data-bind="click: $component.export">Export</button>
 
         <div class="tab-content">
           <div role="tabpanel" data-bind="css: {active: $component.exportTabMode() == 'printfriendly'}" class="tab-pane">

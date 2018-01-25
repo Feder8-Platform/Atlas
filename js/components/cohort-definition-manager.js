@@ -597,6 +597,17 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 			}
 		}
 
+		self.export = function() {
+            var data = "text/json;charset=utf-8,"+ko.toJSON(self.model.currentCohortDefinition().expression);
+            var link = document.createElement('a');
+            link.href="data:" + data;
+            link.download=self.model.currentCohortDefinition().name().split(' ').join('_') + ".cohort";
+            link.style.display = "none";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+		}
+
 		self.exportConceptSetsCSV = function () {
 			window.open(config.api.url + 'cohortdefinition/' + self.model.currentCohortDefinition().id() + '/export/conceptset');
 		}
