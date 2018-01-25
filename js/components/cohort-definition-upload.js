@@ -25,6 +25,10 @@ define(['knockout', 'text!./cohort-definition-upload.html', 'appConfig', 'webapi
 
         self.submitFile = function() {
             var file = document.getElementById('cohortInput').files[0];
+            if (typeof file == "undefined") {
+                alert("Please select a file.");
+                return;
+            }
             var reader = new FileReader();
             reader.readAsText(file);
             console.log(file);
