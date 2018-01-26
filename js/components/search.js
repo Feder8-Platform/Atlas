@@ -62,6 +62,10 @@ define(['jquery', 'knockout', 'text!./search.html', 'vocabularyprovider', 'atlas
 			data: 'DESCENDANT_RECORD_COUNT',
 			className: 'numeric'
         }, {
+            title: '# of subjects',
+            data: 'PERSON_COUNT',
+            className: "numeric"
+        }, {
 			title: 'Domain',
 			data: 'DOMAIN_ID'
         }, {
