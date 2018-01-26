@@ -3,6 +3,7 @@
 <div data-bind="template: { if: showLightBox, afterRender: showModal }">
     Showing
     <div id="fileUploadModal" class="modal">
+        <div class="modal-background" data-bind="click:$component.close"></div>
         <span class="close cursor" data-bind="click: $component.close">&times;</span>
         <div class="modal-content">
             <div class="drop-zone" data-bind="css: { 'dragged-over': $component.draggedOver},

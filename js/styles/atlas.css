@@ -1992,13 +1992,18 @@ span.new-role {
 /* The Modal (background) */
 .modal {
 	display: none;
+	overflow: auto;
+}
+
+.modal-background {
 	position: fixed;
 	z-index: 1;
 	padding-top: 100px;
 	left: 0;
 	top: 0;
-	overflow: auto;
-	background-color: black;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0,0,0,0.5);
 }
 
 /* Modal Content */
@@ -2008,6 +2013,8 @@ span.new-role {
 	margin: auto;
 	padding: 0;
 	max-width: 250px;
+	z-index: 2;
+	top: calc(100% / 2 - 250px);
 }
 .modal-content button, .modal-content input {
 	display: inline-block;
@@ -2022,6 +2029,7 @@ span.new-role {
 	right: 25px;
 	font-size: 35px;
 	font-weight: bold;
+	z-index: 2;
 }
 
 .close:hover,
