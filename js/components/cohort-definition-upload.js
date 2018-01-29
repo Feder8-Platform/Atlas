@@ -1,4 +1,10 @@
-define(['knockout', 'text!./cohort-definition-upload.html', 'appConfig', 'webapi/AuthAPI', 'knockout.dataTables.binding', 'faceted-datatable', 'access-denied'], function (ko, view, config, authApi) {
+define([
+    'knockout',
+    'text!./cohort-definition-upload.html',
+    'appConfig',
+    'webapi/AuthAPI',
+    'knockout.dataTables.binding',
+    'access-denied'], function (ko, view, config, authApi) {
     function cohortDefinitionUpload() {
 
         var self = this;

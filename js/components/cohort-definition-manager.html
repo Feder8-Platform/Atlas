@@ -149,7 +149,7 @@
           </li>
         </ul>
 
-        <button class="btn btn-sm btn-primary pull-right" data-bind="click: $component.export">Export</button>
+        <export-button params="{data:  model.currentCohortDefinition().expression, name: model.currentCohortDefinition().name, extension: '.cohort'}"></export-button>
 
         <div class="tab-content">
           <div role="tabpanel" data-bind="css: {active: $component.exportTabMode() == 'printfriendly'}" class="tab-pane">
@@ -263,6 +263,7 @@
             <th>Generated</th>
             <th>Generation Duration</th>
             <th></th>
+            <th></th>
           </thead>
           <tbody data-bind="foreach:model.cohortDefinitionSourceInfo, css: {overflow: model.cohortDefinitionSourceInfo().length > 3}">
             <tr data-bind="css: { 'selected': $component.selectedReport() && $component.selectedReport().sourceKey == $data.sourceKey}">
@@ -293,6 +294,9 @@
               </td>
               <td>
                 <div class="btn btn-sm btn-primary" data-bind="visible:!$component.isSourceRunning($data) && isValid(), click:$component.selectViewReport"><i class="fa fa-eye"></i>&nbsp;View Reports</div>
+              </td>
+              <td>
+                <export-button params="{endpoint: $component.getGenerationDataEndpoint($data)}" data-bind="visible:!$component.isSourceRunning($data) && isValid()"></export-button>
               </td>
             </tr>
           </tbody>

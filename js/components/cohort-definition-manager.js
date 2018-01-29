@@ -13,6 +13,7 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 				'databindings',
 				'cohortdefinitionviewer/expressionCartoonBinding',
 				'cohortfeatures',
+				'export-button'
 ], function (ko, view, config, CohortDefinition, cohortDefinitionAPI, util, CohortExpression, InclusionRule, ConceptSet, sharedState) {
 
 	function translateSql(sql, dialect) {
@@ -101,6 +102,8 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 			return self.isAuthenticated() && authApi.isPermittedReadCohortReport(self.model.currentCohortDefinition().id(), sourceKey);
 		}
 		if (!self.hasAccess()) return;
+
+		self.generatedData = ko.observable('');
 
 		self.generatedSql = {};
 		self.generatedSql.mssql = ko.observable('');
@@ -461,7 +464,7 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 		}
 
 		self.generateCohort = function (source, includeFeatures) {
-			var route = `${config.api.url}cohortdefinition/${self.model.currentCohortDefinition().id()}/generate/${source.sourceKey}`;
+            var route = `${config.api.url}cohortdefinition/${self.model.currentCohortDefinition().id()}/generate/${source.sourceKey}`;
 			
 			if (includeFeatures) {
 				route = `${route}?includeFeatures`;
@@ -480,6 +483,10 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 				}
 			});
 		}
+
+        self.getGenerationDataEndpoint = function(source){
+            return `${config.api.url}cohortdefinition/${self.model.currentCohortDefinition().id()}/export/${source.sourceKey}`;
+        }
 		
 		self.generateAnalyses = function (data, event) {
 			$(event.target).prop("disabled", true);
@@ -595,17 +602,6 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 				var updatedExpression = JSON.parse(self.modifiedJSON);
 				self.model.currentCohortDefinition().expression(new CohortExpression(updatedExpression));
 			}
-		}
-
-		self.export = function() {
-            var data = "text/json;charset=utf-8,"+ko.toJSON(self.model.currentCohortDefinition().expression);
-            var link = document.createElement('a');
-            link.href="data:" + data;
-            link.download=self.model.currentCohortDefinition().name().split(' ').join('_') + ".cohort";
-            link.style.display = "none";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
 		}
 
 		self.exportConceptSetsCSV = function () {

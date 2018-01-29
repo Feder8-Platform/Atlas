@@ -59,7 +59,7 @@ define(['knockout', 'text!./cohort-definition-browser.html', 'appConfig', 'webap
             return '<span id="export" class="linkish">Export</span>';
         }
 
-        self.onClick = function(d){
+        self.exportClicked = function(d){
             $.ajax({
                 type: "GET",
                 url: self.config.api.url + 'cohortdefinition/'+d.id,
@@ -79,7 +79,7 @@ define(['knockout', 'text!./cohort-definition-browser.html', 'appConfig', 'webap
 
 		self.rowClick = function (d, e) {
         	if(e.originalEvent.target.getAttribute('id') === "export"){
-        		self.onClick(d);
+        		self.exportClicked(d);
         		return;
 			}
 			self.selected(d.id);
