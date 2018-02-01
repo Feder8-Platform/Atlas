@@ -15,9 +15,12 @@ define(
                 var link = document.createElement('a');
                 link.href = "data:" + data;
                 if (params.name) {
-                    link.download = params.name().split(' ').join('_') + '.' + params.extension;
+                    link.download = params.name().trim().split(' ').join('_');
                 } else {
                     link.download = 'default';
+                }
+                if (params.extension) {
+                    link.download += '.' + params.extension;
                 }
                 link.style.display = "none";
                 document.body.appendChild(link);
@@ -28,7 +31,9 @@ define(
             self.export = function () {
                 if(params.data) {
                     jsonDataToFile(params.data());
-                } else if(params.endpoint){
+                    return;
+                }
+                if(params.endpoint){
                     $.ajax(params.endpoint(),{
                         headers: {
                             Authorization: authApi.getAuthorizationHeader()
@@ -37,7 +42,8 @@ define(
                         success: function (data) {
                             jsonDataToFile(data);
                         }
-                    })
+                    });
+                    return;
                 }
             }
         }

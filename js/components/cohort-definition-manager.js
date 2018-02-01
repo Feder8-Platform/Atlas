@@ -487,6 +487,12 @@ define(['knockout', 'text!./cohort-definition-manager.html',
         self.getGenerationDataEndpoint = function(source){
             return `${config.api.url}cohortdefinition/${self.model.currentCohortDefinition().id()}/export/${source.sourceKey}`;
         }
+
+		self.generationFileName = ko.observable('');
+        self.getGenerationFileName = function(source) {
+			self.generationFileName(source.name + '-' + new Date().getFullYear() + (("0" + (new Date().getMonth() + 1)).slice(-2)) + (("0" + new Date().getDate()).slice(-2)));
+			return self.generationFileName;
+		}
 		
 		self.generateAnalyses = function (data, event) {
 			$(event.target).prop("disabled", true);
