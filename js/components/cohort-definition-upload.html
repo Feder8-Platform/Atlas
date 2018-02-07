@@ -1,11 +1,11 @@
 <span class="btn btn-sm btn-primary" data-bind="click:$component.show, text: $component.name"></span>
 
 <div data-bind="template: { if: showLightBox, afterRender: showModal }">
-    Showing
     <div id="fileUploadModal" class="modal">
         <div class="modal-background" data-bind="click:$component.close"></div>
         <span class="close cursor" data-bind="click: $component.close">&times;</span>
         <div class="modal-content">
+            <!-- ko if: !$component.importing() -->
             <div class="drop-zone" data-bind="css: { 'dragged-over': $component.draggedOver},
                                               event: {
                                                 drop: $component.drop,
@@ -15,8 +15,12 @@
                                             }">
                 <i class="fa fa-file fa-5x" aria-hidden="true"></i>
             </div>
-            <input class="btn btn-sm btn-primary" type="file" id="cohortInput">
+            <input class="btn btn-sm btn-primary" type="file" id="cohortInput" data-bind="">
             <button class="btn btn-sm btn-primary" data-bind="click: $component.submitFile">Submit</button>
+            <!-- /ko -->
+            <!-- ko if: $component.importing() -->
+            <i class="fa fa-spinner fa-5x fa-pulse" aria-hidden="true" data-bind="if: !$component.importing()"></i>
+            <!-- /ko -->
         </div>
     </div>
 </div>

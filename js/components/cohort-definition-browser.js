@@ -68,7 +68,7 @@ define(['knockout', 'text!./cohort-definition-browser.html', 'appConfig', 'webap
                     var data = "text/json;charset=utf-8,"+ko.toJSON(JSON.parse(result.expression));
                     var link = document.createElement('a');
                     link.href="data:" + data;
-                    link.download=d.name.split(' ').join('_')+".cohort";
+                    link.download=d.name.trim().split(' ').join('_')+".cohort";
                     link.style.display = "none";
                     document.body.appendChild(link);
                     link.click();

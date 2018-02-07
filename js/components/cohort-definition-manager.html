@@ -149,8 +149,6 @@
           </li>
         </ul>
 
-        <export-button data-bind="css: { active: $component.exportTabMode() == 'json' }" params="{data:  model.currentCohortDefinition().expression, name: model.currentCohortDefinition().name, extension: 'cohort'}"></export-button>
-
         <div class="tab-content">
           <div role="tabpanel" data-bind="css: {active: $component.exportTabMode() == 'printfriendly'}" class="tab-pane">
             <div class="paddedWrapper">
@@ -201,6 +199,7 @@
             <textarea class="code" style="width: 100%; height: 300px" data-bind="textInput: $component.expressionJSON"></textarea>
             <div style="text-align: right">
               <button class="btn btn-sm btn-primary" data-bind="click: $component.reload">Reload</button>
+              <export-button style="margin-left: 5px" params="{data:  model.currentCohortDefinition().expression, name: model.currentCohortDefinition().name, extension: 'cohort'}"></export-button>
             </div>
           </div>
           <div role="tabpanel" data-bind="css: { active: $component.exportTabMode() == 'sql'}" class="tab-pane">
@@ -262,6 +261,7 @@
             <th>Records</th>
             <th>Generated</th>
             <th>Generation Duration</th>
+            <th></th>
             <th></th>
             <th></th>
           </thead>

@@ -12,14 +12,17 @@ define([
         self.content = ko.observable();
         self.draggedOver = ko.observable(false);
         self.config = config;
-        self.name = "Import"
+        self.importing = ko.observable(false);
+        self.name = "Import";
 
         self.show = function(){
             self.showLightBox(true);
         }
 
         self.close = function(){
-            self.showLightBox(false);
+            if(!self.importing()){
+                self.showLightBox(false);
+            }
         }
 
         self.showModal = function(){
@@ -40,6 +43,7 @@ define([
             reader.readAsText(file);
             console.log(file);
             reader.onload = function (evt) {
+                self.importing(true);
                 $.ajax({
                     type: "POST",
                     url: params.endpoint(),
@@ -47,11 +51,14 @@ define([
                     data: JSON.stringify(JSON.parse(evt.target.result)),
                     contentType: "application/json; charset=utf-8",
                     success: function (result) {
-                        window.location.href = "#/cohortdefinition/"+result.cohortGenerationInfo.id.cohortDefinitionId;
+                        window.location.reload()
+                    },
+                    always: function () {
+                        self.importing(false);
+                        self.close();
                     }
                 });
             };
-            self.close();
         }
 
         self.drop = function(data, event){

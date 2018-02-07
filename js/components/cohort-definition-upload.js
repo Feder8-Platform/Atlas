@@ -12,7 +12,8 @@ define([
         self.content = ko.observable();
         self.draggedOver = ko.observable(false);
         self.config = config;
-        self.name = "Import Cohort"
+        self.name = "Import Cohort";
+        self.importing = ko.observable(false);
 
         self.show = function(){
             self.showLightBox(true);
