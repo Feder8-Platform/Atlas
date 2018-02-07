@@ -53,6 +53,7 @@ define(function (require, exports) {
 			// optimization - only lookup standard concepts as non standard concepts will not have records
 			results[c].RECORD_COUNT = 0;
 			results[c].DESCENDANT_RECORD_COUNT = 0;
+			results[c].PERSON_COUNT = 0;
 			if (results[c].STANDARD_CONCEPT_CAPTION == 'Standard' || results[c].STANDARD_CONCEPT_CAPTION == 'Classification') {
 				searchResultIdentifiers.push(results[c].CONCEPT_ID);
 				resultsIndex.push(c);
@@ -75,6 +76,7 @@ define(function (require, exports) {
 					if (densityIndex[concept.CONCEPT_ID] != undefined) {
 						concept.RECORD_COUNT = numeral(densityIndex[concept.CONCEPT_ID][0]).format(formatComma);
 						concept.DESCENDANT_RECORD_COUNT = numeral(densityIndex[concept.CONCEPT_ID][1]).format(formatComma);
+						concept.PERSON_COUNT = numeral(densityIndex[concept.CONCEPT_ID][2]).format(formatComma);
 					}
 				}
 				densityPromise.resolve();
@@ -84,6 +86,7 @@ define(function (require, exports) {
 					var concept = results[c];
 					concept.RECORD_COUNT = 'timeout';
 					concept.DESCENDANT_RECORD_COUNT = 'timeout';
+					concept.PERSON_COUNT = 'timeout';
 				}
 				densityPromise.resolve();
 			}

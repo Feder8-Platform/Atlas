@@ -84,7 +84,7 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
 							});
 						},
 						'/cohortdefinitions': function () {
-							require(['cohort-definitions', 'cohort-definition-manager', 'cohort-definition-browser'], function () {
+							require(['cohort-definitions', 'cohort-definition-manager', 'cohort-definition-browser', 'cohort-definition-upload'], function () {
 								self.componentParams = {
 									model: self
 								};

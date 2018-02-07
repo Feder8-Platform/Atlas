@@ -3,7 +3,7 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 				'cohortbuilder/CohortDefinition',
 				'webapi/CohortDefinitionAPI',
 				'ohdsi.util',
-		'cohortbuilder/CohortExpression',
+				'cohortbuilder/CohortExpression',
 				'cohortbuilder/InclusionRule',
 				'conceptsetbuilder/InputTypes/ConceptSet',
 				'atlas-state',
@@ -13,6 +13,8 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 				'databindings',
 				'cohortdefinitionviewer/expressionCartoonBinding',
 				'cohortfeatures',
+				'export-button',
+				'cohort-results-upload'
 ], function (ko, view, config, CohortDefinition, cohortDefinitionAPI, util, CohortExpression, InclusionRule, ConceptSet, sharedState) {
 
 	function translateSql(sql, dialect) {
@@ -101,6 +103,8 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 			return self.isAuthenticated() && authApi.isPermittedReadCohortReport(self.model.currentCohortDefinition().id(), sourceKey);
 		}
 		if (!self.hasAccess()) return;
+
+		self.generatedData = ko.observable('');
 
 		self.generatedSql = {};
 		self.generatedSql.mssql = ko.observable('');
@@ -461,7 +465,7 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 		}
 
 		self.generateCohort = function (source, includeFeatures) {
-			var route = `${config.api.url}cohortdefinition/${self.model.currentCohortDefinition().id()}/generate/${source.sourceKey}`;
+            var route = `${config.api.url}cohortdefinition/${self.model.currentCohortDefinition().id()}/generate/${source.sourceKey}`;
 			
 			if (includeFeatures) {
 				route = `${route}?includeFeatures`;
@@ -479,6 +483,20 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 					}, 3000);
 				}
 			});
+		}
+
+        self.getGenerationDataEndpoint = function(source){
+            return `${config.api.url}cohortdefinition/${self.model.currentCohortDefinition().id()}/export/${source.sourceKey}`;
+        }
+
+        self.getImportDataEndpoint = function(source){
+            return `${config.api.url}cohortdefinition/${self.model.currentCohortDefinition().id()}/import/${source.sourceKey}`;
+		}
+
+		self.generationFileName = ko.observable('');
+        self.getGenerationFileName = function(source) {
+			self.generationFileName(source.name + '-' + new Date().getFullYear() + (("0" + (new Date().getMonth() + 1)).slice(-2)) + (("0" + new Date().getDate()).slice(-2)));
+			return self.generationFileName;
 		}
 		
 		self.generateAnalyses = function (data, event) {

@@ -131,7 +131,7 @@
         <!-- /ko -->
       </div>
       <div role="tabpanel" data-bind="css: { active: $component.tabMode() == 'export' }" class="tab-pane">
-        <ul class="nav nav-pills">
+        <ul class="nav nav-pills" style="display: inline-block">
           <li role="presentation" data-bind="css: { active: $component.exportTabMode() == 'printfriendly' }, click: function() { $component.exportTabMode('printfriendly'); }">
             <a>Text View</a>
           </li>
@@ -199,6 +199,7 @@
             <textarea class="code" style="width: 100%; height: 300px" data-bind="textInput: $component.expressionJSON"></textarea>
             <div style="text-align: right">
               <button class="btn btn-sm btn-primary" data-bind="click: $component.reload">Reload</button>
+              <export-button style="margin-left: 5px" params="{data:  model.currentCohortDefinition().expression, name: model.currentCohortDefinition().name, extension: 'cohort'}"></export-button>
             </div>
           </div>
           <div role="tabpanel" data-bind="css: { active: $component.exportTabMode() == 'sql'}" class="tab-pane">
@@ -261,6 +262,8 @@
             <th>Generated</th>
             <th>Generation Duration</th>
             <th></th>
+            <th></th>
+            <th></th>
           </thead>
           <tbody data-bind="foreach:model.cohortDefinitionSourceInfo, css: {overflow: model.cohortDefinitionSourceInfo().length > 3}">
             <tr data-bind="css: { 'selected': $component.selectedReport() && $component.selectedReport().sourceKey == $data.sourceKey}">
@@ -291,6 +294,12 @@
               </td>
               <td>
                 <div class="btn btn-sm btn-primary" data-bind="visible:!$component.isSourceRunning($data) && isValid(), click:$component.selectViewReport"><i class="fa fa-eye"></i>&nbsp;View Reports</div>
+              </td>
+              <td>
+                <export-button params="{endpoint: $component.getGenerationDataEndpoint($data), name : $component.getGenerationFileName($data), extension: 'results'}" data-bind="visible:!$component.isSourceRunning($data) && isValid()"></export-button>
+              </td>
+              <td>
+                <cohort-results-upload params="{endpoint: $component.getImportDataEndpoint($data)}" data-bind="visible:!$component.isSourceRunning($data)"></cohort-results-upload>
               </td>
             </tr>
           </tbody>
