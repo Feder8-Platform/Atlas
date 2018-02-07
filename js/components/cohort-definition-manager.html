@@ -149,7 +149,7 @@
           </li>
         </ul>
 
-        <export-button params="{data:  model.currentCohortDefinition().expression, name: model.currentCohortDefinition().name, extension: 'cohort'}"></export-button>
+        <export-button data-bind="css: { active: $component.exportTabMode() == 'json' }" params="{data:  model.currentCohortDefinition().expression, name: model.currentCohortDefinition().name, extension: 'cohort'}"></export-button>
 
         <div class="tab-content">
           <div role="tabpanel" data-bind="css: {active: $component.exportTabMode() == 'printfriendly'}" class="tab-pane">
@@ -297,6 +297,9 @@
               </td>
               <td>
                 <export-button params="{endpoint: $component.getGenerationDataEndpoint($data), name : $component.getGenerationFileName($data), extension: 'results'}" data-bind="visible:!$component.isSourceRunning($data) && isValid()"></export-button>
+              </td>
+              <td>
+                <cohort-results-upload params="{endpoint: $component.getImportDataEndpoint($data)}" data-bind="visible:!$component.isSourceRunning($data)"></cohort-results-upload>
               </td>
             </tr>
           </tbody>

@@ -99,6 +99,7 @@ requirejs.config({
 		"cohort-comparison-print-friendly": "components/cohort-comparison-print-friendly",
 		"cohort-comparison-r-code": "components/cohort-comparison-r-code",
 		"cohort-comparison-multi-r-code": "components/cohort-comparison-multi-r-code",
+		"cohort-results-upload": "components/cohort-results-upload",
 		"export-button": "components/export-button",
 		"user-bar": "components/user-bar",
 		"report-manager": "components/report-manager",

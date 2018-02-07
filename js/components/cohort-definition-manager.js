@@ -3,7 +3,7 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 				'cohortbuilder/CohortDefinition',
 				'webapi/CohortDefinitionAPI',
 				'ohdsi.util',
-		'cohortbuilder/CohortExpression',
+				'cohortbuilder/CohortExpression',
 				'cohortbuilder/InclusionRule',
 				'conceptsetbuilder/InputTypes/ConceptSet',
 				'atlas-state',
@@ -13,7 +13,8 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 				'databindings',
 				'cohortdefinitionviewer/expressionCartoonBinding',
 				'cohortfeatures',
-				'export-button'
+				'export-button',
+				'cohort-results-upload'
 ], function (ko, view, config, CohortDefinition, cohortDefinitionAPI, util, CohortExpression, InclusionRule, ConceptSet, sharedState) {
 
 	function translateSql(sql, dialect) {
@@ -487,6 +488,10 @@ define(['knockout', 'text!./cohort-definition-manager.html',
         self.getGenerationDataEndpoint = function(source){
             return `${config.api.url}cohortdefinition/${self.model.currentCohortDefinition().id()}/export/${source.sourceKey}`;
         }
+
+        self.getImportDataEndpoint = function(source){
+            return `${config.api.url}cohortdefinition/${self.model.currentCohortDefinition().id()}/import/${source.sourceKey}`;
+		}
 
 		self.generationFileName = ko.observable('');
         self.getGenerationFileName = function(source) {

@@ -5,14 +5,14 @@ define([
     'webapi/AuthAPI',
     'knockout.dataTables.binding',
     'access-denied'], function (ko, view, config, authApi) {
-    function cohortDefinitionUpload() {
+    function cohortResultsUpload(params) {
 
         var self = this;
         self.showLightBox = ko.observable(false);
         self.content = ko.observable();
         self.draggedOver = ko.observable(false);
         self.config = config;
-        self.name = "Import Cohort"
+        self.name = "Import"
 
         self.show = function(){
             self.showLightBox(true);
@@ -42,16 +42,12 @@ define([
             reader.onload = function (evt) {
                 $.ajax({
                     type: "POST",
-                    url: self.config.api.url + 'cohortdefinition/',
+                    url: params.endpoint(),
                     dataType: "json",
-                    data: JSON.stringify({
-                            expressionType: "SIMPLE_EXPRESSION",
-                            name: file.name.replace('.cohort', '').split('_').join(' '),
-                            expression: evt.target.result
-                        }),
+                    data: JSON.stringify(JSON.parse(evt.target.result)),
                     contentType: "application/json; charset=utf-8",
                     success: function (result) {
-                        window.location.href = "#/cohortdefinition/"+result.id;
+                        window.location.href = "#/cohortdefinition/"+result.cohortGenerationInfo.id.cohortDefinitionId;
                     }
                 });
             };
@@ -74,10 +70,10 @@ define([
         }
     }
     var component = {
-        viewModel: cohortDefinitionUpload,
+        viewModel: cohortResultsUpload,
         template: view
     };
 
-    ko.components.register('cohort-definition-upload', component);
+    ko.components.register('cohort-results-upload', component);
     return component;
 });
