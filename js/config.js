@@ -65,6 +65,12 @@ define(['optional!config-local'], function (localConfig) {
       "ajax": true,
       "icon": "fa fa-cubes",
       "isUseCredentialsForm": true
+    },
+    {
+        "name": 'CAS',
+        "url": 'user/oauth/cas',
+        "ajax": false,
+        "icon": 'fa fa-windows'
     }
   ];
   config.xssOptions = {

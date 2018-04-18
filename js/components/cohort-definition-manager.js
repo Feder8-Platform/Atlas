@@ -17,6 +17,7 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 	'faceted-datatable',
 	'cohortdefinitionviewer/expressionCartoonBinding',
 	'cohortfeatures',
+    'export-button'
 ], function (ko, view, config, CohortDefinition, cohortDefinitionAPI, momentApi, util, CohortExpression, InclusionRule, ConceptSet, cohortReportingAPI, sharedState, clipboard, d3, jobDetail) {
 
 	function translateSql(sql, dialect) {
@@ -185,12 +186,51 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 			}
 		});
 
+        //Export cohort and cohort generation results
+
+        self.getGenerationDataEndpoint = function(source){
+            return `${config.api.url}cohortdefinition/${self.model.currentCohortDefinition().id()}/export/${source.sourceKey}`;
+        }
+
+        self.getDefinitionEndpoint = function(){
+            return `${config.api.url}cohortdefinition/${self.model.currentCohortDefinition().id()}/export`;
+        }
+
+        self.getImportDataEndpoint = function(source){
+            return `${config.api.url}cohortdefinition/hss/${self.model.currentCohortDefinition().id()}`;
+        }
+
+        self.getSelectDataEndpoint = function(source){
+            return `${config.api.url}cohortdefinition/hss/${self.model.currentCohortDefinition().id()}/select/${source.sourceKey}`;
+        }
+
+        self.getFileDataEndpoint = function(source){
+            return `${config.api.url}cohortdefinition/${self.model.currentCohortDefinition().id()}/import/${source.sourceKey}`;
+        }
+
+        self.generationFileName = ko.observable('');
+        self.getGenerationFileName = function(source) {
+            self.generationFileName(source.name + '-' + new Date().getFullYear() + (("0" + (new Date().getMonth() + 1)).slice(-2)) + (("0" + new Date().getDate()).slice(-2)));
+            return self.generationFileName;
+        }
+
+        // Organizations
+        self.canEditOrganizations = ko.pureComputed(function() { return self.isAuthenticated() && (isNew() || self.canEdit()); });
+
+        self.renderCheckbox = function (field, editable) {
+            return editable
+                ? '<span data-bind="click: function(d) { d.' + field + '(!d.' + field + '()); } , css: { selected: ' + field + '}" class="fa fa-check"></span>'
+                : '<span data-bind="css: { selected: ' + field + '}" class="fa fa-check readonly"></span>';
+        }
+
+        // self.model.currentCohortDefinition().organizations().forEach(el => el.canRead = el.organizationCanRead());
+
 		// model behaviors
 		self.onConceptSetTabRespositoryConceptSetSelected = function (conceptSet) {
 			self.model.loadConceptSet(conceptSet.id, 'cohort-definition-manager', 'cohort', 'details');
 		}
 
-		self.includedConceptsColumns = [{
+        self.includedConceptsColumns = [{
 			title: '<i class="fa fa-shopping-cart"></i>',
 			render: function (s, p, d) {
 				var css = '';
@@ -362,14 +402,22 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 			// for saving, we flatten the expresson JS into a JSON string
 			definition.expression = ko.toJSON(definition.expression, pruneJSON);
 
+			// fue to use of datatable, set right property before saving.
+            self.model.currentCohortDefinition().organizations().forEach(el => el.canRead =el.organizationCanRead());
+
 			// reset view after save
 			cohortDefinitionAPI.saveCohortDefinition(definition).then(function (result) {
 				result.expression = JSON.parse(result.expression);
 				var definition = new CohortDefinition(result);
 				var redirectWhenComplete = definition.id() != self.model.currentCohortDefinition().id();
 
+				//Save organizations seperately
+				var organizationsPromise = cohortDefinitionAPI
+					.saveOrganizations(self.model.currentCohortDefinition().organizations(), definition.id());
+
 				var refreshTokenPromise = (redirectWhenComplete && config.userAuthenticationEnabled) ? authApi.refreshToken() : null;
-				$.when(refreshTokenPromise).done(function () {
+				$.when(refreshTokenPromise, organizationsPromise).done(function () {
+				    definition.organizations(self.model.currentCohortDefinition().organizations());
 					self.model.currentCohortDefinition(definition);
 					if (redirectWhenComplete) {
 						document.location = "#/cohortdefinition/" + definition.id();

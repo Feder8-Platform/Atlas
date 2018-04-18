@@ -48,6 +48,9 @@
 			<li role="presentation" data-bind="css: { active: $component.tabMode() == 'export' }, click: function() { $component.tabMode('export'); $component.showSql(); }">
 				<a>Export</a>
 			</li>
+			<li role="presentation" data-bind="css: { active: $component.tabMode() == 'permissions' }, click: function() { $component.tabMode('permissions');}">
+				<a>Permissions</a>
+			</li>
 		</ul>
 		<div class="tab-content">
 			<div role="tabpanel" data-bind="css: { active: $component.tabMode() == 'definition' }" class="tab-pane">
@@ -219,6 +222,7 @@
 							</div>
 							<div class="col-md-6" style="text-align: right">
 								<button class="btn btn-sm btn-primary" data-bind="click: $component.reload">Reload</button>
+								<export-button style="margin-left: 5px" params="{multiSelect: true, endpoint: $component.getDefinitionEndpoint()}"></export-button>
 							</div>
 						</div>
 					</div>
@@ -303,6 +307,8 @@
 						<th>Generated</th>
 						<th>Generation Duration</th>
 						<th></th>
+						<th></th>
+						<th></th>
 					</thead>
 					<tbody data-bind="foreach:model.cohortDefinitionSourceInfo, css: {overflow: model.cohortDefinitionSourceInfo().length > 3}">
 						<tr data-bind="css: { 'selected': $component.selectedReport() && $component.selectedReport().sourceKey == $data.sourceKey}">
@@ -333,6 +339,12 @@
 							</td>
 							<td>
 								<div class="btn btn-sm btn-primary" data-bind="visible:!$component.isSourceRunning($data) && isValid(), click:$component.selectViewReport"><i class="fa fa-eye"></i>&nbsp;View Reports</div>
+							</td>
+							<td>
+								<export-button params="{uuid: $component.model.currentCohortDefinition().uuid(), multiSelect: true, endpoint: $component.getGenerationDataEndpoint($data)}" data-bind="visible:!$component.isSourceRunning($data) && isValid()"></export-button>
+							</td>
+							<td>
+								<cohort-definition-upload params="{importUrl: $component.getImportDataEndpoint($data), selectUrl: $component.getSelectDataEndpoint($data), fileUrl: $component.getFileDataEndpoint($data)}" data-bind="visible:!$component.isSourceRunning($data)"></cohort-definition-upload>
 							</td>
 						</tr>
 					</tbody>
@@ -492,6 +504,32 @@
 			<div role="tabpanel " data-bind="css: { active: $component.tabMode()=='explore' } " class="tab-pane ">
 				<div class="paddedWrapper ">
 					<explore-cohort params="{model: pageModel, showSelectionArea: false } "></explore-cohort>
+				</div>
+			</div>
+
+			<div role="tabpanel " data-bind="css: { active: $component.tabMode()== 'permissions' } " class="tab-pane ">
+				<div class="paddedWrapper ">
+					<table width="100%" class="stripe compact hover" cellspacing="0" data-bind="dataTable:{
+						data: $component.model.currentCohortDefinition().organizations,
+						options: {
+									dom: 'lfiprt',
+									language: {
+										search : 'Filter:'
+									},
+									lengthMenu: [[25, 50, 100, -1], [25, 50, 100,'All']],
+									orderClasses: false,
+									deferRender: true,
+									autoWidth: false,
+									ordering: true,
+									columnDefs: [
+											{ targets: 0, width: '80px', orderable: false },
+									],
+									columns: [
+											{ title: 'Included', class:'text-center', render: function() { return renderCheckbox('organizationCanRead', $component.canEditOrganizations()); } },
+											{ title: 'Organisation', data: 'name' }
+									]
+							}
+					}"></table>
 				</div>
 			</div>
 		</div>

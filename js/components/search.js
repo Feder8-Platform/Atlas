@@ -68,6 +68,10 @@ define(['jquery', 'knockout', 'text!./search.html', 'vocabularyprovider', 'atlas
 			data: 'DESCENDANT_RECORD_COUNT',
 			className: 'numeric'
 		}, {
+            title: '# of subjects',
+            data: 'PERSON_COUNT',
+            className: "numeric"
+        }, {
 			title: 'Domain',
 			data: 'DOMAIN_ID'
 		}, {
@@ -111,7 +115,12 @@ define(['jquery', 'knockout', 'text!./search.html', 'vocabularyprovider', 'atlas
 				'binding': function (o) {
 					return parseInt(o.DESCENDANT_RECORD_COUNT.toString().replace(',', '')) > 0;
 				}
-			}]
+            }, {
+                'caption': 'Has subjects',
+                'binding': function (o) {
+                    return parseInt(o.PERSON_COUNT.toString().replace(',', '')) > 0;
+                }
+            }]
 		};
 
 		self.updateSearchFilters = function () {

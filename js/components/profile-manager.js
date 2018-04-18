@@ -33,7 +33,7 @@ define(['knockout', 'text!./profile-manager.html', 'd3', 'appConfig', 'webapi/Au
 			if (self.cohortDefinitionId() && (self.model.currentCohortDefinition() && self.model.currentCohortDefinition()
 					.id() == self.cohortDefinitionId)) {
 				// The cohort definition requested is already loaded into the page model - just reference it
-				self.currentCohortDefinition(self.model.currentCohortDefintion())
+				self.currentCohortDefinition(self.model.currentCohortDefinition())
 			} else if (self.cohortDefinitionId()) {
 				cohortDefinitionAPI.getCohortDefinition(self.cohortDefinitionId())
 					.then(function (cohortDefinition) {

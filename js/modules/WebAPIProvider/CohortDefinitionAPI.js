@@ -118,7 +118,38 @@ define(function (require, exports) {
 			}
 		});
 		return reportPromise;
-	}	
+	}
+
+    function getOrganizations(cohortDefinitionId) {
+        var organizationPromise = $.ajax({
+            url: config.webAPIRoot + 'cohortdefinition/'+cohortDefinitionId+'/organizations',
+            headers: {
+                Authorization: authApi.getAuthorizationHeader()
+            },
+            error: function (error) {
+                console.log("Error: " + error);
+                authApi.handleAccessDenied(error);
+            }
+        });
+        return organizationPromise;
+    }
+
+    function saveOrganizations(organizations, cohortDefinitionId) {
+        var organizationPromise = $.ajax({
+            url: config.webAPIRoot + 'cohortdefinition/'+cohortDefinitionId+'/organizations',
+            method: 'POST',
+            data: JSON.stringify(organizations),
+            contentType: 'application/json',
+            headers: {
+                Authorization: authApi.getAuthorizationHeader()
+            },
+            error: function (error) {
+                console.log("Error: " + error);
+                authApi.handleAccessDenied(error);
+            }
+        });
+        return organizationPromise;
+	}
 	
 	var api = {
 		getCohortDefinitionList: getCohortDefinitionList,
@@ -129,7 +160,9 @@ define(function (require, exports) {
 		getSql: getSql,
 		generate: generate,
 		getInfo: getInfo,
-		getReport: getReport
+		getReport: getReport,
+		getOrganizations: getOrganizations,
+		saveOrganizations: saveOrganizations
 	}
 
 	return api;

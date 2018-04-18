@@ -32,6 +32,20 @@ define(['knockout', 'text!./cohort-definitions.html', 'appConfig', 'webapi/AuthA
 		self.canCreateCohort = ko.pureComputed(function () {
 			return (config.userAuthenticationEnabled && self.isAuthenticated() && authApi.isPermittedCreateCohort()) || !config.userAuthenticationEnabled;
 		});
+
+        const empty = ko.observable('');
+
+        self.getImportDataEndpoint = function(source){
+            return `${config.api.url}cohortdefinition/hss${empty()}`;
+        }
+
+        self.getSelectDataEndpoint = function(source){
+            return `${config.api.url}cohortdefinition/hss/select${empty()}`;
+        }
+
+        self.getFileDataEndpoint = function(source){
+            return `${config.api.url}cohortdefinition/${empty()}`;
+        }
 	}
 
 	var component = {

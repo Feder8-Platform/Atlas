@@ -357,6 +357,7 @@ define(function(require, exports) {
         getAuthorizationHeader: getAuthorizationHeader,
         handleAccessDenied: handleAccessDenied,
         refreshToken: refreshToken,
+        setPermissions: setPermissions,
 
         isAuthenticated: isAuthenticated,
 

@@ -1,0 +1,12 @@
+<div style="position:relative" class="btn-group btn-group-sm thumb-dropdown" data-bind="if: $component.multiSelect">
+    <a role="button" class="btn btn-sm btn-primary" data-bind="attr: { href: $component.endpoint}" target="_blank" style="max-width:200px; overflow-x: hidden; text-overflow:ellipsis; white-space:nowrap">Export To File</a>
+    <!-- ko if: $component.multiSelect -->
+        <a role="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>  <!-- caret -->
+            <span class="sr-only">Export To File</span>
+        </a>
+        <ul class="dropdown-menu" style="height: auto; max-height:200px; width:200px; overflow-x: hidden; padding:4px" role="menu">
+            <li style="cursor:pointer" data-bind="click:$component.export">Export To Cloud</li>
+        </ul>
+    <!-- /ko -->
+</div>
