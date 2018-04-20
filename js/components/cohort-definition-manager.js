@@ -197,7 +197,7 @@ define(['knockout', 'text!./cohort-definition-manager.html',
         }
 
         self.getImportDataEndpoint = function(source){
-            return `${config.api.url}cohortdefinition/hss/${self.model.currentCohortDefinition().id()}`;
+            return `${config.api.url}cohortdefinition/hss/list/${self.model.currentCohortDefinition().id()}`;
         }
 
         self.getSelectDataEndpoint = function(source){

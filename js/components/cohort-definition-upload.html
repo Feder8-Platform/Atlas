@@ -1,4 +1,4 @@
-<span class="btn btn-sm btn-primary" data-bind="click:$component.show, text: $component.name"></span>
+<span class="btn btn-sm btn-primary" data-bind="click:$component.show, text: $component.name, css: {disabled: $component.disable}"></span>
 
 <div data-bind="modal: showLightBox" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg">

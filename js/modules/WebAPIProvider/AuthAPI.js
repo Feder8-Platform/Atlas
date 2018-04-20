@@ -325,6 +325,10 @@ define(function(require, exports) {
         return isPermitted('role:' + roleId + ':permissions:*:put') && isPermitted('role:' + roleId + ':permissions:*:delete');
     }
 
+    var isPermittedImportCohortDefinition = function() {
+        return isPermitted("cohortdefinition:hss:list:all:get") && isPermitted("cohortdefinition:hss:select:post")
+    }
+
     $.ajaxSetup({
         beforeSend: function(xhr, settings) {
             if (!authProviders[settings.url] && settings.url.startsWith(config.api.url)) {
@@ -404,6 +408,9 @@ define(function(require, exports) {
         isPermittedSearch: isPermittedSearch,
         isPermittedViewCdmResults: isPermittedViewCdmResults,
         isPermittedViewProfiles: isPermittedViewProfiles,
+
+        isPermittedImportCohortDefinition:isPermittedImportCohortDefinition,
+
     };
 
     return api;

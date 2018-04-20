@@ -1,5 +1,5 @@
-define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atlas-state', 'querystring', 'd3', 'facets', 'css!styles/tabs.css', 'css!styles/buttons.css'],
-    function ($, ko, ohdsiUtil, config, authApi, sharedState, querystring, d3) {
+define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atlas-state', 'querystring', 'd3', 'vocabularyprovider',  'facets', 'css!styles/tabs.css', 'css!styles/buttons.css'],
+    function ($, ko, ohdsiUtil, config, authApi, sharedState, querystring, d3, VocabularyProvider) {
         var appModel = function () {
             $.support.cors = true;
             var self = this;
@@ -62,7 +62,16 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                 return sharedState.appInitializationStatus() != 'initializing';
             });
 
+            self.refreshSources = function() {
+                authApi.token(window.location.hash.substr(10));
+                VocabularyProvider.refreshSources().done(function(){
+                    document.location = "#/welcome/"+window.location.hash.substr(10);
+                    sharedState.appInitializationStatus('complete');
+                });
+            }
+
             self.initComplete = function () {
+
                 var prevToken = authApi.token();
                 var routerOptions = {
                     notfound: function () {
@@ -195,6 +204,18 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                                     authApi.setPermissions(permissionStrings.join("|"));
                                 }
                             });
+
+                            $.ajax({
+                                url: config.api.url + "cohortdefinition/uuids",
+                                method: "GET",
+                                headers: {
+                                    Authorization: authApi.getAuthorizationHeader()
+                                },
+                                contentType: 'application/json',
+                                success: function (permissions) {
+                                    console.log(permissions)
+                                }
+                            })
                             document.location = "#/welcome";
                         });
                     },

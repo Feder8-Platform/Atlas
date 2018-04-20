@@ -36,7 +36,7 @@ define(['knockout', 'text!./cohort-definitions.html', 'appConfig', 'webapi/AuthA
         const empty = ko.observable('');
 
         self.getImportDataEndpoint = function(source){
-            return `${config.api.url}cohortdefinition/hss${empty()}`;
+            return `${config.api.url}cohortdefinition/hss/list/all${empty()}`;
         }
 
         self.getSelectDataEndpoint = function(source){
@@ -46,6 +46,10 @@ define(['knockout', 'text!./cohort-definitions.html', 'appConfig', 'webapi/AuthA
         self.getFileDataEndpoint = function(source){
             return `${config.api.url}cohortdefinition/${empty()}`;
         }
+
+        self.isValid = function(){
+        	return authApi.isPermittedImportCohortDefinition();
+		}
 	}
 
 	var component = {

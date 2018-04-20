@@ -16,6 +16,7 @@ define([
         self.name = "Import Cohort";
         self.importing = ko.observable(false);
         self.fileUuid = ko.observable('');
+        self.disable = params.disable;
 
         self.currentTab = ko.observable('listTab');
 

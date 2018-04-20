@@ -5,11 +5,11 @@
 	<div data-bind="if:$component.canReadCohorts">
 		<div class="paddedWrapper">
 			<div class="row">
-				<div class="col-sm-offset-10 col-sm-1" data-bind="attr: {title: $component.newCohortButtonCaption()}">
+				<div class="col-xs-4 col-sm-offset-8 col-sm-2 col-md-offset-10 col-md-1" data-bind="attr: {title: $component.newCohortButtonCaption()}">
 					<div class="btn btn-sm btn-primary" data-bind="click:$component.newDefinition, css: {disabled: pageModel.currentCohortDefinition() != undefined || !$component.canCreateCohort()}">New Cohort</div>
 				</div>
-				<div class="col-sm-1" data-bind="attr: {title: $component.newCohortButtonCaption()}">
-					<cohort-definition-upload params="{importUrl: $component.getImportDataEndpoint($data), selectUrl: $component.getSelectDataEndpoint($data), fileUrl: $component.getFileDataEndpoint($data)}" style="margin-left: 5px"></cohort-definition-upload>
+				<div class="col-xs-4 col-sm-2 col-md-1"" data-bind="attr: {title: $component.newCohortButtonCaption()}">
+					<cohort-definition-upload params="{importUrl: $component.getImportDataEndpoint($data), selectUrl: $component.getSelectDataEndpoint($data), fileUrl: $component.getFileDataEndpoint($data), disable: !$component.isValid()}" style="margin-left: 5px"></cohort-definition-upload>
 				</div>
 			</div>
 			<cohort-definition-browser params="{cohortDefinitionSelected: cohortDefinitionId}"></cohort-definition-browser>
