@@ -22,7 +22,9 @@ define(
                     },
                     error: authApi.handleAccessDenied,
                     success: function (response, status, headers) {
-
+                        if(params.callbackURL){
+                            window.location = params.callbackURL(response);
+                        }
                     }
                 });
             }

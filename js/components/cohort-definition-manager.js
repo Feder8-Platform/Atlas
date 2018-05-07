@@ -214,6 +214,10 @@ define(['knockout', 'text!./cohort-definition-manager.html',
             return self.generationFileName;
         }
 
+        self.callbackURL = function(response){
+			return `atlas/#/cohortdefinition/${response.id}`
+		}
+
         // Organizations
         self.canEditOrganizations = ko.pureComputed(function() { return self.isAuthenticated() && (isNew() || self.canEdit()); });
 
