@@ -70,6 +70,7 @@ define([
         }
 
         self.submitFile = function() {
+            self.importing(true);
             if (self.currentTab() === "listTab" && self.cohortDefinitions().filter(definition => definition.selected()).length !== 1){
                 alert("Please select one file.");
                 return;
@@ -98,7 +99,6 @@ define([
                     upload(endpoint, data);
                 };
             }
-            self.close();
         }
 
         function upload(endpoint, data){
@@ -116,7 +116,8 @@ define([
                     } else {
                         window.location.reload(true);
                     }
-                }
+                },
+                complete: self.close
             });
         }
 

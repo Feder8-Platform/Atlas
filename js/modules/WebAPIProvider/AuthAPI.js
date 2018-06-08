@@ -20,8 +20,11 @@ define(function(require, exports) {
             return null;
         }
 
+        //TODO: Wait for buji-pac4j to be compatible with pac4j 3.0.0
         var expirationInSeconds = parseJwtPayload(token()).exp;
-        return new Date(expirationInSeconds * 1000);
+        // var expirationInSeconds = 86400;
+        // return new Date(new Date().getTime()+(expirationInSeconds * 1000));
+        return new Date(expirationInSeconds * 1000)
 
     });
     var permissions = function() {
@@ -74,6 +77,7 @@ define(function(require, exports) {
     };
 
     var handleAccessDenied = function(xhr) {
+        console.log(xhr.status)
         switch (xhr.status) {
         case 401:
             resetAuthParams();
