@@ -198,24 +198,11 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                                 },
                                 contentType: 'application/json',
                                 success: function (permissions) {
-                                    permissionStrings = permissions.map(function(element){
-                                        return element.permission;
-                                    })
+                                    permissionStrings = permissions;
                                     authApi.setPermissions(permissionStrings.join("|"));
                                 }
                             });
 
-                            $.ajax({
-                                url: config.api.url + "cohortdefinition/uuids",
-                                method: "GET",
-                                headers: {
-                                    Authorization: authApi.getAuthorizationHeader()
-                                },
-                                contentType: 'application/json',
-                                success: function (permissions) {
-                                    console.log(permissions)
-                                }
-                            })
                             document.location = "#/welcome";
                         });
                     },

@@ -215,7 +215,7 @@ define(['knockout', 'text!./cohort-definition-manager.html',
         }
 
         self.callbackURL = function(response){
-			return `atlas/#/cohortdefinition/${response.id}`
+			return `#/cohortdefinition/${response.id}`
 		}
 
         // Organizations
