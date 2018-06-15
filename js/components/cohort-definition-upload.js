@@ -81,7 +81,7 @@ define([
 
         self.renderCheckbox = function (field, editable) {
             return editable
-                ? '<span data-bind="click: function(d) { d.' + field + '(!d.' + field + '()); } , css: { selected: ' + field + '}" class="fa fa-check"></span>'
+                ? '<span data-bind="click: function(d, e) { d.' + field + '(!d.' + field + '()); e.stopPropagation(); } , css: { selected: ' + field + '}" class="fa fa-check"></span>'
                 : '<span data-bind="css: { selected: ' + field + '}" class="fa fa-check readonly"></span>';
         }
 
