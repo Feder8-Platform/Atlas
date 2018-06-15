@@ -29,7 +29,22 @@ define([
             contentType: 'application/json',
             error: authApi.handleAccessDenied,
             success: function(data) {
-                data.forEach(function(cohortDefinition){
+                var elements = []
+
+                data.forEach(function (element){
+                    elements.push(element)
+                    var next = element.previous;
+                    element.dataTargets=[]
+                    while(next){
+                        next.parent = element.uuid;
+                        element.dataTargets.push(next.uuid);
+                        elements.push(next)
+                        next = next.previous;
+                    }
+                })
+
+                elements.forEach(function(cohortDefinition){
+                    cohortDefinition.groupKey = cohortDefinition.key.split('/')[1];
                     cohortDefinition.selected = ko.observable(false);
                     cohortDefinition.selected.subscribe(function(value){
                         if(value) {
@@ -37,7 +52,8 @@ define([
                         }
                     })
                 });
-                self.cohortDefinitions(data);
+
+                self.cohortDefinitions(elements);
             }
         });
 
@@ -67,6 +83,24 @@ define([
             return editable
                 ? '<span data-bind="click: function(d) { d.' + field + '(!d.' + field + '()); } , css: { selected: ' + field + '}" class="fa fa-check"></span>'
                 : '<span data-bind="css: { selected: ' + field + '}" class="fa fa-check readonly"></span>';
+        }
+
+        self.rowCreation = function (row, data, dataIndex) {
+            if (data.parent) {
+                $(row).attr('id',data.uuid);
+                $(row).attr('class',"collapse");
+            } else {
+                var dtString = '';
+                data.dataTargets.forEach(function(element){
+                    dtString = dtString===''? '#'+element : dtString + ',#'+element;
+                })
+                $(row).attr('data-target', dtString);
+                $(row).attr('data-toggle', 'collapse');
+            }
+        }
+
+        self.doClick = function(d){
+            console.log(d)
         }
 
         self.submitFile = function() {

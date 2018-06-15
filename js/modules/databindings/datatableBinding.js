@@ -29,7 +29,11 @@ define(['jquery', 'knockout', 'datatables.net', 'appConfig', 'xss', 'datatables.
 			// initialise the dataTable with those options.
 			if (binding.options) {
 				// allow row level binding context
+				var createdRow = binding.options.createdRow;
 				binding.options.createdRow = function (row, data, index) {
+					if(createdRow){
+						createdRow(row, data, index);
+					}
 					ko.applyBindings(data, row)
 				};
 				// test for 'select' column (must be first column in column definition
