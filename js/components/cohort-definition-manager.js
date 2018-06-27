@@ -58,6 +58,27 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 		self.selectedConcepts = sharedState.selectedConcepts;
 		self.model = params.model;
 
+		// Previous version tab
+		self.children = [];
+
+		var previous = self.model.currentCohortDefinition().previousVersion;
+
+		while(previous){
+			self.children.push(previous);
+			previous = previous.previousVersion
+		}
+
+
+        self.cohortSelected = ko.observable();
+        self.cohortSelected.extend({
+            notify: 'always'
+        });
+
+        self.cohortSelected.subscribe(function (d) {
+            document.location = "#/cohortdefinition/" + d;
+        });
+		// End previous version tab
+
 		self.cohortDefinitionCaption = ko.computed(function () {
 			if (self.model.currentCohortDefinition()) {
 				if (self.model.currentCohortDefinition().id() == 0) {

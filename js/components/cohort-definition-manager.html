@@ -51,6 +51,9 @@
 			<li role="presentation" data-bind="css: { active: $component.tabMode() == 'permissions' }, click: function() { $component.tabMode('permissions');}">
 				<a>Permissions</a>
 			</li>
+			<li role="presentation" data-bind="css: { active: $component.tabMode() == 'previousVersions' }, click: function() { $component.tabMode('previousVersions');}">
+				<a>Previous Versions</a>
+			</li>
 		</ul>
 		<div class="tab-content">
 			<div role="tabpanel" data-bind="css: { active: $component.tabMode() == 'definition' }" class="tab-pane">
@@ -530,6 +533,12 @@
 									]
 							}
 					}"></table>
+				</div>
+			</div>
+
+			<div role="tabpanel " data-bind="css: { active: $component.tabMode()== 'previousVersions' } " class="tab-pane ">
+				<div class="paddedWrapper ">
+					<cohort-definition-browser params="{cohortDefinitionSelected: cohortSelected, reference: $component.children, initialized: true}"></cohort-definition-browser>
 				</div>
 			</div>
 		</div>

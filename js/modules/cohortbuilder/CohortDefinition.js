@@ -15,6 +15,8 @@ define(function (require, exports) {
 		self.expression = ko.observable(new CohortExpression(data.expression));
         self.organizations = ko.observableArray(data.organizations || []);
 
+        self.previousVersion = data.previousVersion;
+
         self.uuid = ko.observable(data.uuid || null);
 	}
 	return CohortDefinition;
