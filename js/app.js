@@ -961,12 +961,12 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                 self.currentView('loading');
                 var definitionPromise, infoPromise;
                 requirejs(['cohortbuilder/CohortDefinition'], function (CohortDefinition) {
+                    var currentCohortDefinition;
                     if (cohortDefinitionId == '0') {
-                        var def = new CohortDefinition({
+                        currentCohortDefinition = new CohortDefinition({
                             id: '0',
                             name: 'New Cohort Definition'
                         });
-                        self.currentCohortDefinition(def);
                         definitionPromise = $.Deferred();
                         definitionPromise.resolve();
                         self.currentCohortDefinitionInfo([]);
@@ -979,7 +979,7 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                             contentType: 'application/json',
                             success: function (cohortDefinition) {
                                 cohortDefinition.expression = JSON.parse(cohortDefinition.expression);
-                                self.currentCohortDefinition(new CohortDefinition(cohortDefinition));
+                                currentCohortDefinition = new CohortDefinition(cohortDefinition);
                             }
                         });
                         infoPromise = $.ajax({
@@ -993,7 +993,7 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                     }
                     $.when(infoPromise, definitionPromise)
                         .done(function (ip, dp) {
-                            $.ajax({
+                            var organizationPromise = $.ajax({
                                 url: config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/organizations',
                                 method: 'GET',
                                 headers: {
@@ -1002,118 +1002,123 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                                 contentType: 'application/json',
                                 success: function (organizations) {
                                     organizations.forEach(el => el.organizationCanRead = ko.observable(el.canRead));
-                                    self.currentCohortDefinition().organizations(organizations);
-                                }
-                            });
+                                    currentCohortDefinition.organizations(organizations);
 
-                            // Now that we have loaded up the cohort definition, we'll need to
-                            // resolve all of the concepts embedded in the concept set collection
-                            // to ensure they have all of the proper properties for editing in the cohort
-                            // editior
-                            var conceptPromise;
-                            if (self.currentCohortDefinition()
-                                .expression()
-                                .ConceptSets()) {
-                                var identifiers = $.makeArray($(self.currentCohortDefinition()
+                                    self.currentCohortDefinition(currentCohortDefinition);
+                                }
+                            })
+                            $.when(organizationPromise).done(function(){
+
+                                // Now that we have loaded up the cohort definition, we'll need to
+                                // resolve all of the concepts embedded in the concept set collection
+                                // to ensure they have all of the proper properties for editing in the cohort
+                                // editior
+                                var conceptPromise;
+                                if (self.currentCohortDefinition()
                                     .expression()
-                                    .ConceptSets())
-                                    .map(function (cs) {
-                                        var allConceptIDs = $.makeArray($(this.expression.items())
-                                            .map(function (item) {
-                                                return this.concept.CONCEPT_ID;
-                                            }));
-                                        return allConceptIDs;
-                                    }));
-                                conceptPromise = $.ajax({
-                                    url: sharedState.vocabularyUrl() + 'lookup/identifiers',
-                                    method: 'POST',
-                                    contentType: 'application/json',
-                                    data: JSON.stringify(identifiers),
-                                    error: authApi.handleAccessDenied,
-                                    success: function (data) {
-                                        // Update each concept set
-                                        for (var i = 0; i < self.currentCohortDefinition()
-                                            .expression()
-                                            .ConceptSets()
-                                            .length; i++) {
-                                            // Update each of the concept set items
-                                            var currentConceptSet = self.currentCohortDefinition()
+                                    .ConceptSets()) {
+                                    var identifiers = $.makeArray($(self.currentCohortDefinition()
+                                        .expression()
+                                        .ConceptSets())
+                                        .map(function (cs) {
+                                            var allConceptIDs = $.makeArray($(this.expression.items())
+                                                .map(function (item) {
+                                                    return this.concept.CONCEPT_ID;
+                                                }));
+                                            return allConceptIDs;
+                                        }));
+                                    conceptPromise = $.ajax({
+                                        url: sharedState.vocabularyUrl() + 'lookup/identifiers',
+                                        method: 'POST',
+                                        contentType: 'application/json',
+                                        data: JSON.stringify(identifiers),
+                                        error: authApi.handleAccessDenied,
+                                        success: function (data) {
+                                            // Update each concept set
+                                            for (var i = 0; i < self.currentCohortDefinition()
                                                 .expression()
-                                                .ConceptSets()[i];
-                                            for (var j = 0; j < currentConceptSet.expression.items()
-                                                .length; j++) {
-                                                var selectedConcept = $(data)
-                                                    .filter(function (item) {
-                                                        return this.CONCEPT_ID == currentConceptSet.expression.items()[j].concept.CONCEPT_ID
-                                                    });
-                                                if (selectedConcept.length == 1)
-                                                    currentConceptSet.expression.items()[j].concept = selectedConcept[0];
-                                                else
-                                                    console.error("Concept not found: " + currentConceptSet.expression.items()[j].concept.CONCEPT_ID + "," + currentConceptSet.expression.items()[j].concept.CONCEPT_NAME);
+                                                .ConceptSets()
+                                                .length; i++) {
+                                                // Update each of the concept set items
+                                                var currentConceptSet = self.currentCohortDefinition()
+                                                    .expression()
+                                                    .ConceptSets()[i];
+                                                for (var j = 0; j < currentConceptSet.expression.items()
+                                                    .length; j++) {
+                                                    var selectedConcept = $(data)
+                                                        .filter(function (item) {
+                                                            return this.CONCEPT_ID == currentConceptSet.expression.items()[j].concept.CONCEPT_ID
+                                                        });
+                                                    if (selectedConcept.length == 1)
+                                                        currentConceptSet.expression.items()[j].concept = selectedConcept[0];
+                                                    else
+                                                        console.error("Concept not found: " + currentConceptSet.expression.items()[j].concept.CONCEPT_ID + "," + currentConceptSet.expression.items()[j].concept.CONCEPT_NAME);
+                                                }
+                                                currentConceptSet.expression.items.valueHasMutated();
                                             }
-                                            currentConceptSet.expression.items.valueHasMutated();
+                                            self.currentCohortDefinitionDirtyFlag()
+                                                .reset();
                                         }
-                                        self.currentCohortDefinitionDirtyFlag()
-                                            .reset();
-                                    }
-                                });
-                            } else {
-                                conceptPromise = $.Deferred();
-                                conceptPromise.resolve();
-                            }
-                            $.when(conceptPromise)
-                                .done(function (cp) {
-                                    // now that we have required information lets compile them into data objects for our view
-                                    var cdmSources = config.api.sources.filter(self.hasCDM);
-                                    var results = [];
-                                    for (var s = 0; s < cdmSources.length; s++) {
-                                        var source = cdmSources[s];
-                                        self.sourceAnalysesStatus[source.sourceKey] = ko.observable({
-                                            ready: false,
-                                            checking: false
-                                        });
-                                        var sourceInfo = self.getSourceInfo(source);
-                                        var cdsi = {};
-                                        cdsi.name = cdmSources[s].sourceName;
-                                        cdsi.sourceKey = cdmSources[s].sourceKey;
-                                        if (sourceInfo != null) {
-                                            cdsi.isValid = ko.observable(sourceInfo.isValid);
-                                            cdsi.sourceId = sourceInfo.id.sourceId;
-                                            cdsi.status = ko.observable(sourceInfo.status);
-                                            var date = new Date(sourceInfo.startTime);
-                                            cdsi.startTime = ko.observable(date.toLocaleDateString() + ' ' + date.toLocaleTimeString());
-                                            cdsi.executionDuration = ko.observable((sourceInfo.executionDuration / 1000) + 's');
-                                            var commaFormatted = d3.format(",");
-                                            // For backwards compatability, query personCount from cdm if not populated in sourceInfo
-                                            if (sourceInfo.personCount == null) {
-                                                cdsi.personCount = ko.observable('...');
-                                                self.getCohortCount(source, cdsi.personCount);
+                                    });
+                                } else {
+                                    conceptPromise = $.Deferred();
+                                    conceptPromise.resolve();
+                                }
+                                $.when(conceptPromise)
+                                    .done(function (cp) {
+                                        // now that we have required information lets compile them into data objects for our view
+                                        var cdmSources = config.api.sources.filter(self.hasCDM);
+                                        var results = [];
+                                        for (var s = 0; s < cdmSources.length; s++) {
+                                            var source = cdmSources[s];
+                                            self.sourceAnalysesStatus[source.sourceKey] = ko.observable({
+                                                ready: false,
+                                                checking: false
+                                            });
+                                            var sourceInfo = self.getSourceInfo(source);
+                                            var cdsi = {};
+                                            cdsi.name = cdmSources[s].sourceName;
+                                            cdsi.sourceKey = cdmSources[s].sourceKey;
+                                            if (sourceInfo != null) {
+                                                cdsi.isValid = ko.observable(sourceInfo.isValid);
+                                                cdsi.sourceId = sourceInfo.id.sourceId;
+                                                cdsi.status = ko.observable(sourceInfo.status);
+                                                var date = new Date(sourceInfo.startTime);
+                                                cdsi.startTime = ko.observable(date.toLocaleDateString() + ' ' + date.toLocaleTimeString());
+                                                cdsi.executionDuration = ko.observable((sourceInfo.executionDuration / 1000) + 's');
+                                                var commaFormatted = d3.format(",");
+                                                // For backwards compatability, query personCount from cdm if not populated in sourceInfo
+                                                if (sourceInfo.personCount == null) {
+                                                    cdsi.personCount = ko.observable('...');
+                                                    self.getCohortCount(source, cdsi.personCount);
+                                                } else {
+                                                    cdsi.personCount = ko.observable(commaFormatted(sourceInfo.personCount));
+                                                }
+                                                cdsi.recordCount = ko.observable(commaFormatted(sourceInfo.recordCount));
+                                                cdsi.includeFeatures = ko.observable(sourceInfo.includeFeatures);
+                                                cdsi.failMessage = ko.observable(sourceInfo.failMessage);
                                             } else {
-                                                cdsi.personCount = ko.observable(commaFormatted(sourceInfo.personCount));
+                                                cdsi.isValid = ko.observable(false);
+                                                cdsi.status = ko.observable('n/a');
+                                                cdsi.startTime = ko.observable('n/a');
+                                                cdsi.executionDuration = ko.observable('n/a');
+                                                cdsi.personCount = ko.observable('n/a');
+                                                cdsi.recordCount = ko.observable('n/a');
+                                                cdsi.includeFeatures = ko.observable(false);
+                                                cdsi.failMessage = ko.observable(null);
                                             }
-                                            cdsi.recordCount = ko.observable(commaFormatted(sourceInfo.recordCount));
-                                            cdsi.includeFeatures = ko.observable(sourceInfo.includeFeatures);
-                                            cdsi.failMessage = ko.observable(sourceInfo.failMessage);
-                                        } else {
-                                            cdsi.isValid = ko.observable(false);
-                                            cdsi.status = ko.observable('n/a');
-                                            cdsi.startTime = ko.observable('n/a');
-                                            cdsi.executionDuration = ko.observable('n/a');
-                                            cdsi.personCount = ko.observable('n/a');
-                                            cdsi.recordCount = ko.observable('n/a');
-                                            cdsi.includeFeatures = ko.observable(false);
-                                            cdsi.failMessage = ko.observable(null);
+                                            results.push(cdsi);
                                         }
-                                        results.push(cdsi);
-                                    }
-                                    self.cohortDefinitionSourceInfo(results);
-                                    if (conceptSetId != null) {
-                                        self.loadConceptSet(conceptSetId, viewToShow, 'cohort', mode);
-                                    } else {
-                                        self.reportSourceKey(sourceKey);
-                                        self.currentView(viewToShow);
-                                    }
-                                });
+                                        self.cohortDefinitionSourceInfo(results);
+                                        if (conceptSetId != null) {
+                                            self.loadConceptSet(conceptSetId, viewToShow, 'cohort', mode);
+                                        } else {
+                                            self.reportSourceKey(sourceKey);
+                                            self.currentView(viewToShow);
+                                        }
+                                    });
+
+                            });
                         })
                         .fail(function (xhr) {
                             if (xhr.status == 403 || xhr.status == 401) {
