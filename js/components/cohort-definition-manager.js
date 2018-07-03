@@ -122,7 +122,7 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 			return authApi.isPermittedReadCohort(self.model.currentCohortDefinition().id());
 		});
 		self.hasAccessToGenerate = function (sourceKey) {
-			if (isNew()) {
+			if (isNew() || (self.dirtyFlag() && self.dirtyFlag().isDirty())) {
 				return false;
 			}
 
@@ -171,12 +171,12 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 
 		self.delayedCartoonUpdate = ko.observable(null);
 
-		self.canGenerate = ko.pureComputed(function () {
-			var isDirty = self.dirtyFlag() && self.dirtyFlag().isDirty();
-			var isNew = self.model.currentCohortDefinition() && (self.model.currentCohortDefinition().id() == 0);
-			var canGenerate = !(isDirty || isNew);
-			return (canGenerate);
-		});
+		// self.canGenerate = ko.pureComputed(function () {
+		// 	var isDirty = self.dirtyFlag() && self.dirtyFlag().isDirty();
+		// 	var isNew = self.model.currentCohortDefinition() && (self.model.currentCohortDefinition().id() == 0);
+		// 	var canGenerate = !(isDirty || isNew);
+		// 	return (canGenerate);
+		// });
 
 
 		self.modifiedJSON = "";
