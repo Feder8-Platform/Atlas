@@ -17,6 +17,8 @@ define([
         self.importing = ko.observable(false);
         self.fileUuid = ko.observable('');
         self.disable = params.disable;
+        self.isError = ko.observable(false);
+        self.error = ko.observable('');
 
         self.currentTab = ko.observable('listTab');
 
@@ -68,6 +70,7 @@ define([
         }
 
         self.close = function(){
+            self.isError(false);
             self.showLightBox(false);
         }
 
@@ -150,8 +153,12 @@ define([
                     } else {
                         window.location.reload(true);
                     }
+                    self.close();
                 },
-                complete: self.close
+                error: function(jqXHR, exception) {
+                    self.isError(true);
+                    self.error(jqXHR.responseText);
+                }
             });
         }
 
