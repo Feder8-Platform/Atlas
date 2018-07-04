@@ -13,7 +13,8 @@ define([
         self.content = ko.observable();
         self.draggedOver = ko.observable(false);
         self.config = config;
-        self.name = "Import Cohort";
+        self.name = params.name;
+        self.type = params.type;
         self.importing = ko.observable(false);
         self.fileUuid = ko.observable('');
         self.disable = params.disable;
@@ -128,11 +129,15 @@ define([
                 reader.readAsText(input.files[0]);
                 reader.onload = function (evt) {
                     endpoint = params.fileUrl();
-                    data = JSON.stringify({
-                        expressionType: "SIMPLE_EXPRESSION",
-                        name: input.files[0].name.replace('.cohort', '').split('_').join(' '),
-                        expression: evt.target.result
-                    });
+                    if(self.type === 'definition') {
+                        data = JSON.stringify({
+                            expressionType: "SIMPLE_EXPRESSION",
+                            name: input.files[0].name.replace('.cohort', '').split('_').join(' '),
+                            expression: evt.target.result
+                        });
+                    } else {
+                        data = evt.target.result;
+                    }
                     upload(endpoint, data);
                 };
             }

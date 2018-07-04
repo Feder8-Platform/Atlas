@@ -1003,11 +1003,10 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                                 success: function (organizations) {
                                     organizations.forEach(el => el.organizationCanRead = ko.observable(el.canRead));
                                     currentCohortDefinition.organizations(organizations);
-
-                                    self.currentCohortDefinition(currentCohortDefinition);
                                 }
                             })
-                            $.when(organizationPromise).done(function(){
+                            $.when(organizationPromise).always(function(){
+                                self.currentCohortDefinition(currentCohortDefinition);
 
                                 // Now that we have loaded up the cohort definition, we'll need to
                                 // resolve all of the concepts embedded in the concept set collection
