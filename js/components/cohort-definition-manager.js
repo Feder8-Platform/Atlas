@@ -126,14 +126,14 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 				return false;
 			}
 
-			return self.isAuthenticated() && authApi.isPermittedGenerateCohort(self.model.currentCohortDefinition().id(), sourceKey);
+			return (config.userAuthenticationEnabled && self.isAuthenticated() && authApi.isPermittedGenerateCohort(self.model.currentCohortDefinition().id(), sourceKey)) || !config.userAuthenticationEnabled;
 		}
 		self.hasAccessToReadCohortReport = function (sourceKey) {
 			if (isNew()) {
 				return false;
 			}
 
-			return self.isAuthenticated() && authApi.isPermittedReadCohortReport(self.model.currentCohortDefinition().id(), sourceKey);
+			return (config.userAuthenticationEnabled && self.isAuthenticated() && authApi.isPermittedReadCohortReport(self.model.currentCohortDefinition().id(), sourceKey)) || !config.userAuthenticationEnabled;
 		}
 		if (!self.hasAccess()) return;
 
