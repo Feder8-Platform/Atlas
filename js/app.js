@@ -190,6 +190,7 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                     '/welcome/:token': function (token) {
                         require(['welcome'], function () {
                             authApi.token(token);
+                            sharedState.appInitializationStatus('initializing');
                             $.ajax({
                                 url: config.api.url + "user/permission",
                                 method: "GET",
@@ -200,6 +201,7 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                                 success: function (permissions) {
                                     permissionStrings = permissions;
                                     authApi.setPermissions(permissionStrings.join("|"));
+                                    sharedState.appInitializationStatus('complete');
                                 }
                             });
 
