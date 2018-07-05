@@ -48,7 +48,7 @@ define(['knockout', 'text!./cohort-definitions.html', 'appConfig', 'webapi/AuthA
         }
 
         self.isValid = function(){
-        	return authApi.isPermittedImportCohortDefinition();
+        	return (config.userAuthenticationEnabled && self.isAuthenticated() && authApi.isPermittedImportCohortDefinition()) || !config.userAuthenticationEnabled;
 		}
 	}
 
