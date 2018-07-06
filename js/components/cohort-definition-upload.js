@@ -25,6 +25,8 @@ define([
 
         self.cohortDefinitions = ko.observableArray();
 
+        self.breadCrumb = ko.observableArray();
+
         $.ajax(params.importUrl(), {
             headers: {
                 Authorization: authApi.getAuthorizationHeader()
@@ -40,25 +42,34 @@ define([
                     element.dataTargets=[]
                     while(next){
                         next.parent = element.uuid;
-                        element.dataTargets.push(next.uuid);
-                        elements.push(next)
+                        element.dataTargets.push(next);
+                        // elements.push(next)
                         next = next.previous;
                     }
                 })
 
-                elements.forEach(function(cohortDefinition){
-                    cohortDefinition.groupKey = cohortDefinition.key.split('/')[1];
-                    cohortDefinition.selected = ko.observable(false);
-                    cohortDefinition.selected.subscribe(function(value){
-                        if(value) {
-                            self.selectNone(cohortDefinition);
-                        }
-                    })
-                });
-
                 self.cohortDefinitions(elements);
             }
         });
+
+        self.cohortDefinitions.subscribe(function(elements){
+            elements.sort(function(def1,def2){
+                // Turn your strings into dates, and then subtract them
+                // to get a value that is either negative, positive, or zero.
+                return new Date(def1.lastModified) - new Date(def2.lastModified);
+            })
+            var counter = 1;
+            elements.forEach(function(cohortDefinition){
+                cohortDefinition.version = cohortDefinition.parent ? counter++ : counter;
+                cohortDefinition.groupKey = cohortDefinition.key.split('/')[1];
+                cohortDefinition.selected = ko.observable(false);
+                cohortDefinition.selected.subscribe(function(value){
+                    if(value) {
+                        self.selectNone(cohortDefinition);
+                    }
+                })
+            });
+        })
 
         self.showLightBox.subscribe(function(value) {
             if (!value && document.getElementById('cohortInput')) {
@@ -89,18 +100,25 @@ define([
                 : '<span data-bind="css: { selected: ' + field + '}" class="fa fa-check readonly"></span>';
         }
 
-        self.rowCreation = function (row, data, dataIndex) {
-            if (data.parent) {
-                $(row).attr('id',data.uuid);
-                $(row).attr('class',"collapse");
-            } else {
-                var dtString = '';
-                data.dataTargets.forEach(function(element){
-                    dtString = dtString===''? '#'+element : dtString + ',#'+element;
-                })
-                $(row).attr('data-target', dtString);
-                $(row).attr('data-toggle', 'collapse');
+        self.renderVersion = function (data, type, row, meta) {
+            if (type === 'display') {
+                return row.version === self.cohortDefinitions.length || !row.parent ? "Current" : "V" + row.version;
             }
+            return data;
+        }
+
+        self.rowClick = function(d){
+            var breadCrumb = self.breadCrumb();
+            breadCrumb.push(self.cohortDefinitions());
+            self.breadCrumb(breadCrumb);
+
+            var targets = d.dataTargets.slice();
+            targets.push(d);
+            self.cohortDefinitions(targets);
+        }
+
+        self.back = function() {
+            self.cohortDefinitions(self.breadCrumb.pop());
         }
 
         self.doClick = function(d){
