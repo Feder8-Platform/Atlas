@@ -101,7 +101,7 @@ define([
         }
 
         self.renderVersion = function (data, type, row, meta) {
-            if (type === 'display') {
+            if (type === 'display' || type === 'filter') {
                 return row.version === self.cohortDefinitions.length || !row.parent ? "Current" : "V" + row.version;
             }
             return data;
