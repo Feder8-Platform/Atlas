@@ -351,6 +351,20 @@ define(function(require, exports) {
         token(jqXHR.getResponseHeader(TOKEN_HEADER));
     };
 
+    var retrievePermissions = function(){
+        return $.ajax({
+            url: config.api.url + "user/permission",
+            method: "GET",
+            headers: {
+                Authorization: getAuthorizationHeader()
+            },
+            contentType: 'application/json',
+            success: function (permissions) {
+                setPermissions(permissions.join("|"));
+            }
+        })
+    };
+
     var resetAuthParams = function () {
         setPermissions(null);
         token(null);
@@ -366,6 +380,7 @@ define(function(require, exports) {
         handleAccessDenied: handleAccessDenied,
         refreshToken: refreshToken,
         setPermissions: setPermissions,
+        retrievePermissions: retrievePermissions,
 
         isAuthenticated: isAuthenticated,
 

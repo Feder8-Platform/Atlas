@@ -192,17 +192,7 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                         require(['welcome'], function () {
                             authApi.token(token);
                             sharedState.appInitializationStatus('initializing');
-                            $.ajax({
-                                url: config.api.url + "user/permission",
-                                method: "GET",
-                                headers: {
-                                    Authorization: authApi.getAuthorizationHeader()
-                                },
-                                contentType: 'application/json',
-                                success: function (permissions) {
-                                    authApi.setPermissions(permissions.join("|"));
-                                }
-                            }).then(function(){
+                            authApi.retrievePermissions().then(function(){
                                 sharedState.appInitializationStatus('complete');
                             });
 

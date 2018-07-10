@@ -18,17 +18,25 @@ define(
 
                 const endpoint = params.endpoint() + "?toCloud=true" + (params.uuid ? "&uuid="+params.uuid() : "");
                 self.exporting(true);
+                var refreshPromise = null;
                 $.ajax(endpoint, {
                     headers: {
                         Authorization: authApi.getAuthorizationHeader()
                     },
                     success: function (response, status, headers) {
-                        if(params.callbackURL){
-                            window.location = params.callbackURL(response);
-                        }
+                        refreshPromise = authApi.retrievePermissions();
                     }
                 }).then(function(){
-                    self.exporting(false);
+                    if(refreshPromise === null){
+                        self.exporting(false);
+                    } else {
+                        refreshPromise.then(function () {
+                            self.exporting(false);
+                            if(params.callbackURL){
+                                window.location = params.callbackURL(response);
+                            }
+                        })
+                    }
                 });
             }
         }

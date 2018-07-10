@@ -165,6 +165,8 @@ define([
         }
 
         function upload(endpoint, data){
+            var refreshPromise = null;
+            var id;
             $.ajax({
                 url: endpoint,
                 method: "POST",
@@ -174,19 +176,27 @@ define([
                 contentType: 'application/json',
                 data: data,
                 success: function (result) {
-                    if(result.id){
-                        window.location.href = "#/cohortdefinition/" + result.id;
-                    } else {
-                        window.location.reload(true);
-                    }
-                    self.close();
+                    refreshPromise = authApi.retrievePermissions();
+                    id = result.id;
                 },
                 error: function(jqXHR, exception) {
                     self.isError(true);
                     self.error(jqXHR.responseText);
                 }
             }).then(function(){
-                self.importing(false);
+                if(refreshPromise === null){
+                    self.importing(false);
+                } else {
+                    refreshPromise.then(function () {
+                        self.importing(false);
+                        if(id){
+                            window.location.href = "#/cohortdefinition/" + id;
+                        } else {
+                            window.location.reload(true);
+                        }
+                        self.close();
+                    })
+                }
             });
         }
 
