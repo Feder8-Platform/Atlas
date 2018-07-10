@@ -347,7 +347,7 @@
 								<export-button params="{uuid: $component.model.currentCohortDefinition().uuid(), multiSelect: true, endpoint: $component.getGenerationDataEndpoint($data)}" data-bind="visible:!$component.isSourceRunning($data) && isValid()"></export-button>
 							</td>
 							<td>
-								<cohort-definition-upload params="{name: 'Import results', type: 'results', importUrl: $component.getImportDataEndpoint($data), selectUrl: $component.getSelectDataEndpoint($data), fileUrl: $component.getFileDataEndpoint($data)}" data-bind="visible:!$component.isSourceRunning($data)"></cohort-definition-upload>
+								<import-button params="{name: 'Import results', type: 'results', importUrl: $component.getImportDataEndpoint($data), selectUrl: $component.getSelectDataEndpoint($data), fileUrl: $component.getFileDataEndpoint($data)}" data-bind="visible:!$component.isSourceRunning($data)"></import-button>
 							</td>
 						</tr>
 					</tbody>

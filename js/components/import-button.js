@@ -1,15 +1,15 @@
 define([
     'knockout',
-    'text!./cohort-definition-upload.html',
+    'text!./import-button.html',
     'appConfig',
     'webapi/AuthAPI',
     'databindings',
     'access-denied'], function (ko, view, config, authApi) {
-    function cohortDefinitionUpload(params) {
+    function importButton(params) {
 
         var self = this;
 
-        self.showLightBox = ko.observable(false);
+        self.showImportLightBox = ko.observable(false);
         self.content = ko.observable();
         self.draggedOver = ko.observable(false);
         self.config = config;
@@ -71,19 +71,22 @@ define([
             });
         })
 
-        self.showLightBox.subscribe(function(value) {
+        self.showImportLightBox.subscribe(function(value) {
             if (!value && document.getElementById('cohortInput')) {
                 document.getElementById('cohortInput').value = '';
+            }
+            if(!value){
+                self.isError(false);
             }
         });
 
         self.show = function(){
-            self.showLightBox(true);
+            self.showImportLightBox(true);
         }
 
         self.close = function(){
             self.isError(false);
-            self.showLightBox(false);
+            self.showImportLightBox(false);
         }
 
         self.selectNone = function(cohortDefinition){
@@ -182,6 +185,8 @@ define([
                     self.isError(true);
                     self.error(jqXHR.responseText);
                 }
+            }).then(function(){
+                self.importing(false);
             });
         }
 
@@ -201,10 +206,10 @@ define([
         }
     }
     var component = {
-        viewModel: cohortDefinitionUpload,
+        viewModel: importButton,
         template: view
     };
 
-    ko.components.register('cohort-definition-upload', component);
+    ko.components.register('import-button', component);
     return component;
 });

@@ -107,7 +107,7 @@ requirejs.config({
 		"cohort-definitions": "components/cohort-definitions",
 		"cohort-definition-manager": "components/cohort-definition-manager",
 		"cohort-definition-browser": "components/cohort-definition-browser",
-        "cohort-definition-upload": "components/cohort-definition-upload",
+        "import-button": "components/import-button",
         "export-button": "components/export-button",
         "cohort-comparison-browser": "components/cohort-comparison-browser",
 		"cohort-comparison-print-friendly": "components/cohort-comparison-print-friendly",

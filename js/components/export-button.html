@@ -1,5 +1,8 @@
 <div style="position:relative" class="btn-group btn-group-sm thumb-dropdown" data-bind="if: $component.multiSelect">
-    <a role="button" class="btn btn-sm btn-primary" data-bind="attr: { href: $component.endpoint}" target="_blank" style="max-width:200px; overflow-x: hidden; text-overflow:ellipsis; white-space:nowrap">Export To File</a>
+
+    <div class="btn btn-sm btn-warning" data-bind="visible:$component.exporting()"><i class="fa fa-spinner fa-spin"></i></div>
+
+    <a role="button" class="btn btn-sm btn-primary" data-bind="visible:!$component.exporting(), attr: { href: $component.endpoint}" target="_blank" style="max-width:200px; overflow-x: hidden; text-overflow:ellipsis; white-space:nowrap">Export To File</a>
     <!-- ko if: $component.multiSelect -->
         <a role="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
             <span class="caret"></span>  <!-- caret -->

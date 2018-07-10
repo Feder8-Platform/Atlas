@@ -3,6 +3,7 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
         var appModel = function () {
             $.support.cors = true;
             var self = this;
+
             self.authApi = authApi;
             self.componentParams = {};
             self.config = config;
@@ -100,7 +101,7 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                         });
                     },
                     '/cohortdefinitions': function () {
-                        require(['cohort-definitions', 'cohort-definition-manager', 'cohort-definition-browser', 'cohort-definition-upload'], function () {
+                        require(['cohort-definitions', 'cohort-definition-manager', 'cohort-definition-browser', 'import-button'], function () {
                             self.componentParams = {
                                 model: self
                             };
@@ -108,7 +109,7 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                         });
                     },
                     '/cohortdefinition/:cohortDefinitionId:/?((\w|.)*)': function (cohortDefinitionId, path) {
-                        require(['cohortbuilder/CohortDefinition', 'components/atlas.cohort-editor', 'cohort-definitions', 'cohort-definition-manager', 'cohort-definition-browser', 'conceptset-editor', 'report-manager', 'explore-cohort', 'cohort-definition-upload'], function (CohortDefinition) {
+                        require(['cohortbuilder/CohortDefinition', 'components/atlas.cohort-editor', 'cohort-definitions', 'cohort-definition-manager', 'cohort-definition-browser', 'conceptset-editor', 'report-manager', 'explore-cohort', 'import-button'], function (CohortDefinition) {
                             // Determine the view to show on the cohort manager screen based on the path
                             path = path.split("/");
                             var view = 'definition'
@@ -199,10 +200,10 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                                 },
                                 contentType: 'application/json',
                                 success: function (permissions) {
-                                    permissionStrings = permissions;
-                                    authApi.setPermissions(permissionStrings.join("|"));
-                                    sharedState.appInitializationStatus('complete');
+                                    authApi.setPermissions(permissions.join("|"));
                                 }
+                            }).then(function(){
+                                sharedState.appInitializationStatus('complete');
                             });
 
                             document.location = "#/welcome";
