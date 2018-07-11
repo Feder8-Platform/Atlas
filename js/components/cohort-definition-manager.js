@@ -171,14 +171,6 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 
 		self.delayedCartoonUpdate = ko.observable(null);
 
-		// self.canGenerate = ko.pureComputed(function () {
-		// 	var isDirty = self.dirtyFlag() && self.dirtyFlag().isDirty();
-		// 	var isNew = self.model.currentCohortDefinition() && (self.model.currentCohortDefinition().id() == 0);
-		// 	var canGenerate = !(isDirty || isNew);
-		// 	return (canGenerate);
-		// });
-
-
 		self.modifiedJSON = "";
 		self.expressionJSON = ko.pureComputed({
 			read: function () {
@@ -238,6 +230,18 @@ define(['knockout', 'text!./cohort-definition-manager.html',
         self.callbackURL = function(response){
 			return `#/cohortdefinition/${response.id}`
 		}
+
+		self.createJobDetail = function(source) {
+
+            return self.exportJob = new jobDetail({
+                name: "EXPORT_" + self.model.currentCohortDefinition().name() + "_" + source.sourceKey,
+                type: 'cohort-generation-export',
+                executionId: "EXPORT" + String(self.model.currentCohortDefinition().id()) + String(self.getSourceId(source.sourceKey)),
+                statusValue: 'status',
+                viewed: false,
+                url: 'cohortdefinition/' + self.model.currentCohortDefinition().id() + '/generation',
+            });
+        }
 
         // Organizations
         self.canEditOrganizations = ko.pureComputed(function() { return self.isAuthenticated() && (isNew() || self.canEdit()); });

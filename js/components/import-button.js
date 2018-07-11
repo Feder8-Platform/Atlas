@@ -105,7 +105,7 @@ define([
 
         self.renderVersion = function (data, type, row, meta) {
             if (type === 'display' || type === 'filter') {
-                return row.version === self.cohortDefinitions.length || !row.parent ? "Current" : "V" + row.version;
+                return row.version === self.cohortDefinitions.length || !row.parent ? "Latest" : "V" + row.version;
             }
             return data;
         }
@@ -183,7 +183,7 @@ define([
                     self.isError(true);
                     self.error(jqXHR.responseText);
                 }
-            }).then(function(){
+            }).always(function(){
                 if(refreshPromise === null){
                     self.importing(false);
                 } else {
