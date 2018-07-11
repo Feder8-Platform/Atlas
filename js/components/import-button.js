@@ -26,6 +26,7 @@ define([
         self.cohortDefinitions = ko.observableArray();
 
         self.breadCrumb = ko.observableArray();
+        self.breadCrumbNames = ko.observableArray();
 
         $.ajax(params.importUrl(), {
             headers: {
@@ -54,9 +55,7 @@ define([
 
         self.cohortDefinitions.subscribe(function(elements){
             elements.sort(function(def1,def2){
-                // Turn your strings into dates, and then subtract them
-                // to get a value that is either negative, positive, or zero.
-                return new Date(def1.lastModified) - new Date(def2.lastModified);
+                return new Date(def2.lastModified) - new Date(def1.lastModified);
             })
             var counter = 1;
             elements.forEach(function(cohortDefinition){
@@ -110,10 +109,16 @@ define([
             return data;
         }
 
+        self.renderCohortDefinitionLink = function (data, type, row) {
+            return '<span class="linkish">' + row.originalFilename + '</span>';
+        }
+
         self.rowClick = function(d){
-            var breadCrumb = self.breadCrumb();
-            breadCrumb.push(self.cohortDefinitions());
-            self.breadCrumb(breadCrumb);
+            if(self.breadCrumbNames().length > 0) {
+                return;
+            }
+            self.breadCrumbNames.push(d.originalFilename);
+            self.breadCrumb.push(self.cohortDefinitions());
 
             var targets = d.dataTargets.slice();
             targets.push(d);
@@ -121,6 +126,7 @@ define([
         }
 
         self.back = function() {
+            self.breadCrumbNames.pop();
             self.cohortDefinitions(self.breadCrumb.pop());
         }
 

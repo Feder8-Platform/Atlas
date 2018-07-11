@@ -27,6 +27,17 @@
                 </ul>
 
                 <!-- ko if: $component.currentTab() == 'listTab' -->
+                <!-- ko if: $component.breadCrumbNames().length>0 -->
+                <div class="alert alert-success">
+                    <div>
+                        You are now looking at previous versions of:
+                    </div>
+                    <div>
+                        &emsp;<strong><span data-bind="text: $component.breadCrumbNames().join(' > ')"></span></strong>
+                    </div>
+                </div>
+                <!-- /ko -->
+
                 <table width="100%" class="stripe compact hover" cellspacing="0" data-bind="dataTable:{
                         data: $component.cohortDefinitions,
                         options: {
@@ -46,7 +57,7 @@
                                     ],
                                     columns: [
                                             { title: 'Selected', class:'text-center', render: function() { return renderCheckbox('selected', true); } },
-                                            { title: 'Cohort Definition',  data: 'originalFilename' },
+                                            { title: 'Cohort Definition',  render: $component.renderCohortDefinitionLink },
                                             { title: 'Version', data: 'version', render: renderVersion }
                                     ]
                             },
