@@ -20,6 +20,7 @@ define(
                 const endpoint = params.endpoint() + "?toCloud=true" + (params.uuid ? "&uuid="+params.uuid() : "");
                 self.exporting(true);
                 var refreshPromise = null;
+                var res = null;
 
                 var job = params.job;
                 if (job) {
@@ -33,6 +34,7 @@ define(
                     },
                     success: function (response, status, headers) {
                         refreshPromise = authApi.retrievePermissions();
+                        res = response;
                         if (job) {
                             job().status('COMPLETE');
                             sharedState.jobListing.queue(job());
@@ -50,8 +52,8 @@ define(
                     } else {
                         refreshPromise.then(function () {
                             self.exporting(false);
-                            if(params.callbackURL){
-                                window.location = params.callbackURL(response);
+                            if(params.callbackURL && res){
+                                window.location = params.callbackURL(res);
                             }
                         })
                     }
