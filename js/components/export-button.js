@@ -21,10 +21,10 @@ define(
                 self.exporting(true);
                 var refreshPromise = null;
 
-                var job = params.job();
+                var job = params.job;
                 if (job) {
-                    job.status('RUNNING');
-                    sharedState.jobListing.queue(job);
+                    job().status('RUNNING');
+                    sharedState.jobListing.queue(job());
                 }
 
                 $.ajax(endpoint, {
@@ -34,14 +34,14 @@ define(
                     success: function (response, status, headers) {
                         refreshPromise = authApi.retrievePermissions();
                         if (job) {
-                            job.status('COMPLETE');
-                            sharedState.jobListing.queue(job);
+                            job().status('COMPLETE');
+                            sharedState.jobListing.queue(job());
                         }
                     },
                     error: function (err) {
                         if (job) {
-                            job.status('ERROR');
-                            sharedState.jobListing.queue(job);
+                            job().status('ERROR');
+                            sharedState.jobListing.queue(job());
                         }
                     }
                 }).always(function(){
