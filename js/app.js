@@ -340,6 +340,14 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                             self.currentView('plp-manager');
                         });
                     },
+                    '/hss/serviceUser': function () {
+                        require(['hss-user-service'], function() {
+                            self.componentParams = {
+                                model: self
+                            };
+                            self.currentView('hss-user-service');
+                        });
+                    }
                 };
 
                 self.router = new Router(routes)

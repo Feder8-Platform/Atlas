@@ -187,7 +187,7 @@ define([
                 },
                 error: function(jqXHR, exception) {
                     self.isError(true);
-                    self.error(jqXHR.responseText);
+                    self.error(jqXHR.status + " - " + jqXHR.responseText);
                 }
             }).always(function(){
                 if(refreshPromise === null){

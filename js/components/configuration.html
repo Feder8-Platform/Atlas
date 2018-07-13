@@ -1,6 +1,9 @@
 <div class="wrapperTitle">
 	<i class="fa fa-cogs"></i>Configuration
 </div>
+<div data-bind="ifnot:$component.hasAccess()">
+	<access-denied params="isAuthenticated: isAuthenticated"></access-denied>
+</div>
 <div data-bind="if:$component.hasAccess">
 	<div id="wrapperConfigure">
 		<div data-bind="if:sharedState.appInitializationStatus()=='complete'">
@@ -65,7 +68,6 @@
 				</div>
 			</div>
 			<div data-bind="if: config.userAuthenticationEnabled && $component.hasAccess">
-				<access-denied params="isAuthenticated: isAuthenticated"></access-denied>
 				<a href="#/roles" class="btn btn-sm btn-primary" style="width: 175px" data-bind="css: { disabled: !canReadRoles() }">Manage Permissions</a>
 			</div>
 		</div>
