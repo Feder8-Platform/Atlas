@@ -8,6 +8,20 @@ define(
         'databindings',
         'access-denied'],
     function (ko, view, config, sharedState, authApi) {
+        function createJob(params) {
+            var job = params.job;
+            if (job) {
+                job().status('RUNNING');
+                sharedState.jobListing.queue(job());
+            }
+            return job;
+        }
+
+        function setJob(job, status){
+            job().status(status);
+            sharedState.jobListing.queue(job);
+        }
+
         function exportButton(params) {
             var self = this;
 
@@ -15,18 +29,39 @@ define(
             self.endpoint = params.endpoint;
             self.exporting = ko.observable(false);
 
-            self.export = function () {
+            self.exportToFile = function () {
+                const endpoint = params.endpoint();
+                self.exporting(true);
+
+                var results = params.uuid;
+
+                $.ajax(endpoint, {
+                    headers: {
+                        Authorization: authApi.getAuthorizationHeader()
+                    },
+                    success: function (response, status, headers) {
+
+                        a = document.createElement("a");
+                        a.style.display = 'none';
+                        var file = new Blob([JSON.stringify(response)]);
+                        a.href = URL.createObjectURL(file);
+                        a.download = response.name+"."+(results? "results" : "cohort");
+                        a.click();
+                        a.remove();
+                    }
+                }).always(function(){
+                    self.exporting(false);
+                });
+            };
+
+            self.exportToCloud = function () {
 
                 const endpoint = params.endpoint() + "?toCloud=true" + (params.uuid ? "&uuid="+params.uuid() : "");
                 self.exporting(true);
                 var refreshPromise = null;
                 var res = null;
 
-                var job = params.job;
-                if (job) {
-                    job().status('RUNNING');
-                    sharedState.jobListing.queue(job());
-                }
+                var job = createJob(params);
 
                 $.ajax(endpoint, {
                     headers: {
@@ -36,14 +71,12 @@ define(
                         refreshPromise = authApi.retrievePermissions();
                         res = response;
                         if (job) {
-                            job().status('COMPLETE');
-                            sharedState.jobListing.queue(job());
+                            setJob(job, 'COMPLETE')
                         }
                     },
                     error: function (err) {
                         if (job) {
-                            job().status('ERROR');
-                            sharedState.jobListing.queue(job());
+                            setJob(job, 'ERROR')
                         }
                     }
                 }).always(function(){
