@@ -191,12 +191,10 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                     '/welcome/:token': function (token) {
                         require(['welcome'], function () {
                             authApi.token(token);
-                            sharedState.appInitializationStatus('initializing');
-                            authApi.retrievePermissions().then(function(){
-                                sharedState.appInitializationStatus('complete');
+                            authApi.retrievePermissions().always(function(){
+                                document.location = "#/welcome";
                             });
 
-                            document.location = "#/welcome";
                         });
                     },
                     '/jobs': function () {
