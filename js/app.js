@@ -60,7 +60,8 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
             self.sharedState = sharedState;
 
             self.initializationComplete = ko.pureComputed(function () {
-                return sharedState.appInitializationStatus() != 'initializing';
+                return sharedState.appInitializationStatus() != 'initializing' &&
+                    (config.userAuthenticationEnabled ? sharedState.permissionInitializationStatus() != 'initializing' : true);
             });
 
             self.refreshSources = function() {
@@ -192,6 +193,7 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                         require(['welcome'], function () {
                             authApi.token(token);
                             authApi.retrievePermissions().always(function(){
+                                sharedState.permissionInitializationStatus('complete');
                                 document.location = "#/welcome";
                             });
 
