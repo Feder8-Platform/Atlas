@@ -178,7 +178,8 @@ define(['knockout', 'text!./concept-manager.html', 'appConfig', 'vocabularyprovi
 								sourceData.push({
 									sourceName: this.source.sourceName,
 									recordCount: recordCountObject[0],
-									descendantRecordCount: recordCountObject[1]
+									descendantRecordCount: recordCountObject[1],
+									personCount: recordCountObject[2]
 								});
 							}
 

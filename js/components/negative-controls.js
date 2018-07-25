@@ -264,6 +264,15 @@ define(['knockout',
 				label: '<i id="dtNegCtrlDRC" class="fa fa-database" aria-hidden="true"></i> DRC',
 				isField: true,
 			},
+            PC: {
+                propName: 'personCount',
+                value: d => d.personCount,
+                isColumn: true,
+                isFacet: false,
+                colIdx: 17,
+                label: '<i id="dtNegCtrlPC" class="fa fa-database" aria-hidden="true"></i> # of subjects',
+                isField: true,
+            },
 			fControls: {
 				propName: 'medlineCt',
 				value: d => {
@@ -315,6 +324,21 @@ define(['knockout',
 				isColumn: false,
 				isFacet: true,
 			},
+            fPC: {
+                propName: 'fPersonCount',
+                label: 'Has Subjects',
+                value: d => {
+                    var val = parseInt(d.personCount.replace(/\,/g, '')); // Remove comma formatting and treat as int
+                    if (val > 0) {
+                        return 'true'
+                    } else {
+                        return 'false'
+                    }
+                },
+                isField: true,
+                isColumn: false,
+                isFacet: true,
+            },
 			fMedlineCT: {
 				propName: 'medlineCt',
 				label: 'Medline CT',
@@ -515,10 +539,14 @@ define(['knockout',
 				title: '<i id="dtNegCtrlRC" class="fa fa-database" aria-hidden="true"></i> RC',
 				data: d => d.recordCount,
 			},
-			{
-				title: '<i id="dtNegCtrlDRC" class="fa fa-database" aria-hidden="true"></i> DRC',
-				data: d => d.descendantRecordCount,
-			},
+            {
+                title: '<i id="dtNegCtrlDRC" class="fa fa-database" aria-hidden="true"></i> DRC',
+                data: d => d.descendantRecordCount,
+            },
+            {
+                title: '<i id="dtNegCtrlPC" class="fa fa-database" aria-hidden="true"></i> # of subjects',
+                data: d => d.descendantRecordCount,
+            },
 		];
 
 		self.negControlOptions = {
@@ -560,19 +588,32 @@ define(['knockout',
 						}
 					},
 				},
-				{
-					'caption': 'Has Descendant Records',
-					'binding': d => {
-						var val = d.descendantRecordCount;
-						if (val.replace)
-							val = parseInt(val.replace(/\,/g, '')); // Remove comma formatting and treat as int
-						if (val > 0) {
-							return 'true'
-						} else {
-							return 'false'
-						}
-					},
-				},
+                {
+                    'caption': 'Has Descendant Records',
+                    'binding': d => {
+                        var val = d.descendantRecordCount;
+                        if (val.replace)
+                            val = parseInt(val.replace(/\,/g, '')); // Remove comma formatting and treat as int
+                        if (val > 0) {
+                            return 'true'
+                        } else {
+                            return 'false'
+                        }
+                    },
+                },
+                {
+                    'caption': 'Has Subjects',
+                    'binding': d => {
+                        var val = d.personCount;
+                        if (val.replace)
+                            val = parseInt(val.replace(/\,/g, '')); // Remove comma formatting and treat as int
+                        if (val > 0) {
+                            return 'true'
+                        } else {
+                            return 'false'
+                        }
+                    },
+                },
 				{
 					'caption': 'Medline CT',
 					'binding': d => {
@@ -864,6 +905,10 @@ define(['knockout',
 					.toggleClass("fa-database")
 					.toggleClass("fa-circle-o-notch")
 					.toggleClass("fa-spin");
+                $("#dtNegCtrlPC")
+                    .toggleClass("fa-database")
+                    .toggleClass("fa-circle-o-notch")
+                    .toggleClass("fa-spin");
 				var negativeControls = self.negativeControls();
 				var conceptIdsForNegativeControls = $.map(negativeControls, function (o, n) {
 					return o.conceptId;
@@ -882,6 +927,10 @@ define(['knockout',
 							.toggleClass("fa-database")
 							.toggleClass("fa-circle-o-notch")
 							.toggleClass("fa-spin");
+                        $("#dtNegCtrlPC")
+                            .toggleClass("fa-database")
+                            .toggleClass("fa-circle-o-notch")
+                            .toggleClass("fa-spin");
 					});
 			}
 		}

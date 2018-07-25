@@ -31,9 +31,11 @@ define(function (require, exports) {
 					if (densityIndex[concept.conceptId] != undefined) {
 						concept.recordCount = formatComma(densityIndex[concept.conceptId][0]);
 						concept.descendantRecordCount = formatComma(densityIndex[concept.conceptId][1]);
+						concept.personCount = formatComma(densityIndex[concept.conceptId][2]);
 					} else {
-						concept.recordCount = 0;
-						concept.descendantRecordCount = 0;
+						concept.recordCount = 'N/A';
+						concept.descendantRecordCount = 'N/A';
+						concept.personCount = 'N/A';
 					}
 				}
 
@@ -44,6 +46,7 @@ define(function (require, exports) {
 					var concept = results[c];
 					concept.recordCount = 'timeout';
 					concept.descendantRecordCount = 'timeout';
+                    concept.personCount = 'timeout';
 				}
 
 				densityPromise.resolve();
