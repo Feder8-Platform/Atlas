@@ -36,9 +36,6 @@ define(
                 var results = params.uuid;
 
                 $.ajax(endpoint, {
-                    headers: {
-                        Authorization: authApi.getAuthorizationHeader()
-                    },
                     success: function (response, status, headers) {
 
                         a = document.createElement("a");
@@ -64,9 +61,6 @@ define(
                 var job = createJob(params);
 
                 $.ajax(endpoint, {
-                    headers: {
-                        Authorization: authApi.getAuthorizationHeader()
-                    },
                     success: function (response, status, headers) {
                         refreshPromise = authApi.retrievePermissions();
                         res = response;

@@ -40,9 +40,6 @@ define([
                 url: config.api.url + 'user/hss',
                 data: JSON.stringify({"username":self.userName(), "password":self.userPassword()}),
                 method: 'POST',
-                headers: {
-                    Authorization: authApi.getAuthorizationHeader()
-                },
                 contentType: 'application/json',
                 success: function () {
                     self.validSubmit(true);

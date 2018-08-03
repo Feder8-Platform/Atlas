@@ -21,9 +21,6 @@ define(function (require, exports) {
         return $.ajax({
             url: config.api.url + "source/refresh",
             method: "GET",
-            headers: {
-                Authorization: authAPI.getAuthorizationHeader()
-            },
             contentType: 'application/json',
             success: handleSources
         })

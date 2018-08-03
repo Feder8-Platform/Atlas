@@ -123,9 +123,6 @@ define(function (require, exports) {
     function getOrganizations(cohortDefinitionId) {
         var organizationPromise = $.ajax({
             url: config.webAPIRoot + 'cohortdefinition/'+cohortDefinitionId+'/organizations',
-            headers: {
-                Authorization: authApi.getAuthorizationHeader()
-            },
             error: function (error) {
                 console.log("Error: " + error);
                 authApi.handleAccessDenied(error);
@@ -140,9 +137,6 @@ define(function (require, exports) {
             method: 'POST',
             data: JSON.stringify(organizations),
             contentType: 'application/json',
-            headers: {
-                Authorization: authApi.getAuthorizationHeader()
-            },
             error: function (error) {
                 console.log("Error: " + error);
                 authApi.handleAccessDenied(error);

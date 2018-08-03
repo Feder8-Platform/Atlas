@@ -29,9 +29,6 @@ define([
         self.breadCrumbNames = ko.observableArray();
 
         $.ajax(params.importUrl(), {
-            headers: {
-                Authorization: authApi.getAuthorizationHeader()
-            },
             contentType: 'application/json',
             error: authApi.handleAccessDenied,
             success: function(data) {
@@ -176,9 +173,6 @@ define([
             $.ajax({
                 url: endpoint,
                 method: "POST",
-                headers: {
-                    Authorization: authApi.getAuthorizationHeader()
-                },
                 contentType: 'application/json',
                 data: data,
                 success: function (result) {

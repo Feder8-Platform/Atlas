@@ -997,9 +997,6 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                             var organizationPromise = $.ajax({
                                 url: config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/organizations',
                                 method: 'GET',
-                                headers: {
-                                    Authorization: authApi.getAuthorizationHeader()
-                                },
                                 contentType: 'application/json',
                                 success: function (organizations) {
                                     organizations.forEach(el => el.organizationCanRead = ko.observable(el.canRead));
