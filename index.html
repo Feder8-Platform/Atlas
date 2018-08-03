@@ -22,7 +22,7 @@
 	<title data-bind="text: pageTitle">ATLAS</title>
 </head>
 
-<body>
+<body data-bind="click: extendToken">
 	<div id="splash" data-bind="if:!initializationComplete()">
 		<div id="stage">
 			<img src="images/atlas_loading.svg" />

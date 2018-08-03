@@ -5,6 +5,7 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
             var self = this;
 
             self.authApi = authApi;
+            self.extendToken = authApi.extendToken;
             self.componentParams = {};
             self.config = config;
             self.initPromises = [];

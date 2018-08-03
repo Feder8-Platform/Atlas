@@ -338,6 +338,9 @@ define(function(require, exports) {
             if (!authProviders[settings.url] && settings.url.startsWith(config.api.url)) {
                 xhr.setRequestHeader('Authorization', getAuthorizationHeader());
             }
+        },
+        statusCode: {
+            401: handleAccessDenied
         }
     });
 
@@ -370,6 +373,23 @@ define(function(require, exports) {
         token(null);
     };
 
+    var resetToken = false;
+
+    var extendToken = function(){
+        resetToken = true;
+        return true;
+    }
+
+    var tokenRefreshInterval = setInterval(function(){
+        if(resetToken){
+            refreshToken();
+            resetToken = false;
+        } else {
+            clearInterval(tokenRefreshInterval)
+            resetAuthParams();
+        }
+    }, 900000);
+
     var api = {
         token: token,
         subject: subject,
@@ -383,6 +403,7 @@ define(function(require, exports) {
         retrievePermissions: retrievePermissions,
 
         isAuthenticated: isAuthenticated,
+        extendToken: extendToken,
 
         isPermittedCreateConceptset: isPermittedCreateConceptset,
         isPermittedUpdateConceptset: isPermittedUpdateConceptset,
