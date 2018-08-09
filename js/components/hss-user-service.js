@@ -37,8 +37,8 @@ define([
             }
 
             $.ajax({
-                url: config.api.url + 'user/hss',
-                data: JSON.stringify({"username":self.userName(), "password":self.userPassword()}),
+                url: config.api.url + 'hss/user',
+                data: JSON.stringify({"username":self.userName(), "plainTextPassword":self.userPassword()}),
                 method: 'POST',
                 contentType: 'application/json',
                 success: function () {
