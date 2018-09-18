@@ -20,6 +20,7 @@ define([
         self.disable = params.disable;
         self.isError = ko.observable(false);
         self.error = ko.observable('');
+        self.loadingDefinitionsToImport = ko.observable(true);
 
         self.currentTab = ko.observable('listTab');
 
@@ -28,27 +29,32 @@ define([
         self.breadCrumb = ko.observableArray();
         self.breadCrumbNames = ko.observableArray();
 
-        $.ajax(params.importUrl(), {
-            contentType: 'application/json',
-            error: authApi.handleAccessDenied,
-            success: function(data) {
-                var elements = []
+        function load() {
+            self.loadingDefinitionsToImport(true);
+            $.ajax(params.importUrl(), {
+                contentType: 'application/json',
+                error: authApi.handleAccessDenied,
+                success: function (data) {
+                    var elements = []
 
-                data.forEach(function (element){
-                    elements.push(element)
-                    var next = element.previous;
-                    element.dataTargets=[]
-                    while(next){
-                        next.parent = element.uuid;
-                        element.dataTargets.push(next);
-                        // elements.push(next)
-                        next = next.previous;
-                    }
-                })
+                    data.forEach(function (element) {
+                        elements.push(element)
+                        var next = element.previous;
+                        element.dataTargets = []
+                        while (next) {
+                            next.parent = element.uuid;
+                            element.dataTargets.push(next);
+                            // elements.push(next)
+                            next = next.previous;
+                        }
+                    })
 
-                self.cohortDefinitions(elements);
-            }
-        });
+                    self.cohortDefinitions(elements);
+                }
+            }).always(function(){
+                self.loadingDefinitionsToImport(false);
+            });
+        }
 
         self.cohortDefinitions.subscribe(function(elements){
             elements.sort(function(def1,def2){
@@ -78,6 +84,7 @@ define([
 
         self.show = function(){
             self.showImportLightBox(true);
+            load();
         }
 
         self.close = function(){
@@ -176,7 +183,9 @@ define([
                 contentType: 'application/json',
                 data: data,
                 success: function (result) {
-                    refreshPromise = authApi.retrievePermissions();
+                    if (config.userAuthenticationEnabled) {
+                        refreshPromise = authApi.retrievePermissions();
+                    }
                     id = result.id;
                 },
                 error: function(jqXHR, exception) {
@@ -185,19 +194,23 @@ define([
                 }
             }).always(function(){
                 if(refreshPromise === null){
-                    self.importing(false);
+                    redirect(id);
                 } else {
                     refreshPromise.then(function () {
-                        self.importing(false);
-                        if(id){
-                            window.location.href = "#/cohortdefinition/" + id;
-                        } else {
-                            window.location.reload(true);
-                        }
-                        self.close();
+                        redirect(id);
                     })
                 }
             });
+        }
+
+        function redirect(id) {
+            self.importing(false);
+            if(id){
+                window.location.href = "#/cohortdefinition/" + id;
+            } else {
+                window.location.reload(true);
+            }
+            self.close();
         }
 
         self.drop = function(data, event){

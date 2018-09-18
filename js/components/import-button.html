@@ -2,6 +2,8 @@
 
 <div data-bind="modal: showImportLightBox" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg">
+
+
         <div class="modal-content" data-bind="css: { 'dragged-over': $component.draggedOver},
                                               event: {
                                                 drop: $component.drop,
@@ -19,8 +21,7 @@
                 </div>
                 <!-- /ko -->
 
-
-                <!-- ko if: !$component.isError() -->
+                <!-- ko if: !$component.isError() && !$component.loadingDefinitionsToImport() -->
                 <ul class="nav nav-tabs">
                     <li role="presentation" data-bind="click: function() {$component.currentTab('listTab');}, attr: {class: $component.currentTab() == 'listTab' ? 'active' : ''}"><a>List</a></li>
                     <li role="presentation" data-bind="click: function() {$component.currentTab('fileTab');}, attr: {class: $component.currentTab() == 'fileTab' ? 'active' : ''}"><a>File</a></li>
@@ -61,7 +62,7 @@
                                             { title: 'Version', data: 'version', render: renderVersion }
                                     ]
                             },
-					    onRowClick: $component.rowClick,
+                        onRowClick: $component.rowClick,
                     }, css: {'hidden': $component.importing()}"></table>
                 <!-- /ko -->
 
@@ -78,8 +79,8 @@
                 <button class="btn btn-sm btn-primary" data-bind="click: $component.submitFile, css: {'hidden': $component.importing()}">Submit</button>
                 <!-- /ko -->
 
-                <!-- ko if: $component.importing() && !$component.isError() -->
-                <i class="fa fa-spinner fa-5x fa-pulse" aria-hidden="true" data-bind="if: !$component.importing()"></i>
+                <!-- ko if: ($component.importing() || $component.loadingDefinitionsToImport()) && !$component.isError() -->
+                <i class="fa fa-spinner fa-5x fa-pulse"></i>
                 <!-- /ko -->
             </div>
         </div>
