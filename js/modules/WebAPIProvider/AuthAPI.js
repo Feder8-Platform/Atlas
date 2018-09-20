@@ -355,7 +355,7 @@ define(function(require, exports) {
         $(close).addClass("close");
         close.innerHTML = "&times;"
 
-        errorMessage.textContent = "Something went wrong";
+        errorMessage.innerHTML = "Something went wrong, check <i class=\"fa fa-exclamation-triangle error-icon\"></i> on the top right for more details.";
         errorMessage.appendChild(close);
         if (modalIsOpen) {
             if ($(".modal.in .modal-content #general-error-message").length == 0) {
