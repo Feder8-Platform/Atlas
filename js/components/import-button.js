@@ -18,8 +18,6 @@ define([
         self.importing = ko.observable(false);
         self.fileUuid = ko.observable('');
         self.disable = params.disable;
-        self.isError = ko.observable(false);
-        self.error = ko.observable('');
         self.loadingDefinitionsToImport = ko.observable(true);
 
         self.currentTab = ko.observable('listTab');
@@ -76,9 +74,6 @@ define([
             if (!value && document.getElementById('cohortInput')) {
                 document.getElementById('cohortInput').value = '';
             }
-            if(!value){
-                self.isError(false);
-            }
         });
 
         self.show = function(){
@@ -87,7 +82,6 @@ define([
         }
 
         self.close = function(){
-            self.isError(false);
             self.showImportLightBox(false);
         }
 
@@ -186,10 +180,6 @@ define([
                         refreshPromise = authApi.retrievePermissions();
                     }
                     id = result.id;
-                },
-                error: function(jqXHR, exception) {
-                    self.isError(true);
-                    self.error(jqXHR.status + " - " + jqXHR.responseText);
                 }
             }).always(function(){
                 if(refreshPromise === null){

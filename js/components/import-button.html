@@ -14,14 +14,7 @@
             <div class="modal-header">Select or upload cohort definition...</div>
             <div class="paddedWrapper">
 
-
-                <!-- ko if: $component.isError() -->
-                <div class="alert alert-danger">
-                    <strong>Error:</strong> <span data-bind="text: $component.error()"></span> .
-                </div>
-                <!-- /ko -->
-
-                <!-- ko if: !$component.isError() && !$component.loadingDefinitionsToImport() -->
+                <!-- ko if: !$component.loadingDefinitionsToImport() -->
                 <ul class="nav nav-tabs">
                     <li role="presentation" data-bind="click: function() {$component.currentTab('listTab');}, attr: {class: $component.currentTab() == 'listTab' ? 'active' : ''}"><a>List</a></li>
                     <li role="presentation" data-bind="click: function() {$component.currentTab('fileTab');}, attr: {class: $component.currentTab() == 'fileTab' ? 'active' : ''}"><a>File</a></li>
@@ -79,7 +72,7 @@
                 <button class="btn btn-sm btn-primary" data-bind="click: $component.submitFile, css: {'hidden': $component.importing()}">Submit</button>
                 <!-- /ko -->
 
-                <!-- ko if: ($component.importing() || $component.loadingDefinitionsToImport()) && !$component.isError() -->
+                <!-- ko if: ($component.importing() || $component.loadingDefinitionsToImport()) -->
                 <i class="fa fa-spinner fa-5x fa-pulse"></i>
                 <!-- /ko -->
             </div>
