@@ -1938,6 +1938,14 @@ i.fa.pending {
   color: #f19119;
 }
 
+i.fa.error-icon {
+  color: #ff0000;
+}
+
+.alert-dismissible .close {
+  right: 0;
+}
+
 #jobModal .progress {
   margin-bottom: 0px;
 }

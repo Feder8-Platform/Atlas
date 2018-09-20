@@ -73,6 +73,22 @@ define(['knockout', 'text!./user-bar.html', 'appConfig', 'atlas-state'], functio
 			window.location = '#/' + j.url;
 		}
 
+        self.errorNotifications = state.errorNotifications;
+		self.errorNotificationsPending = ko.computed(function() {
+			return self.errorNotifications().filter(j => {
+				return !j.viewed();
+			}).length;
+		});
+
+        self.clearErrorNotifications = function() {
+        	self.errorNotifications.removeAll();
+		};
+        self.clearErrorNotificationsPending = function() {
+            self.errorNotifications().forEach(j => {
+                j.viewed(true);
+            });
+		}
+
 		self.appConfig = appConfig;
 		self.token = authApi.token;
 		self.isLoggedIn = ko.computed(function () {

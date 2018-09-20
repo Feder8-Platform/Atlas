@@ -4,6 +4,7 @@ define(['knockout', 'lscache', 'job/jobDetail'], function (ko, cache, jobDetail)
 	state.vocabularyUrl = ko.observable();
 	state.evidenceUrl = ko.observable();
 	state.jobListing = ko.observableArray();
+	state.errorNotifications = ko.observableArray();
 	
 	// Extending the jobListing array to include a 'queue' 
 	// function that will check if an existing job is 
@@ -16,6 +17,19 @@ define(['knockout', 'lscache', 'job/jobDetail'], function (ko, cache, jobDetail)
 			state.jobListing.push(newItem);
 		}
 	}
+
+	state.errorNotifications.queue = function(newItem) {
+		state.errorNotifications.push(newItem);
+	}
+
+
+    var errorNotificationsCacheKey = "atlas:errorNotifications";
+    var errorNotificationCache = cache.get(errorNotificationsCacheKey);
+    if (errorNotificationCache) {
+        errorNotificationCache.forEach(j => {
+            state.errorNotifications.push(j);
+        })
+    }
 
 	// job listing notification management
 	var jobListingCacheKey = "atlas:jobListing";

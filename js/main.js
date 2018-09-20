@@ -157,7 +157,8 @@ requirejs.config({
 		"plp-r-code": "components/plp-r-code",
 		"plp-print-friendly": "components/plp-print-friendly",
 
-		"hss-user-service": "components/hss-user-service",
+        "hss-user-service": "components/hss-user-service",
+        "error/errorNotification": "modules/error/errorNotification",
 
 		"d3": "https://cdnjs.cloudflare.com/ajax/libs/d3/4.10.0/d3.min",
 		"d3-collection": "https://cdnjs.cloudflare.com/ajax/libs/d3-collection/1.0.4/d3-collection.min",

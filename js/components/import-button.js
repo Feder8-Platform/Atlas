@@ -33,7 +33,6 @@ define([
             self.loadingDefinitionsToImport(true);
             $.ajax(params.importUrl(), {
                 contentType: 'application/json',
-                error: authApi.handleAccessDenied,
                 success: function (data) {
                     var elements = []
 

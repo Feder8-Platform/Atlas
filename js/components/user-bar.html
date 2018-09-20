@@ -2,6 +2,7 @@
 	<!-- for notifications, job completion, etc. -->
 	<div class="user-bar-container">
 		<a data-toggle="modal" data-target="#jobModal"><i data-bind="css: {pending: jobNotificationsPending}" class="fa fa-bell"></i></a>
+		<a data-toggle="modal" data-target="#errorModal"><i data-bind="css: {'error-icon': errorNotificationsPending}" class="fa fa-exclamation-triangle"></i></a>
 		<span data-bind="if:appConfig.userAuthenticationEnabled===true" style="display: inline-block;">
 			<div data-bind="if: !isLoggedIn()"><a data-toggle="modal" data-target="#myModal"><i class="fa fa-sign-in"></i> Sign In</a></div>
 			<div data-bind="if: isLoggedIn()"><a data-toggle="modal" data-target="#myModal"><i class="fa fa-sign-in"></i> Sign Out</a></div>
@@ -21,6 +22,50 @@
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-sm btn-default" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal" id="errorModal" tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<i class="fa fa-exclamation-triangle"></i> Errors
+			</div>
+			<div class="modal-body">
+				<div data-bind="if: $component.errorNotifications().length == 0">
+					Errors during HTTP server calls will be displayed here. This top right notification icon will highlight <i class="fa fa-exclamation-triangle error"></i> if a
+					new error occurs.
+				</div>
+				<div data-bind="if: $component.errorNotifications().length > 0">
+					<table class="pad-5" style="width:100%;">
+						<thead>
+							<th>Status</th>
+							<th>Type</th>
+							<th>Message</th>
+						</thead>
+						<tbody>
+							<!-- ko foreach: errorNotifications -->
+							<tr>
+								<td class="pad-5"> <span data-bind="text: $data.statusCode"></span></td>
+								<td class="pad-5">
+									<span data-bind="text: $data.type"></span>
+								</td>
+								<td class="pad-5">
+									<span  data-bind="text: $data.message"></span>
+								</td>
+							</tr>
+							<!-- /ko -->
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<!-- ko if: errorNotifications().length > 0 -->
+				<button type="button" data-bind="click:clearErrorNotifications" class="btn btn-sm btn-default" data-dismiss="modal">Clear Errors</button>
+				<!-- /ko -->
+				<button type="button" data-bind="click:clearErrorNotificationsPending" class="btn btn-sm btn-default" data-dismiss="modal">Close</button>
 			</div>
 		</div>
 	</div>
