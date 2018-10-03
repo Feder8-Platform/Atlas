@@ -195,7 +195,7 @@ requirejs(['bootstrap'], function () { // bootstrap must come first
 			var refreshTokenPromise = $.Deferred();
 			pageModel.initPromises.push(refreshTokenPromise);
 			authApi.refreshToken()
-				.always(refreshTokenPromise.resolve);
+				.always(refreshTokenPromise.resolve());
 		}
 
 		// establish base priorities for daimons
