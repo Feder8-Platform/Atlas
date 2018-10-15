@@ -336,7 +336,7 @@ define(function(require, exports) {
     }
 
     function addErrorNotification(xhr) {
-        errorJson = xhr.responseJSON;
+        errorJson = xhr.responseJSON || {};
         errorJson.statusCode = xhr.status;
         state.errorNotifications.queue(new errorNotification(errorJson));
     }
