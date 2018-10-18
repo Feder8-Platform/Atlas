@@ -53,7 +53,7 @@ define(
 
             self.exportToCloud = function () {
 
-                const endpoint = params.endpoint() + "?toCloud=true" + (params.uuid ? "&uuid="+params.uuid() : "");
+                const endpoint = params.endpoint() + "?toCloud=true" + (params.uuid() ? "&uuid="+params.uuid() : "");
                 self.exporting(true);
                 var refreshPromise = null;
                 var res = null;
@@ -62,7 +62,9 @@ define(
 
                 $.ajax(endpoint, {
                     success: function (response, status, headers) {
-                        refreshPromise = authApi.retrievePermissions();
+                        if (config.userAuthenticationEnabled) {
+                            refreshPromise = authApi.retrievePermissions();
+                        }
                         res = response;
                         if (job) {
                             setJob(job, 'COMPLETE')
