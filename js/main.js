@@ -195,8 +195,25 @@ requirejs(['bootstrap'], function () { // bootstrap must come first
 			var refreshTokenPromise = $.Deferred();
 			pageModel.initPromises.push(refreshTokenPromise);
 			authApi.refreshToken()
-				.always(refreshTokenPromise.resolve());
+				.always(function(){
+					refreshTokenPromise.resolve()
+                });
+			if(config.userAuthenticationEnabled) {
+                var refreshPermissionsPromise = $.Deferred();
+                pageModel.initPromises.push(refreshPermissionsPromise);
+                authApi.retrievePermissions().always(function(){
+                    refreshPermissionsPromise.resolve();
+                    sharedState.permissionInitializationStatus('complete');
+                });
+			}
 		}
+
+		var interval = setInterval(function(){
+			if(sharedState.appInitializationStatus() !== 'initializing' && !authApi.token()){
+				sharedState.permissionInitializationStatus('complete');
+				clearInterval(interval);
+			}
+		}, 5000);
 
 		// establish base priorities for daimons
 		var evidencePriority = 0;

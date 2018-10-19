@@ -1,4 +1,4 @@
-define(['knockout', 'lscache', 'job/jobDetail'], function (ko, cache, jobDetail) {
+define(['knockout', 'lscache', 'job/jobDetail', 'appConfig'], function (ko, cache, jobDetail, config) {
 	var state = {};
 	state.resultsUrl = ko.observable();
 	state.vocabularyUrl = ko.observable();
@@ -48,7 +48,11 @@ define(['knockout', 'lscache', 'job/jobDetail'], function (ko, cache, jobDetail)
 	state.selectedConceptsIndex = {};
 	state.selectedConcepts = ko.observableArray(null);
 	state.appInitializationStatus = ko.observable('initializing');
-	state.permissionInitializationStatus = ko.observable('initializing');
+	if(config.userAuthenticationEnabled) {
+        state.permissionInitializationStatus = ko.observable('initializing');
+    } else {
+		state.permissionInitializationStatus = ko.observable('complete');
+	}
 
 	state.clearSelectedConcepts = function () {
 		this.selectedConceptsIndex = {};
