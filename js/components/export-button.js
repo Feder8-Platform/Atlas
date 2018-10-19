@@ -39,12 +39,17 @@ define(
                     success: function (response, status, headers) {
                         var file = new Blob([JSON.stringify(response)]);
 
+                        var filename = (response.name ? response.name : "cohort") + "." + (results? "results" : "cohort");
                         // Get the filename from the header
                         var contentDispositionHeader = downloadUrl.getResponseHeader("Content-Disposition");
-                        var filenameIndex = contentDispositionHeader.indexOf("=");
-                        var filename = contentDispositionHeader.substr(filenameIndex + 1);
-                        // remove double quotes around the filename
-                        filename = filename.slice(1, -1);
+                        if(contentDispositionHeader != null) {
+                            var filenameIndex = contentDispositionHeader.indexOf("=");
+                            if(filenameIndex != null) {
+                                filename = contentDispositionHeader.substr(filenameIndex + 1);
+                                // remove double quotes around the filename
+                                filename = filename.slice(1, -1);
+                            }
+                        }
                         console.debug('filename: ' + filename);
 
                         // Download the file
