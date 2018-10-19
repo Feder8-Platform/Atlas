@@ -35,16 +35,30 @@ define(
 
                 var results = params.uuid;
 
-                $.ajax(endpoint, {
+                var downloadUrl = $.ajax(endpoint, {
                     success: function (response, status, headers) {
-
-                        a = document.createElement("a");
-                        a.style.display = 'none';
                         var file = new Blob([JSON.stringify(response)]);
-                        a.href = URL.createObjectURL(file);
-                        a.download = response.name+"."+(results? "results" : "cohort");
-                        a.click();
-                        a.remove();
+
+                        // Get the filename from the header
+                        var contentDispositionHeader = downloadUrl.getResponseHeader("Content-Disposition");
+                        var filenameIndex = contentDispositionHeader.indexOf("=");
+                        var filename = contentDispositionHeader.substr(filenameIndex + 1);
+                        // remove double quotes around the filename
+                        filename = filename.slice(1, -1);
+                        console.debug('filename: ' + filename);
+
+                        // Download the file
+                        const data = window.URL.createObjectURL(file);
+                        var link = document.createElement('a');
+                        link.href = data;
+                        link.download=filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        setTimeout(function() {
+                            // For Firefox it is necessary to delay revoking the ObjectURL
+                            document.body.removeChild(link);
+                            window.URL.revokeObjectURL(data); }, 100);
+
                     }
                 }).always(function(){
                     self.exporting(false);
