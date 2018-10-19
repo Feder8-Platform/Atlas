@@ -61,8 +61,8 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
             self.sharedState = sharedState;
 
             self.initializationComplete = ko.pureComputed(function () {
-                return sharedState.appInitializationStatus() != 'initializing' &&
-                    (config.userAuthenticationEnabled ? sharedState.permissionInitializationStatus() != 'initializing' : true);
+                return sharedState.appInitializationStatus() !== 'initializing' &&
+                    (config.userAuthenticationEnabled ? sharedState.permissionInitializationStatus() !== 'initializing' : true);
             });
 
             self.refreshSources = function() {
