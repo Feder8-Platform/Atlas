@@ -171,17 +171,14 @@ define(function(require, exports) {
                 headers: {
                     Authorization: getAuthorizationHeader()
                 },
-
-            }).then(
-                // success
-                function (data, textStatus, jqXHR) {
-                    setAuthParams(jqXHR);
-                },
-                // error
-                function (error) {
+                success:
+                    function (data, textStatus, jqXHR) {
+                        setAuthParams(jqXHR);
+                    },
+                error: function (err) {
                     resetAuthParams();
-                },
-            );
+                }
+            });
         }
 
         return refreshTokenPromise;
