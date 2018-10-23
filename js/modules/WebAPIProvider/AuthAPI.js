@@ -4,6 +4,7 @@ define(function(require, exports) {
     var config = require('appConfig');
     var ko = require('knockout');
     var cookie = require('webapi/CookieAPI');
+    var state = require('atlas-state');
     var TOKEN_HEADER = 'Bearer';
     var LOCAL_STORAGE_PERMISSIONS_KEY = "permissions";
     const httpService = require('services/http');
@@ -31,11 +32,53 @@ define(function(require, exports) {
         return TOKEN_HEADER + ' ' + token();
     };
 
+    function addErrorNotification(xhr) {
+        errorJson = xhr.responseJSON || {};
+        errorJson.statusCode = xhr.status;
+        state.errorNotifications.queue(new errorNotification(errorJson));
+    }
+
+    function addErrorMessageOnTopOfPage() {
+        var modalIsOpen = $('.modal-open').length == 1;
+        var errorMessage = document.createElement("div");
+        errorMessage.setAttribute("id", "general-error-message")
+        $(errorMessage).addClass("alert");
+        $(errorMessage).addClass("alert-danger");
+        $(errorMessage).addClass("alert-dismissible");
+
+        var close = document.createElement("a");
+        close.setAttribute("data-dismiss", "alert");
+        close.setAttribute("aria-label", "close");
+        $(close).addClass("close");
+        close.innerHTML = "&times;"
+
+        errorMessage.innerHTML = "Something went wrong, check <i class=\"fa fa-exclamation-triangle error-icon\"></i> on the top right for more details.";
+        errorMessage.appendChild(close);
+        if (modalIsOpen) {
+            if ($(".modal.in .modal-content #general-error-message").length == 0) {
+                var modal = $('.modal.in .modal-content .modal-header');
+                modal.after(errorMessage);
+                $(".modal.in").on('hide.bs.modal', function () {
+                    $(errorMessage).remove();
+                });
+            }
+        } else {
+            if ($("user-bar #general-error-message").length == 0) {
+                var userBar = $('user-bar');
+                userBar.append(errorMessage);
+            }
+        }
+    }
+
     $.ajaxSetup({
         beforeSend: function(xhr, settings) {
             if (!authProviders[settings.url] && settings.url.startsWith(config.api.url)) {
                 xhr.setRequestHeader('Authorization', getAuthorizationHeader());
             }
+        },
+        error: function(xhr, response) {
+            addErrorNotification(xhr);
+            addErrorMessageOnTopOfPage();
         }
     });
 

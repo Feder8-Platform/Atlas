@@ -56,9 +56,20 @@ define([
 				return unviewedNotificationCount;
 			});
 
+
+            this.errorNotifications = state.errorNotifications;
+            this.errorNotificationsPending = ko.computed(() => {
+                return this.errorNotifications().filter(j => {
+                    return !j.viewed();
+                }).length;
+            });
+
 			this.updateJobStatus = this.updateJobStatus.bind(this);
 			this.clearJobNotifications = this.clearJobNotifications.bind(this);
 			this.clearJobNotificationsPending = this.clearJobNotificationsPending.bind(this);
+
+            this.clearErrorNotifications = this.clearErrorNotifications.bind(this);
+            this.clearErrorNotificationsPending = this.clearErrorNotificationsPending.bind(this);
 
 			if (!appConfig.userAuthenticationEnabled) {
 				this.startPolling();
@@ -123,6 +134,15 @@ define([
 			$('#jobModal').modal('hide');
 			window.location = '#/' + j.url;
 		}
+
+        clearErrorNotifications() {
+            self.errorNotifications.removeAll();
+        };
+        clearErrorNotificationsPending() {
+            self.errorNotifications().forEach(j => {
+                j.viewed(true);
+            });
+        }
 	}
 
 	return commonUtils.build('user-bar', UserBar, view);

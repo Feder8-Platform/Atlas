@@ -1,9 +1,10 @@
-define(['knockout', 'lscache', 'job/jobDetail', 'assets/ohdsi.util'], function (ko, cache, jobDetail, ohdsiUtil) {
+define(['knockout', 'lscache', 'job/jobDetail', 'assets/ohdsi.util', 'appConfig'], function (ko, cache, jobDetail, ohdsiUtil, config) {
 	var state = {};
 	state.resultsUrl = ko.observable();
 	state.vocabularyUrl = ko.observable();
 	state.evidenceUrl = ko.observable();
 	state.jobListing = ko.observableArray();
+    state.errorNotifications = ko.observableArray();
 	state.priorityScope = ko.observable('session');
 	state.roles = ko.observableArray();
 	state.sources = ko.observableArray([]);
@@ -19,6 +20,19 @@ define(['knockout', 'lscache', 'job/jobDetail', 'assets/ohdsi.util'], function (
 			state.jobListing.push(newItem);
 		}
 	}
+
+	state.errorNotifications.queue = function(newItem) {
+		state.errorNotifications.push(newItem);
+	}
+
+
+    var errorNotificationsCacheKey = "atlas:errorNotifications";
+    var errorNotificationCache = cache.get(errorNotificationsCacheKey);
+    if (errorNotificationCache) {
+        errorNotificationCache.forEach(j => {
+            state.errorNotifications.push(j);
+        })
+    }
 
 	// job listing notification management
 	var jobListingCacheKey = "atlas:jobListing";
@@ -37,6 +51,11 @@ define(['knockout', 'lscache', 'job/jobDetail', 'assets/ohdsi.util'], function (
 	state.selectedConceptsIndex = {};
 	state.selectedConcepts = ko.observableArray(null);
 	state.appInitializationStatus = ko.observable('initializing');
+	if(config.userAuthenticationEnabled) {
+        state.permissionInitializationStatus = ko.observable('initializing');
+    } else {
+		state.permissionInitializationStatus = ko.observable('complete');
+	}
 
 	state.clearSelectedConcepts = function () {
 		this.selectedConceptsIndex = {};
