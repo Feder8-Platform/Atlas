@@ -68,6 +68,13 @@ define(function () {
       "ajax": true,
       "icon": "fa fa-cubes",
       "isUseCredentialsForm": true
+    },
+    {
+      "name": "CAS",
+      "url": "user/oauth/cas",
+      "ajax": false,
+      "icon": "",
+      "isUseCredentialsForm": false
     }
   ];
   appConfig.xssOptions = {
