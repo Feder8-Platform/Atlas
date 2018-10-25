@@ -22,6 +22,8 @@ const localRefs = {
 	"loading": "components/loading",
 	"atlas-state": "components/atlas-state",
 	"feedback": "components/feedback",
+    "export-button": "components/export-button",
+    "import-button": "components/import-button",
 	"conceptsetbuilder": "modules/conceptsetbuilder",
 	"conceptpicker": "modules/conceptpicker",
 	"webapi": "modules/WebAPIProvider",

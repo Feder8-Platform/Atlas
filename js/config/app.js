@@ -71,7 +71,7 @@ define(function () {
     },
     {
       "name": "CAS",
-      "url": "user/oauth/cas",
+      "url": "user/login/cas",
       "ajax": false,
       "icon": "",
       "isUseCredentialsForm": false
