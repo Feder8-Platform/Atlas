@@ -245,6 +245,7 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 
         // Organizations
         self.canEditOrganizations = ko.pureComputed(function() { return self.isAuthenticated() && (isNew() || self.canEdit()); });
+        self.isCentral = config.isCentralInstance;
 
         self.renderCheckbox = function (field, editable) {
             return editable
@@ -441,8 +442,13 @@ define(['knockout', 'text!./cohort-definition-manager.html',
 				var redirectWhenComplete = definition.id() != self.model.currentCohortDefinition().id();
 
 				//Save organizations seperately
-				var organizationsPromise = cohortDefinitionAPI
-					.saveOrganizations(self.model.currentCohortDefinition().organizations(), definition.id());
+                var organizationsPromise = $.Deferred();
+				if(self.isCentral) {
+                    organizationsPromise = cohortDefinitionAPI
+                        .saveOrganizations(self.model.currentCohortDefinition().organizations(), definition.id());
+                } else {
+					organizationsPromise.resolve();
+				}
 
 				var refreshTokenPromise = (redirectWhenComplete && config.userAuthenticationEnabled) ? authApi.refreshToken() : null;
 				$.when(refreshTokenPromise, organizationsPromise).done(function () {

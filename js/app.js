@@ -995,15 +995,20 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
                     }
                     $.when(infoPromise, definitionPromise)
                         .done(function (ip, dp) {
-                            var organizationPromise = $.ajax({
-                                url: config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/organizations',
-                                method: 'GET',
-                                contentType: 'application/json',
-                                success: function (organizations) {
-                                    organizations.forEach(el => el.organizationCanRead = ko.observable(el.canRead));
-                                    currentCohortDefinition.organizations(organizations);
-                                }
-                            })
+                            var organizationPromise = $.Deferred();
+                            if (config.isCentralInstance) {
+                                organizationPromise = $.ajax({
+                                    url: config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/organizations',
+                                    method: 'GET',
+                                    contentType: 'application/json',
+                                    success: function (organizations) {
+                                        organizations.forEach(el => el.organizationCanRead = ko.observable(el.canRead));
+                                        currentCohortDefinition.organizations(organizations);
+                                    }
+                                });
+                            } else {
+                                organizationPromise.resolve();
+                            }
                             $.when(organizationPromise).always(function(){
                                 self.currentCohortDefinition(currentCohortDefinition);
 
