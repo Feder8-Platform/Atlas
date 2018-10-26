@@ -72,7 +72,7 @@ define(
 
             self.exportToCloud = function () {
 
-                const endpoint = params.endpoint() + "?toCloud=true" + (params.uuid() ? "&uuid="+params.uuid() : "");
+                const endpoint = params.endpoint() + "?toCloud=true";
                 self.exporting(true);
                 var refreshPromise = null;
                 var res = null;
