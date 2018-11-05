@@ -6,6 +6,9 @@
 				<div class="col-sm-offset-10 col-sm-1" data-bind="attr: {title: $component.newCohortButtonCaption()}">
 					<div class="btn btn-sm btn-primary" data-bind="click:$component.newDefinition, css: {disabled: $root.currentCohortDefinition() != undefined || !$component.canCreateCohort()}">New Cohort</div>
 				</div>
+				<div class="col-xs-4 col-sm-2 col-md-1" data-bind="attr: {title: $component.newCohortButtonCaption()}">
+					<import-button params="{name: 'Import cohort', type: 'definition', importUrl: $component.getImportDataEndpoint($data), selectUrl: $component.getSelectDataEndpoint($data), fileUrl: $component.getFileDataEndpoint($data), disable: !$component.isValid()}" style="margin-left: 5px"></import-button>
+				</div>
 			</div>
 			<cohort-definition-browser params="{cohortDefinitionSelected: data => cohortDefinitionId(data.id)}"></cohort-definition-browser>
 		</div>

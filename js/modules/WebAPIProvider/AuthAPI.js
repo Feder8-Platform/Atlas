@@ -454,8 +454,12 @@ define(function(require, exports) {
     }
 
 		const isPermittedImportUsers = function() {
-			return isPermitted('user:import:post') && isPermitted('user:import:*:post');
-		}
+            return isPermitted('user:import:post') && isPermitted('user:import:*:post');
+        }
+
+    var isPermittedImportCohortDefinition = function() {
+        return isPermitted("cohortdefinition:hss:list:all:get") && isPermitted("cohortdefinition:hss:select:post");
+    }
 
 	var setAuthParams = function (tokenHeader) {
         token(tokenHeader);
@@ -536,6 +540,8 @@ define(function(require, exports) {
         isPermittedEditSource: isPermittedEditSource,
         isPermittedDeleteSource: isPermittedDeleteSource,
         isPermittedCheckSourceConnection: isPermittedCheckSourceConnection,
+
+        isPermittedImportCohortDefinition: isPermittedImportCohortDefinition,
 
         isPermittedImportUsers,
 

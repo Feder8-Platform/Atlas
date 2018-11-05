@@ -9,6 +9,7 @@ define(
             './cohort-definitions',
             './cohort-definition-manager',
             'components/cohort-definition-browser',
+            'components/import-button'
           ], function () {
             router.setCurrentView('cohort-definitions');
           });
@@ -25,11 +26,14 @@ define(
             './components/reporting/cost-utilization/report-manager',
             'explore-cohort',
             'conceptset-list-modal',
+            'components/import-button',
+            'components/export-button'
           ], function () {
             // Determine the view to show on the cohort manager screen based on the path
             path = path.split("/");
             let view = 'definition';
             if (path.length > 0 && path[0] != "") {
+              view = path[0];
               view = path[0];
             }
             // Determine any optional parameters to set based on the query string

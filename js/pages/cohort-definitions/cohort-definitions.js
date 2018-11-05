@@ -44,12 +44,30 @@ define([
 		
 			this.isAuthenticated 	= authApi.isAuthenticated;
 			this.canReadCohorts 	= ko.pureComputed(() => (config.userAuthenticationEnabled && this.isAuthenticated() && authApi.isPermittedReadCohorts()) || !config.userAuthenticationEnabled);
-			this.canCreateCohort 	= ko.pureComputed(() => (config.userAuthenticationEnabled && this.isAuthenticated() && authApi.isPermittedCreateCohort()) || !config.userAuthenticationEnabled);			
+			this.canCreateCohort 	= ko.pureComputed(() => (config.userAuthenticationEnabled && this.isAuthenticated() && authApi.isPermittedCreateCohort()) || !config.userAuthenticationEnabled);
+
+			this.empty = ko.observable('');
 		}
 
 		newDefinition(data, event) {
 			this.cohortDefinitionId('0');
 		}
+
+        getImportDataEndpoint(source) {
+            return `${config.api.url}cohortdefinition/hss/list/all${this.empty()}`;
+        }
+
+        getSelectDataEndpoint(source) {
+            return `${config.api.url}cohortdefinition/hss/select${this.empty()}`;
+        }
+
+        getFileDataEndpoint(source) {
+            return `${config.api.url}cohortdefinition/${this.empty()}`;
+        }
+
+        isValid() {
+            return (config.userAuthenticationEnabled && this.isAuthenticated() && authApi.isPermittedImportCohortDefinition()) || !config.userAuthenticationEnabled;
+        }
 		
 	}
 

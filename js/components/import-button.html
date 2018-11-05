@@ -1,0 +1,81 @@
+<span class="btn btn-sm btn-primary" data-bind="click:$component.show, text: $component.name, css: {disabled: $component.disable}"></span>
+
+<div data-bind="modal: showImportLightBox" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+
+
+        <div class="modal-content" data-bind="css: { 'dragged-over': $component.draggedOver},
+                                              event: {
+                                                drop: $component.drop,
+                                                dragover: function(data, e){ $component.dragOver(e);},
+                                                dragenter: function(data, e){$component.toggleInDropZone(e);},
+                                                dragleave: function(data, e){$component.toggleInDropZone(e);}
+                                            }">
+            <div class="modal-header">Select or upload cohort definition...</div>
+            <div class="paddedWrapper">
+
+                <!-- ko if: !$component.loadingDefinitionsToImport() -->
+                <ul class="nav nav-tabs">
+                    <li role="presentation" data-bind="click: function() {$component.currentTab('listTab');}, attr: {class: $component.currentTab() == 'listTab' ? 'active' : ''}"><a>List</a></li>
+                    <li role="presentation" data-bind="click: function() {$component.currentTab('fileTab');}, attr: {class: $component.currentTab() == 'fileTab' ? 'active' : ''}"><a>File</a></li>
+                </ul>
+
+                <!-- ko if: $component.currentTab() == 'listTab' -->
+                <!-- ko if: $component.breadCrumbNames().length>0 -->
+                <div class="alert alert-success">
+                    <div>
+                        You are now looking at previous versions of:
+                    </div>
+                    <div>
+                        &emsp;<strong><span data-bind="text: $component.breadCrumbNames().join(' > ')"></span></strong>
+                    </div>
+                </div>
+                <!-- /ko -->
+
+                <table width="100%" class="stripe compact hover" cellspacing="0" data-bind="dataTable:{
+                        data: $component.cohortDefinitions,
+                        options: {
+                                    dom: 'lfiprt',
+                                    language: {
+                                        search : 'Filter:'
+                                    },
+                                    lengthMenu: [[5, 10, 20, -1], [5, 10, 20,'All']],
+                                    orderClasses: false,
+                                    deferRender: true,
+                                    autoWidth: false,
+                                    ordering: true,
+                                    columnDefs: [
+                                            { targets: 0, width: '80px' },
+                                            { targets: 1 },
+                                            { targets: 2, width: '100px' },
+                                    ],
+                                    columns: [
+                                            { title: 'Selected', class:'text-center', render: function() { return renderCheckbox('selected', true); } },
+                                            { title: 'Cohort Definition',  render: $component.renderCohortDefinitionLink },
+                                            { title: 'Version', data: 'version', render: renderVersion }
+                                    ]
+                            },
+                        onRowClick: $component.rowClick,
+                    }, css: {'hidden': $component.importing()}"></table>
+                <!-- /ko -->
+
+                <!-- ko if: $component.currentTab() == 'fileTab' -->
+                <div class="drop-zone" data-bind="css: {'hidden': !$component.draggedOver()}" style="position: fixed; width: 100%; height: 100%; text-align: center; top: 0; left: 0; background: #000; opacity: 0.5">
+                    <i class="fa fa-file fa-5x fa-inverse" aria-hidden="true" style="position: absolute; top: calc(50% - 25px)"></i>
+                </div>
+                <input class="btn btn-sm btn-primary" type="file" id="cohortInput" data-bind="css: {'hidden': $component.importing()}">
+                <!-- /ko -->
+
+                <!-- ko if:$component.breadCrumb().length > 0 -->
+                <button class="btn btn-sm btn-primary" data-bind="click: $component.back, css: {'hidden': $component.importing()}">Back</button>
+                <!-- /ko -->
+                <button class="btn btn-sm btn-primary" data-bind="click: $component.submitFile, css: {'hidden': $component.importing()}">Submit</button>
+                <!-- /ko -->
+
+                <!-- ko if: ($component.importing() || $component.loadingDefinitionsToImport()) -->
+                <i class="fa fa-spinner fa-5x fa-pulse"></i>
+                <!-- /ko -->
+            </div>
+        </div>
+    </div>
+</div>

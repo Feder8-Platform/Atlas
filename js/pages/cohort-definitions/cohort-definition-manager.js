@@ -609,6 +609,8 @@ define(['jquery', 'knockout', 'text!./cohort-definition-manager.html',
 			};
 			
 			this.selectedCriteria = ko.observable();
+
+            this.generationFileName = ko.observable('');
 		}
 
 			// METHODS
@@ -1247,6 +1249,49 @@ define(['jquery', 'knockout', 'text!./cohort-definition-manager.html',
 			copyCohortSQLToClipboard () {
 				this.copyToClipboard('#btnCopyCohortSQLClipboard', '#copyCopyCohortSQLMessage');
 			}
+
+        //Export cohort and cohort generation results
+
+        getGenerationDataEndpoint(source){
+            return `${config.api.url}cohortdefinition/${this.model.currentCohortDefinition().id()}/export/${source.sourceKey}`;
+        }
+
+        getDefinitionEndpoint(){
+            return `${config.api.url}cohortdefinition/${this.model.currentCohortDefinition().id()}/export`;
+        }
+
+        getImportDataEndpoint(source){
+            return `${config.api.url}cohortdefinition/hss/list/${this.model.currentCohortDefinition().id()}`;
+        }
+
+        getSelectDataEndpoint(source){
+            return `${config.api.url}cohortdefinition/hss/${this.model.currentCohortDefinition().id()}/select/${source.sourceKey}`;
+        }
+
+        getFileDataEndpoint(source){
+            return `${config.api.url}cohortdefinition/${this.model.currentCohortDefinition().id()}/import/${source.sourceKey}`;
+        }
+
+        getGenerationFileName(source) {
+            this.generationFileName(source.name + '-' + new Date().getFullYear() + (("0" + (new Date().getMonth() + 1)).slice(-2)) + (("0" + new Date().getDate()).slice(-2)));
+            return this.generationFileName;
+        }
+
+        callbackURL(response){
+            return `#/cohortdefinition/${response.id}`
+        }
+
+        createJobDetail(source) {
+
+            return this.exportJob = new jobDetail({
+                name: "EXPORT_" + this.model.currentCohortDefinition().name() + "_" + source.sourceKey,
+                type: 'cohort-generation-export',
+                executionId: "EXPORT" + String(this.model.currentCohortDefinition().id()) + String(this.getSourceId(source.sourceKey)),
+                statusValue: 'status',
+                viewed: false,
+                url: 'cohortdefinition/' + this.model.currentCohortDefinition().id() + '/generation',
+            });
+        }
 		
 	}
 
