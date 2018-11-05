@@ -119,9 +119,6 @@ define(['jquery', 'knockout', 'text!./cohort-definition-manager.html',
 				return '';
 			});
 
-			//Organizations tab
-			this.isCentral = config.isCentralInstance;
-
             // Previous version tab
             this.children = [];
 
@@ -635,6 +632,10 @@ define(['jquery', 'knockout', 'text!./cohort-definition-manager.html',
 			this.selectedCriteria = ko.observable();
 
             this.generationFileName = ko.observable('');
+
+            //Organizations tab
+            this.canEditOrganizations = ko.pureComputed(() => { return this.isAuthenticated() && (isNew() || this.canEdit()); });
+            this.isCentral = config.isCentralInstance;
 		}
 
 			// METHODS
@@ -679,14 +680,14 @@ define(['jquery', 'knockout', 'text!./cohort-definition-manager.html',
                     //Save organizations seperately
                     var organizationsPromise = $.Deferred();
                     if(this.isCentral) {
-                        organizationsPromise = cohortDefinitionAPI
+                        organizationsPromise = cohortDefinitionService
                             .saveOrganizations(this.model.currentCohortDefinition().organizations(), definition.id());
                     } else {
                         organizationsPromise.resolve();
                     }
 
                     var refreshTokenPromise = (redirectWhenComplete && config.userAuthenticationEnabled) ? authApi.refreshToken() : null;
-                    $.when(refreshTokenPromise, organizationsPromise).done(function () {
+                    $.when(refreshTokenPromise, organizationsPromise).done(() => {
                         definition.organizations(this.model.currentCohortDefinition().organizations());
                         this.model.currentCohortDefinition(definition);
                         if (redirectWhenComplete) {
@@ -1332,6 +1333,13 @@ define(['jquery', 'knockout', 'text!./cohort-definition-manager.html',
                 viewed: false,
                 url: 'cohortdefinition/' + this.model.currentCohortDefinition().id() + '/generation',
             });
+        }
+
+        //Organizations
+        renderCheckbox(field, editable) {
+            return editable
+                ? '<span data-bind="click: function(d) { d.' + field + '(!d.' + field + '()); } , css: { selected: ' + field + '}" class="fa fa-check"></span>'
+                : '<span data-bind="css: { selected: ' + field + '}" class="fa fa-check readonly"></span>';
         }
 
 	}

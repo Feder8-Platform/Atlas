@@ -490,28 +490,34 @@ define(
 					this.clearConceptSet();
 				}
 				this.currentView('loading');
-				let definitionPromise, infoPromise;
+				let definitionPromise, infoPromise, organizationPromise;
 
 				if (cohortDefinitionId == '0') {
 					definitionPromise = Promise.resolve();
 					infoPromise = Promise.resolve();
+					organizationPromise = Promise.resolve();
 
 					this.currentCohortDefinition(new CohortDefinition({ id: '0', name: 'New Cohort Definition' }));
 					this.currentCohortDefinitionInfo([]);
 				} else {
 					definitionPromise = httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId);
 					infoPromise = httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/info');
+					organizationPromise = httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/organizations');
 					
 					definitionPromise.then(({ data: cohortDefinition }) => {
 						cohortDefinition.expression = JSON.parse(cohortDefinition.expression);
-						this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
+                        organizationPromise.then(({ data: organizations}) => {
+                            organizations.forEach(el => el.organizationCanRead = ko.observable(el.canRead));
+                        	cohortDefinition.organizations = organizations;
+							this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
+                        })
 					});
 					infoPromise.then(({ data: generationInfo }) => {
 						this.currentCohortDefinitionInfo(generationInfo);
 					});
 				}
 
-				Promise.all([infoPromise, definitionPromise])
+				Promise.all([infoPromise, definitionPromise, organizationPromise])
 					.then(() => {
 						// Now that we have loaded up the cohort definition, we'll need to
 						// resolve all of the concepts embedded in the concept set collection

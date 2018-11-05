@@ -149,6 +149,32 @@ define(function (require, exports) {
 		return httpService.doGet(config.api.url + 'cohortresults/' + sourceKey + '/' + cohortDefinitionId + '/distinctPersonCount')
 			.then(({ data }) => data);
 	}
+
+
+    function getOrganizations(cohortDefinitionId) {
+        var organizationPromise = $.ajax({
+            url: config.webAPIRoot + 'cohortdefinition/'+cohortDefinitionId+'/organizations',
+            error: function (error) {
+                console.log("Error: " + error);
+                authApi.handleAccessDenied(error);
+            }
+        });
+        return organizationPromise;
+    }
+
+    function saveOrganizations(organizations, cohortDefinitionId) {
+        var organizationPromise = $.ajax({
+            url: config.webAPIRoot + 'cohortdefinition/'+cohortDefinitionId+'/organizations',
+            method: 'POST',
+            data: JSON.stringify(organizations),
+            contentType: 'application/json',
+            error: function (error) {
+                console.log("Error: " + error);
+                authApi.handleAccessDenied(error);
+            }
+        });
+        return organizationPromise;
+    }
 	
 	var api = {
 		getCohortDefinitionList: getCohortDefinitionList,
@@ -164,6 +190,8 @@ define(function (require, exports) {
 		runDiagnostics: runDiagnostics,
 		cancelGenerate,
 		getCohortCount,
+        getOrganizations: getOrganizations,
+        saveOrganizations: saveOrganizations
 	}
 
 	return api;
