@@ -21,16 +21,20 @@ define([
 	class CohortDefinitionBrowser extends Component {
 		constructor(params) {
 			super(params);
-			this.reference = ko.observableArray();
+			this.reference = ko.observableArray(params.initialized ? params.reference : []);
 			this.selected = params.cohortDefinitionSelected;
 			this.loading = ko.observable(false);
 			this.config = config;
 
-			this.loading(true);
+            if(!params.initialized) {
+                this.loading(true);
 
-			httpService.doGet(`${config.api.url}cohortdefinition`)
-				.then(({ data }) => this.reference(data))
-				.finally(() => { this.loading(false) });
+                httpService.doGet(`${config.api.url}cohortdefinition`)
+                    .then(({data}) => this.reference(data))
+                    .finally(() => {
+                        this.loading(false)
+                    });
+            }
 
 
 			this.options = {
@@ -60,7 +64,7 @@ define([
 				]
 			};
 
-			this.columns = [{
+            this.columns = [{
 					title: 'Id',
 					data: 'id'
 				},

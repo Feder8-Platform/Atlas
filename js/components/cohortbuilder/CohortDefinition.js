@@ -12,7 +12,12 @@ define(function (require, exports) {
 		self.name = ko.observable(data.name || null);
 		self.description = ko.observable(data.description || null);
 		self.expressionType = (data.expressionType || "SIMPLE_EXPRESSION");
-		self.expression = ko.observable(new CohortExpression(data.expression))
+		self.expression = ko.observable(new CohortExpression(data.expression));
+        self.organizations = ko.observableArray(data.organizations || []);
+
+        self.previousVersion = data.previousVersion;
+
+        self.uuid = ko.observable(data.uuid || null);
 	}
 	return CohortDefinition;
 });
