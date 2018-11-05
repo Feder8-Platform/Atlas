@@ -176,7 +176,7 @@ define([
                 data: data,
                 success: function (result) {
                     if (config.userAuthenticationEnabled) {
-                        refreshPromise = authApi.retrievePermissions();
+                        refreshPromise = authApi.loadUserInfo();
                     }
                     id = result.id;
                 }

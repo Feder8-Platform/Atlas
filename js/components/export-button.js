@@ -81,7 +81,7 @@ define(
                 $.ajax(endpoint, {
                     success: function (response, status, headers) {
                         if (config.userAuthenticationEnabled) {
-                            refreshPromise = authApi.retrievePermissions();
+                            refreshPromise = authApi.loadUserInfo();
                         }
                         res = response;
                         if (job) {
