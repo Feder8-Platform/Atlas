@@ -5,6 +5,8 @@ define(function(require, exports) {
     var ko = require('knockout');
     var cookie = require('webapi/CookieAPI');
     var state = require('atlas-state');
+    var ErrorNotification = require('errors/ErrorNotification');
+
     var TOKEN_HEADER = 'Bearer';
     var LOCAL_STORAGE_PERMISSIONS_KEY = "permissions";
     const httpService = require('services/http');
@@ -33,9 +35,12 @@ define(function(require, exports) {
     };
 
     function addErrorNotification(xhr) {
-        errorJson = xhr.responseJSON || {};
-        errorJson.statusCode = xhr.status;
-        state.errorNotifications.queue(new errorNotification(errorJson));
+        if(xhr.status !== 401) {
+            errorJson = xhr.responseJSON || {};
+            errorJson.statusCode = xhr.status;
+            state.errorNotifications.queue(new ErrorNotification(errorJson));
+            addErrorMessageOnTopOfPage()
+        }
     }
 
     function addErrorMessageOnTopOfPage() {
@@ -76,10 +81,14 @@ define(function(require, exports) {
                 xhr.setRequestHeader('Authorization', getAuthorizationHeader());
             }
         },
-        error: function(xhr, response) {
-            addErrorNotification(xhr);
-            addErrorMessageOnTopOfPage();
-        }
+        // error: function(xhr, response) {
+        //     addErrorNotification(xhr);
+        //     addErrorMessageOnTopOfPage();
+        // }
+    });
+
+    $(document).ajaxError(function( event, jqxhr, settings, thrownError ){
+        addErrorNotification(jqxhr);
     });
 
     var subject = ko.observable();
@@ -177,7 +186,7 @@ define(function(require, exports) {
             break;
         }
     }
-    
+
     var checkPermission = function(permission, etalon) {
         // etalon may be like '*:read,write:etc'
         if (!etalon || !permission) {
@@ -300,7 +309,7 @@ define(function(require, exports) {
     var isPermittedDeleteIR = function(id) {
         return isPermitted('ir:' + id + ':delete');
     };
-    
+
     var isPermittedCopyIR = function(id) {
         return isPermitted('ir:' + id + ':copy:get');
     };
@@ -472,6 +481,23 @@ define(function(require, exports) {
         permissions(null);
     };
 
+    var resetToken = false;
+
+    var extendToken = function(){
+        resetToken = true;
+        return true;
+    }
+
+    var tokenRefreshInterval = setInterval(function(){
+        if(resetToken){
+            refreshToken();
+            resetToken = false;
+        } else {
+            clearInterval(tokenRefreshInterval)
+            resetAuthParams();
+        }
+    }, 900000);
+
     var api = {
         token: token,
         subject: subject,
@@ -485,6 +511,7 @@ define(function(require, exports) {
 
         isAuthenticated: isAuthenticated,
         isPermitted: isPermitted,
+        extendToken: extendToken,
 
         isPermittedCreateConceptset: isPermittedCreateConceptset,
         isPermittedUpdateConceptset: isPermittedUpdateConceptset,

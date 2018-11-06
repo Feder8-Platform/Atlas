@@ -51,11 +51,6 @@ define(['knockout', 'lscache', 'job/jobDetail', 'assets/ohdsi.util', 'appConfig'
 	state.selectedConceptsIndex = {};
 	state.selectedConcepts = ko.observableArray(null);
 	state.appInitializationStatus = ko.observable('initializing');
-	if(config.userAuthenticationEnabled) {
-        state.permissionInitializationStatus = ko.observable('initializing');
-    } else {
-		state.permissionInitializationStatus = ko.observable('complete');
-	}
 
 	state.clearSelectedConcepts = function () {
 		this.selectedConceptsIndex = {};

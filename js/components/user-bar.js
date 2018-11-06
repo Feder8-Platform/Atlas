@@ -136,10 +136,10 @@ define([
 		}
 
         clearErrorNotifications() {
-            self.errorNotifications.removeAll();
+            this.errorNotifications.removeAll();
         };
         clearErrorNotificationsPending() {
-            self.errorNotifications().forEach(j => {
+            this.errorNotifications().forEach(j => {
                 j.viewed(true);
             });
         }

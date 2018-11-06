@@ -27,6 +27,7 @@ const localRefs = {
 	"conceptsetbuilder": "modules/conceptsetbuilder",
 	"conceptpicker": "modules/conceptpicker",
 	"webapi": "modules/WebAPIProvider",
+	"errors": "components/errors",
 	"vocabularyprovider": "modules/WebAPIProvider/VocabularyProvider",
 	"css": "plugins/css.min",
 };
