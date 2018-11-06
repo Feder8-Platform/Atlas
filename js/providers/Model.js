@@ -340,6 +340,8 @@ define(
 					}
 				});
 				this.currentConceptSetMode.subscribe(this.onCurrentConceptSetModeChanged);
+
+				this.extendToken = authApi.extendToken;
 				/*
 					probably unreachable code
 					
