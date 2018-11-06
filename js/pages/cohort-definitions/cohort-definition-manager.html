@@ -371,6 +371,8 @@
 						<th class="text-right nowrap">Generated</th>
 						<th class="text-right nowrap">Generation Duration</th>
 						<th></th>
+						<th></th>
+						<th></th>
 					</thead>
 					<tbody data-bind="foreach:$root.cohortDefinitionSourceInfo, css: {overflow: $root.cohortDefinitionSourceInfo().length > 3, 'max-height': $component.loadingReport() || $component.selectedReport()}">
 						<tr data-bind="css: { 'selected': $component.selectedReport() && $component.selectedReport().sourceKey == $data.sourceKey}">

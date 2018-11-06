@@ -74,7 +74,7 @@ define([
 					)
 				) {
 					// The cohort definition requested is already loaded into the page model - just reference it
-					this.currentCohortDefinition(this.model.currentCohortDefintion())
+					this.currentCohortDefinition(this.model.currentCohortDefinition())
 					} else if (this.cohortDefinitionId()) {
 						cohortDefinitionService.getCohortDefinition(this.cohortDefinitionId())
 							.then((cohortDefinition) => {

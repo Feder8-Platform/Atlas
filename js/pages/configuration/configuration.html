@@ -1,4 +1,7 @@
 <heading-title params="name: 'Configuration', icon: 'cogs', theme: 'dark'"></heading-title>
+<div data-bind="ifnot:$component.hasAccess(), css: `${$component.hasAccess() ? '' : 'flexed'}`">
+	<access-denied params="isAuthenticated: isAuthenticated" class="flexed"></access-denied>
+</div>
 <div data-bind="if: $component.hasAccess(), css: classes({ extra: 'paddedWrapper' })">
 		<div data-bind="if: $component.initializationCompleted()">
 			<div data-bind="with:config.api">
