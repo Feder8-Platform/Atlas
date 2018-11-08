@@ -6,7 +6,6 @@ define(
 		const conceptSets = require('./concept-sets/index');
 		const cohortDefinitions = require('./cohort-definitions/index');
 		const characterizations = require('./characterizations/index');
-		const hssServiceUser = require('./hss-service-user/index');
 		const incidenceRates = require('./incidence-rates/index');
 		const profiles = require('./profiles/index');
 		const pathways = require('./pathways/index');
@@ -15,46 +14,23 @@ define(
 		const jobs = require('./jobs/index');
 		const configuration = require('./configuration/index');
 		const feedback = require('./feedback/index');
-		const config = require('appConfig');
 
 		// order of nav items in left-nav will appear in the following order:
-		var returningObject;
-		if (config.isCentralInstance){
-			returningObject = {
-                home,
-                dataSources,
-                vocabulary,
-                conceptSets,
-                cohortDefinitions,
-                characterizations,
-                pathways,
-                incidenceRates,
-                profiles,
-                estimation,
-                prediction,
-                jobs,
-                configuration,
-                feedback,
-            }
-        } else {
-			returningObject = {
-                home,
-                dataSources,
-                vocabulary,
-                conceptSets,
-                cohortDefinitions,
-                characterizations,
-                pathways,
-                incidenceRates,
-                profiles,
-                estimation,
-                prediction,
-                jobs,
-                configuration,
-                hssServiceUser,
-                feedback,
-            }
-		}
-		return returningObject;
+        return {
+            home,
+            dataSources,
+            vocabulary,
+            conceptSets,
+            cohortDefinitions,
+            characterizations,
+            pathways,
+            incidenceRates,
+            profiles,
+            estimation,
+            prediction,
+            jobs,
+            configuration,
+            feedback,
+        }
 	}
 );

@@ -21,6 +21,12 @@ define(
             document.location = "#/welcome";
           });
         }),
+          '/hss-service-user': new Route((token) => {
+              appModel.activePage(this.title);
+              require(['components/hss-service-user/hss-service-user'], function () {
+                  router.setCurrentView('hss-service-user');
+              });
+          }),
       };
     }
 
