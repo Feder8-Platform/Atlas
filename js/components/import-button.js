@@ -56,9 +56,9 @@ define([
             elements.sort(function(def1,def2){
                 return new Date(def2.lastModified) - new Date(def1.lastModified);
             })
-            var counter = 1;
+            var counter = elements.length;
             elements.forEach(function(cohortDefinition){
-                cohortDefinition.version = cohortDefinition.parent ? counter++ : counter;
+                cohortDefinition.version = counter--;
                 cohortDefinition.groupKey = cohortDefinition.key.split('/')[1];
                 cohortDefinition.selected = ko.observable(false);
                 cohortDefinition.selected.subscribe(function(value){
@@ -100,7 +100,7 @@ define([
 
         self.renderVersion = function (data, type, row, meta) {
             if (type === 'display' || type === 'filter') {
-                return row.version === self.cohortDefinitions.length || !row.parent ? "Latest" : "V" + row.version;
+                return !row.parent ? "Latest" : "V" + row.version;
             }
             return data;
         }
