@@ -427,7 +427,7 @@ define(['jquery', 'knockout', 'text!./cohort-definition-manager.html',
 
 						if (source) {
 							// only bother updating those sources that we know are running
-								if (this.isSourceRunning(source)) {
+							if (this.isSourceRunning(source)) {
 								source.status(info.status);
 								source.includeFeatures(info.includeFeatures);
 								source.isValid(info.isValid);
@@ -727,6 +727,9 @@ define(['jquery', 'knockout', 'text!./cohort-definition-manager.html',
 						case 'COMPLETE':
 							return false;
 							break;
+                        case 'ERROR':
+                            return false;
+                            break;
 						case 'n/a':
 							return false;
 							break;
@@ -1323,15 +1326,30 @@ define(['jquery', 'knockout', 'text!./cohort-definition-manager.html',
             return `#/cohortdefinition/${response.id}`
         }
 
-        createJobDetail(source) {
+        createExportJobDetail(source) {
 
             return this.exportJob = new jobDetail({
                 name: "EXPORT_" + this.model.currentCohortDefinition().name() + "_" + source.sourceKey,
                 type: 'cohort-generation-export',
+                status: 'PENDING',
                 executionId: "EXPORT" + String(this.model.currentCohortDefinition().id()) + String(this.getSourceId(source.sourceKey)),
                 statusValue: 'status',
                 viewed: false,
                 url: 'cohortdefinition/' + this.model.currentCohortDefinition().id() + '/generation',
+            });
+        }
+
+        createImportJobDetail(source) {
+
+            return this.importJob = new jobDetail({
+                name: "IMPORT_" + this.model.currentCohortDefinition().name() + "_" + source.sourceKey,
+                type: 'cohort-generation-import',
+                status: 'PENDING',
+                executionId: "IMPORT" + String(this.model.currentCohortDefinition().id()) + String(this.getSourceId(source.sourceKey)),
+                statusUrl: this.config.api.url + 'cohortdefinition/' + String(this.model.currentCohortDefinition().id()) + '/info',
+                statusValue: 'status',
+                viewed: false,
+                url: 'cohortdefinition/' + this.model.currentCohortDefinition().id() + '/import/' + source.sourceKey,
             });
         }
 

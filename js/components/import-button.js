@@ -3,7 +3,8 @@ define([
     'text!./import-button.html',
     'appConfig',
     'webapi/AuthAPI',
-    'databindings'], function (ko, view, config, authApi) {
+	'atlas-state',
+    'databindings'], function (ko, view, config, authApi, sharedState) {
     function importButton(params) {
 
         var self = this;
@@ -25,6 +26,8 @@ define([
 
         self.breadCrumb = ko.observableArray();
         self.breadCrumbNames = ko.observableArray();
+
+        self.job = params.job;
 
         function load() {
             self.loadingDefinitionsToImport(true);
@@ -169,36 +172,36 @@ define([
         function upload(endpoint, data){
             var refreshPromise = null;
             var id;
+
             $.ajax({
                 url: endpoint,
                 method: "POST",
                 contentType: 'application/json',
                 data: data,
                 success: function (result) {
+                    if(self.job) {
+                        self.job().status(result.status || "COMPLETE");
+                        sharedState.jobListing.queue(self.job());
+                    }
                     if (config.userAuthenticationEnabled) {
                         refreshPromise = authApi.loadUserInfo();
                     }
                     id = result.id;
                 }
-            }).always(function(){
-                if(refreshPromise === null){
-                    redirect(id);
-                } else {
-                    refreshPromise.then(function () {
-                        redirect(id);
-                    })
-                }
-            });
-        }
+            })
+                .always(function(){
 
-        function redirect(id) {
-            self.importing(false);
-            if(id){
-                window.location.href = "#/cohortdefinition/" + id;
-            } else {
-                window.location.reload(true);
-            }
-            self.close();
+                    self.close();
+                    if(refreshPromise === null){
+                        self.importing(false);
+                        params.callback(id);
+                    } else {
+                        refreshPromise.then(function () {
+                            self.importing(false);
+                            params.callback(id);
+                        })
+                    }
+            });
         }
 
         self.drop = function(data, event){
