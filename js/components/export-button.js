@@ -25,6 +25,11 @@ define(
         function exportButton(params) {
             var self = this;
 
+            if(params.dropup){
+                self.dropup = params.dropup();
+            } else {
+                self.dropup = false;
+            }
             self.multiSelect = params.multiSelect;
             self.endpoint = params.endpoint;
             self.exporting = ko.observable(false);
