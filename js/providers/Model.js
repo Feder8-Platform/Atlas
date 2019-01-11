@@ -504,15 +504,21 @@ define(
 				} else {
 					definitionPromise = httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId);
 					infoPromise = httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/info');
-					organizationPromise = httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/organizations');
+					if(config.isCentralInstance) {
+                        organizationPromise = httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/organizations');
+                    }
 					
 					definitionPromise.then(({ data: cohortDefinition }) => {
 						cohortDefinition.expression = JSON.parse(cohortDefinition.expression);
-                        organizationPromise.then(({ data: organizations}) => {
-                            organizations.forEach(el => el.organizationCanRead = ko.observable(el.canRead));
-                        	cohortDefinition.organizations = organizations;
-							this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
-                        })
+						if(organizationPromise) {
+                            organizationPromise.then(({data: organizations}) => {
+                                organizations.forEach(el => el.organizationCanRead = ko.observable(el.canRead));
+                                cohortDefinition.organizations = organizations;
+                                this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
+                            })
+                        } else {
+                            this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
+						}
 					});
 					infoPromise.then(({ data: generationInfo }) => {
 						this.currentCohortDefinitionInfo(generationInfo);
