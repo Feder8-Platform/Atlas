@@ -18,7 +18,7 @@ define(
 
         function setJob(job, status){
             job().status(status);
-            sharedState.jobListing.queue(job);
+            sharedState.jobListing.queue(job());
         }
 
         function exportButton(params) {
