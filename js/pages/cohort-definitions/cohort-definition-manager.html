@@ -596,7 +596,7 @@
 
 			<div role="tabpanel " data-bind="css: { active: $component.tabMode()== 'previousVersions' } " class="tab-pane ">
 				<div class="paddedWrapper ">
-					<cohort-definition-browser params="{cohortDefinitionSelected: $component.cohortSelected, reference: $component.children, initialized: true}"></cohort-definition-browser>
+					<cohort-definition-browser params="{cohortDefinitionSelected: data => cohortDefinitionId(data.id), reference: $component.children, initialized: true}"></cohort-definition-browser>
 				</div>
 			</div>
 			<div role="tabpanel" data-bind="css: { active: $component.tabMode() === 'warnings' }" class="tab-pane">
