@@ -136,7 +136,7 @@ define(['jquery', 'knockout', 'text!./cohort-definition-manager.html',
             });
 
             this.cohortSelected.subscribe(function (d) {
-                document.location = "#/cohortdefinition/" + d;
+                document.location = cohortConst.paths.details(d);
             });
             // End previous version tab
 
