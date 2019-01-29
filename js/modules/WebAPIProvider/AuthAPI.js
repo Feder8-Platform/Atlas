@@ -470,6 +470,14 @@ define(function(require, exports) {
         return isPermitted("cohortdefinition:hss:list:all:get") && isPermitted("cohortdefinition:hss:select:post");
     }
 
+    var isPermittedExportCohortDefinition = function(definitionId) {
+        return isPermitted("cohortdefinition:"+definitionId+":export:get");
+    }
+
+    var isPermittedExportCohortDefinitionGenerationResults = function(definitionId, source) {
+        return isPermitted("cohortdefinition:"+definitionId+":export:"+source+":get");
+    }
+
 	var setAuthParams = function (tokenHeader) {
         token(tokenHeader);
         loadUserInfo();
@@ -569,6 +577,8 @@ define(function(require, exports) {
         isPermittedCheckSourceConnection: isPermittedCheckSourceConnection,
 
         isPermittedImportCohortDefinition: isPermittedImportCohortDefinition,
+        isPermittedExportCohortDefinition: isPermittedExportCohortDefinition,
+        isPermittedExportCohortDefinitionGenerationResults: isPermittedExportCohortDefinitionGenerationResults,
 
         isPermittedImportUsers,
 

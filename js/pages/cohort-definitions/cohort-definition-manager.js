@@ -1360,6 +1360,14 @@ define(['jquery', 'knockout', 'text!./cohort-definition-manager.html',
                 : '<span data-bind="css: { selected: ' + field + '}" class="fa fa-check readonly"></span>';
         }
 
+        hasExportCohortDefinitionRights() {
+				return this.authApi.isPermittedExportCohortDefinition(this.model.currentCohortDefinition().id())
+		}
+
+        hasExportCohortDefinitionGenerationResultsRights(source) {
+            return this.authApi.isPermittedExportCohortDefinitionGenerationResults(this.model.currentCohortDefinition().id(), source.sourceKey)
+        }
+
 	}
 
 	return commonUtils.build('cohort-definition-manager', CohortDefinitionManager, view);

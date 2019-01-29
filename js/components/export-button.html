@@ -5,10 +5,10 @@
     </div>
 
     <a role="button" class="btn btn-sm btn-primary"
-       data-bind="visible:!$component.exporting(), click: $component.exportToFile" target="_blank"
+       data-bind="visible:!$component.exporting(), click: $component.exportToFile, css: {disabled: $component.disabled}" target="_blank"
        style="max-width:200px; overflow-x: hidden; text-overflow:ellipsis; white-space:nowrap">Export To File</a>
     <!-- ko if: $component.multiSelect && !$component.exporting()-->
-    <a role="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
+    <a role="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" data-bind="css: {disabled: $component.disabled}">
         <span class="caret"></span>  <!-- caret -->
         <span class="sr-only">Export To File</span>
     </a>
