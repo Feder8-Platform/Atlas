@@ -500,18 +500,17 @@ define(
                     if(config.isCentralInstance) {
                         organizationPromise = httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/organizations');
                     }
-                    let cohortDefinition = new CohortDefinition({ id: '0', name: 'New Cohort Definition' });
+                    let cohortDefinition = { id: '0', name: 'New Cohort Definition' };
                     if(organizationPromise) {
                         organizationPromise.then(({data: organizations}) => {
                             organizations.forEach(el => el.organizationCanRead = ko.observable(el.canRead));
                             cohortDefinition.organizations = organizations;
-                            this.currentCohortDefinition(cohortDefinition);
+                            this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
                         })
                     } else {
-                        this.currentCohortDefinition(cohortDefinition);
+                        this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
                     }
 
-					this.currentCohortDefinition(cohortDefinition);
 					this.currentCohortDefinitionInfo([]);
 				} else {
 					definitionPromise = httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId);
