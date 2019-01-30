@@ -32,7 +32,7 @@ define(
             self.multiSelect = params.multiSelect;
             self.endpoint = params.endpoint;
             self.exporting = ko.observable(false);
-            self.disabled = params.disabled();
+            self.disabled = params.disabled;
 
             self.exportToFile = function () {
                 const endpoint = params.endpoint();
