@@ -7,6 +7,18 @@ define(
         'webapi/AuthAPI',
         'databindings'],
     function (ko, view, config, sharedState, authApi) {
+
+        const resultKeys=['cohort',
+            'cohortInclusion',
+            'cohortInclusionResult',
+            'cohortInclusionStats',
+            'cohortSummaryStats',
+            'cohortGenerationInfo',
+            'cohortFeatures',
+            'cohortFeaturesAnalysisRef',
+            'cohortFeaturesDist',
+            'cohortFeaturesRef']
+
         function createJob(params) {
             var job = params.job;
             if (job) {
@@ -38,15 +50,15 @@ define(
                 const endpoint = params.endpoint();
                 self.exporting(true);
 
-                var results = params.uuid;
-
-                var downloadUrl = $.ajax(endpoint, {
+                $.ajax(endpoint, {
                     success: function (response, status, headers) {
                         var file = new Blob([JSON.stringify(response)]);
 
-                        var filename = (response.name ? response.name : "cohort") + "." + (results? "results" : "cohort");
+                        var isResultsResponse = Object.keys(response).every((value) => resultKeys.indexOf(value)>=0);
+
+                        var filename = "cohort-definition." + (isResultsResponse ? "results" : "cohort");
                         // Get the filename from the header
-                        var contentDispositionHeader = downloadUrl.getResponseHeader("Content-Disposition");
+                        var contentDispositionHeader = headers.getResponseHeader("content-disposition");
                         if(contentDispositionHeader != null) {
                             var filenameIndex = contentDispositionHeader.indexOf("=");
                             if(filenameIndex != null) {

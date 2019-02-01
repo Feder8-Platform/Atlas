@@ -51,7 +51,7 @@
                                     ],
                                     columns: [
                                             { title: 'Selected', class:'text-center', render: function() { return renderCheckbox('selected', true); } },
-                                            { title: 'Cohort Definition',  render: $component.renderCohortDefinitionLink },
+                                            { title: ($component.type === 'definition' ? 'Cohort Definition' : 'Cohort Results'),  render: $component.renderCohortDefinitionLink },
                                             { title: 'Version', data: 'version', render: renderVersion }
                                     ]
                             },
