@@ -173,6 +173,8 @@ define([
             var refreshPromise = null;
             var id;
 
+            self.close();
+
             $.ajax({
                 url: endpoint,
                 method: "POST",
@@ -185,22 +187,17 @@ define([
                     }
                     if (config.userAuthenticationEnabled) {
                         refreshPromise = authApi.loadUserInfo();
-                    }
-                    id = result.id;
-                }
-            })
-                .always(function(){
-
-                    self.close();
-                    if(refreshPromise === null){
-                        self.importing(false);
-                        params.callback(id);
-                    } else {
                         refreshPromise.then(function () {
                             self.importing(false);
                             params.callback(id);
                         })
                     }
+                    id = result.id;
+                    params.callback(id);
+                }
+            })
+                .always(function(){
+                    self.importing(false);
             });
         }
 
