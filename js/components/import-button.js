@@ -76,6 +76,10 @@ define([
             if (!value && document.getElementById('cohortInput')) {
                 document.getElementById('cohortInput').value = '';
             }
+            if(!value && self.id){
+                self.importing = false;
+                params.callback(self.id);
+            }
         });
 
         self.show = function(){
@@ -188,13 +192,16 @@ define([
                     if (config.userAuthenticationEnabled) {
                         refreshPromise = authApi.loadUserInfo();
                         refreshPromise.then(function () {
-                            params.callback(id);
+                            self.id = id;
+                            self.close();
                         })
                     } else {
-                        params.callback(id);
+                        self.id = id;
+                        self.close();
                     }
                 },
                 error: function () {
+                    self.id = null;
                     self.close();
                 }
             })
