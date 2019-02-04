@@ -149,6 +149,7 @@ define([
             }
             let endpoint;
             let data;
+            self.close();
             if(self.currentTab() === "listTab"){
                 endpoint = params.selectUrl();
                 data = JSON.stringify(self.cohortDefinitions().filter(definition => definition.selected())[0]);
@@ -175,7 +176,6 @@ define([
         function upload(endpoint, data){
             var refreshPromise = null;
             var id;
-            self.close();
             self.model.currentView('loading');
 
             $.ajax({
