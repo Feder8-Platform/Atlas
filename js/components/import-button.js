@@ -179,6 +179,8 @@ define([
                 contentType: 'application/json',
                 data: data,
                 success: function (result) {
+                    self.importing(false);
+                    self.close();
                     if(self.job) {
                         self.job().status(result.status || "COMPLETE");
                         sharedState.jobListing.queue(self.job());
@@ -191,12 +193,12 @@ define([
                     }
                     id = result.id;
                     params.callback(id);
-                }
-            })
-                .always(function(){
+                },
+                error: function () {
                     self.importing(false);
                     self.close();
-            });
+                }
+            })
         }
 
         self.drop = function(data, event){
