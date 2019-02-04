@@ -77,7 +77,7 @@ define([
                 document.getElementById('cohortInput').value = '';
             }
             if(!value && self.id){
-                self.importing = false;
+                self.importing(false);
                 params.callback(self.id);
             }
         });
@@ -220,10 +220,6 @@ define([
         self.toggleInDropZone = function(e){
             e.preventDefault();
             self.draggedOver(!self.draggedOver());
-        }
-
-        self.dispose = function() {
-            self.close();
         }
     }
     var component = {
