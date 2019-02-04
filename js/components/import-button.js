@@ -9,6 +9,8 @@ define([
 
         var self = this;
 
+        self.model = params.model;
+
         self.showImportLightBox = ko.observable(false);
         self.content = ko.observable();
         self.draggedOver = ko.observable(false);
@@ -75,10 +77,6 @@ define([
         self.showImportLightBox.subscribe(function(value) {
             if (!value && document.getElementById('cohortInput')) {
                 document.getElementById('cohortInput').value = '';
-            }
-            if(!value && self.id){
-                self.importing(false);
-                params.callback(self.id);
             }
         });
 
@@ -177,6 +175,8 @@ define([
         function upload(endpoint, data){
             var refreshPromise = null;
             var id;
+            self.close();
+            self.model.currentView('loading');
 
             $.ajax({
                 url: endpoint,
@@ -185,6 +185,7 @@ define([
                 data: data,
                 success: function (result) {
                     id = result.id;
+                    self.importing(false);
                     if(self.job) {
                         self.job().status(result.status || "COMPLETE");
                         sharedState.jobListing.queue(self.job());
@@ -192,17 +193,17 @@ define([
                     if (config.userAuthenticationEnabled) {
                         refreshPromise = authApi.loadUserInfo();
                         refreshPromise.then(function () {
-                            self.id = id;
-                            self.close();
+                            self.model.currentView('cohort-definition-manager');
+                            params.callback(id);
                         })
                     } else {
-                        self.id = id;
-                        self.close();
+                        self.model.currentView('cohort-definition-manager');
+                        params.callback(id);
                     }
                 },
                 error: function () {
-                    self.id = null;
                     self.close();
+                    self.model.currentView('cohort-definitions');
                 }
             })
         }

@@ -409,7 +409,7 @@
 								<export-button params="{job: $component.createExportJobDetail($data), multiSelect: true, endpoint: $component.getGenerationDataEndpoint($data), dropup: $index() > 0 && $index() == $root.cohortDefinitionSourceInfo().length-1, disabled: !$component.hasExportCohortDefinitionGenerationResultsRights($data)}" data-bind="visible:!$component.isSourceRunning($data) && isValid()"></export-button>
 							</td>
 							<td>
-								<import-button params="{job: $component.createImportJobDetail($data), name: 'Import results', type: 'results', importUrl: $component.getImportDataEndpoint($data), selectUrl: $component.getSelectDataEndpoint($data), fileUrl: $component.getFileDataEndpoint($data), callback: function(){$component.getSourceInfo($data.sourceKey).status('PENDING');$component.pollForInfo()}}" data-bind="visible:!$component.isSourceRunning($data)"></import-button>
+								<import-button params="{job: $component.createImportJobDetail($data), name: 'Import results', type: 'results', importUrl: $component.getImportDataEndpoint($data), selectUrl: $component.getSelectDataEndpoint($data), fileUrl: $component.getFileDataEndpoint($data), callback: function(){$component.getSourceInfo($data.sourceKey).status('PENDING');$component.pollForInfo()}, model:$component.model}" data-bind="visible:!$component.isSourceRunning($data)"></import-button>
 							</td>
 						</tr>
 					</tbody>
