@@ -84,6 +84,7 @@ define([
         }
 
         self.close = function(){
+            self.importing(false)
             self.showImportLightBox(false);
         }
 
@@ -180,8 +181,6 @@ define([
                 data: data,
                 success: function (result) {
                     id = result.id;
-                    self.importing(false);
-                    self.close();
                     if(self.job) {
                         self.job().status(result.status || "COMPLETE");
                         sharedState.jobListing.queue(self.job());
@@ -196,7 +195,6 @@ define([
                     }
                 },
                 error: function () {
-                    self.importing(false);
                     self.close();
                 }
             })
@@ -215,6 +213,10 @@ define([
         self.toggleInDropZone = function(e){
             e.preventDefault();
             self.draggedOver(!self.draggedOver());
+        }
+
+        self.dispose = function() {
+            self.close();
         }
     }
     var component = {
