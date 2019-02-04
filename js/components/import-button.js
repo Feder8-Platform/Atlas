@@ -149,7 +149,6 @@ define([
             }
             let endpoint;
             let data;
-            self.close();
             if(self.currentTab() === "listTab"){
                 endpoint = params.selectUrl();
                 data = JSON.stringify(self.cohortDefinitions().filter(definition => definition.selected())[0]);
@@ -176,36 +175,39 @@ define([
         function upload(endpoint, data){
             var refreshPromise = null;
             var id;
-            self.model.currentView('loading');
+            self.close();
+            setTimeout(function(){
+                self.model.currentView('loading');
 
-            $.ajax({
-                url: endpoint,
-                method: "POST",
-                contentType: 'application/json',
-                data: data,
-                success: function (result) {
-                    id = result.id;
-                    self.importing(false);
-                    if(self.job) {
-                        self.job().status(result.status || "COMPLETE");
-                        sharedState.jobListing.queue(self.job());
-                    }
-                    if (config.userAuthenticationEnabled) {
-                        refreshPromise = authApi.loadUserInfo();
-                        refreshPromise.then(function () {
+                $.ajax({
+                    url: endpoint,
+                    method: "POST",
+                    contentType: 'application/json',
+                    data: data,
+                    success: function (result) {
+                        id = result.id;
+                        self.importing(false);
+                        if(self.job) {
+                            self.job().status(result.status || "COMPLETE");
+                            sharedState.jobListing.queue(self.job());
+                        }
+                        if (config.userAuthenticationEnabled) {
+                            refreshPromise = authApi.loadUserInfo();
+                            refreshPromise.then(function () {
+                                self.model.currentView('cohort-definition-manager');
+                                params.callback(id);
+                            })
+                        } else {
                             self.model.currentView('cohort-definition-manager');
                             params.callback(id);
-                        })
-                    } else {
-                        self.model.currentView('cohort-definition-manager');
-                        params.callback(id);
+                        }
+                    },
+                    error: function () {
+                        self.close();
+                        self.model.currentView('cohort-definitions');
                     }
-                },
-                error: function () {
-                    self.close();
-                    self.model.currentView('cohort-definitions');
-                }
-            })
+                })
+            }, 1500)
         }
 
         self.drop = function(data, event){
