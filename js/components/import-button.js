@@ -179,6 +179,7 @@ define([
                 contentType: 'application/json',
                 data: data,
                 success: function (result) {
+                    id = result.id;
                     self.importing(false);
                     self.close();
                     if(self.job) {
@@ -190,9 +191,9 @@ define([
                         refreshPromise.then(function () {
                             params.callback(id);
                         })
+                    } else {
+                        params.callback(id);
                     }
-                    id = result.id;
-                    params.callback(id);
                 },
                 error: function () {
                     self.importing(false);
