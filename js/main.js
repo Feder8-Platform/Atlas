@@ -33,7 +33,7 @@ const localRefs = {
 };
 
 // set 'optional' path prior to first call to require
-requirejs.config({paths: {"optional": "plugins/optional", "text": "plugins/text"}});
+requirejs.config({waitSeconds: 30, paths: {"optional": "plugins/optional", "text": "plugins/text"}});
 
 require([
 	'./settings',

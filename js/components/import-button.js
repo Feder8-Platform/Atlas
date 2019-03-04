@@ -9,6 +9,8 @@ define([
 
         var self = this;
 
+        self.model = params.model;
+
         self.showImportLightBox = ko.observable(false);
         self.content = ko.observable();
         self.draggedOver = ko.observable(false);
@@ -84,6 +86,7 @@ define([
         }
 
         self.close = function(){
+            self.importing(false)
             self.showImportLightBox(false);
         }
 
@@ -172,36 +175,39 @@ define([
         function upload(endpoint, data){
             var refreshPromise = null;
             var id;
+            self.close();
+            setTimeout(function(){
+                self.model.currentView('loading');
 
-            $.ajax({
-                url: endpoint,
-                method: "POST",
-                contentType: 'application/json',
-                data: data,
-                success: function (result) {
-                    if(self.job) {
-                        self.job().status(result.status || "COMPLETE");
-                        sharedState.jobListing.queue(self.job());
-                    }
-                    if (config.userAuthenticationEnabled) {
-                        refreshPromise = authApi.loadUserInfo();
-                    }
-                    id = result.id;
-                }
-            })
-                .always(function(){
-
-                    self.close();
-                    if(refreshPromise === null){
+                $.ajax({
+                    url: endpoint,
+                    method: "POST",
+                    contentType: 'application/json',
+                    data: data,
+                    success: function (result) {
+                        id = result.id;
                         self.importing(false);
-                        params.callback(id);
-                    } else {
-                        refreshPromise.then(function () {
-                            self.importing(false);
+                        if(self.job) {
+                            self.job().status(result.status || "COMPLETE");
+                            sharedState.jobListing.queue(self.job());
+                        }
+                        if (config.userAuthenticationEnabled) {
+                            refreshPromise = authApi.loadUserInfo();
+                            refreshPromise.then(function () {
+                                self.model.currentView('cohort-definition-manager');
+                                params.callback(id);
+                            })
+                        } else {
+                            self.model.currentView('cohort-definition-manager');
                             params.callback(id);
-                        })
+                        }
+                    },
+                    error: function () {
+                        self.close();
+                        self.model.currentView('cohort-definitions');
                     }
-            });
+                })
+            }, 1500)
         }
 
         self.drop = function(data, event){
