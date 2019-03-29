@@ -40,6 +40,7 @@ define(
       }
 
       aggregateRoutes() {
+        let pattern = /^[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*$/g;
         const routes = this.pages.reduce((routes, page) => {
           return {
             ...routes,
@@ -52,7 +53,10 @@ define(
 						if (this.onLoginSubscription) {
 							this.onLoginSubscription.dispose();
             }
-						const handler = routes[key].handler.bind(null, ...args);
+            const handler = routes[key].handler.bind(null, ...args);
+            if(args.length > 0 && pattern.test(args[0])) {
+              authApi.token(null);
+            }
 						routes[key].checkPermission()
 							.then(() => handler())
 							.catch((ex) => {
@@ -77,7 +81,6 @@ define(
 						this.schedulePageUpdateOnLogin(this.activeRouteHandler);
 					}
 				});
-        
         return routesWithRefreshedToken;
       }
 
