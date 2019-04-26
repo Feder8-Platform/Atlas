@@ -160,7 +160,7 @@ define([
                 reader.onload = function (evt) {
                     endpoint = params.fileUrl();
                     data = evt.target.result;
-                    cohortDefinitionJson = JSON.parse(data);
+                    var cohortDefinitionJson = JSON.parse(data);
                     if(cohortDefinitionJson["name"] == null && cohortDefinitionJson["ConceptSets"] != null) {
                         data = JSON.stringify({
                             expressionType: "SIMPLE_EXPRESSION",
