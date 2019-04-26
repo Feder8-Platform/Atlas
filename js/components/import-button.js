@@ -35,6 +35,7 @@ define([
             self.loadingDefinitionsToImport(true);
             $.ajax(params.importUrl(), {
                 contentType: 'application/json',
+                timeout: 5000,
                 success: function (data) {
                     var elements = []
 
@@ -158,14 +159,14 @@ define([
                 reader.readAsText(input.files[0]);
                 reader.onload = function (evt) {
                     endpoint = params.fileUrl();
-                    if(self.type === 'definition') {
+                    data = evt.target.result;
+                    cohortDefinitionJson = JSON.parse(data);
+                    if(cohortDefinitionJson["name"] == null && cohortDefinitionJson["ConceptSets"] != null) {
                         data = JSON.stringify({
                             expressionType: "SIMPLE_EXPRESSION",
                             name: input.files[0].name.replace('.cohort', '').split('_').join(' '),
                             expression: evt.target.result
                         });
-                    } else {
-                        data = evt.target.result;
                     }
                     upload(endpoint, data);
                 };
