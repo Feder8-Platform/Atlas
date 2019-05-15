@@ -2,8 +2,8 @@ define([
 	'knockout',
 	'text!./cohort-definitions.html',
 	'appConfig',
-	'webapi/AuthAPI',
-	'providers/Page',
+	'services/AuthAPI',
+	'pages/Page',
 	'utils/CommonUtils',
 	'pages/cohort-definitions/const',
 	'databindings',
@@ -68,7 +68,7 @@ define([
         isValid() {
             return (config.userAuthenticationEnabled && this.isAuthenticated() && authApi.isPermittedImportCohortDefinition()) || !config.userAuthenticationEnabled;
         }
-		
+
 	}
 
 	commonUtils.build('cohort-definitions', CohortDefinitions, view);

@@ -1,11 +1,13 @@
 define([
 	'knockout',
 	'text!./included-conceptsets.html',
-	'providers/Component',
+	'components/Component',
   'utils/CommonUtils',
   'atlas-state',
-	'services/ConceptSet',
-  './included-conceptsets-badge'
+  'services/ConceptSet',
+  'lodash',
+  './included-conceptsets-badge',
+  'components/empty-state',
 ], function (
 	ko,
 	view,
@@ -13,6 +15,7 @@ define([
   commonUtils,
   sharedState,
   conceptSetService,
+  lodash,
 ) {
 	class IncludedConceptsets extends Component {
 		constructor(params) {
@@ -20,6 +23,9 @@ define([
       this.model = params.model;
       this.ancestorsModalIsShown = ko.observable(false);
       this.ancestors = ko.observableArray([]);		
+			this.loading = ko.pureComputed(() => {
+				return this.model.loadingSourcecodes() || this.model.loadingIncluded();
+			});
       this.showAncestorsModal = conceptSetService.getAncestorsModalHandler({
         model: params.model,
         ancestors: this.ancestors,
@@ -42,10 +48,7 @@ define([
         data: 'CONCEPT_CODE'
       }, {
         data: 'CONCEPT_NAME',
-        render: function (s, p, d) {
-          var valid = d.INVALID_REASON_CAPTION == 'Invalid' ? 'invalid' : '';
-          return '<a class="' + valid + '" href=\"#/concept/' + d.CONCEPT_ID + '\">' + d.CONCEPT_NAME + '</a>';
-        }
+        render: commonUtils.renderLink,
       }, {
         data: 'CONCEPT_CLASS_ID'
       }, {
@@ -106,10 +109,15 @@ define([
           }
         }]
       };
+
+      // Triggers parallel load of subset of Ancestors only for current page - to display data ASAP
+      // while the query for full ancestors list is being executed in background
+      // Per: https://github.com/OHDSI/Atlas/pull/614#issuecomment-383050990
       this.includedDrawCallback = conceptSetService.getIncludedConceptSetDrawCallback(this);
 
-      // on activate
-      this.model.loadIncluded();
+      // data load takes place in "Model.loadConceptSet" which is triggered by "router.js"
+      // or in "Model.onCurrentConceptSetModeChanged" which is triggered by tab switch
+      this.model.resolveConceptSetExpression().then(() => this.model.onCurrentConceptSetModeChanged(this.model.currentConceptSetMode()));
     }
 
 	}

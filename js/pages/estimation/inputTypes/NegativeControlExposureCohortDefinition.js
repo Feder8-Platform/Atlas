@@ -1,10 +1,11 @@
-define(function (require, exports) {
-
-    var ko = require('knockout');
-
-	function NegativeControlExposureCohortDefinition(data) {
-		var self = this;
-		data = data || {};
+define([
+	'knockout',
+], function (
+	ko
+) {
+	class NegativeControlExposureCohortDefinition {
+		constructor(data = {}) {
+		}
 	}
 	
 	return NegativeControlExposureCohortDefinition;

@@ -1,53 +1,62 @@
 define([
 	'knockout',
 	'text!./user-bar.html',
+	'utils/AutoBind',
 	'appConfig',
 	'atlas-state',
-	'providers/Component',
+	'components/Component',
 	'utils/CommonUtils',
-	'webapi/AuthAPI',
+	'services/AuthAPI',
+	'services/JobDetailsService',
+	'services/MomentAPI',
+	'lodash',
+	'services/Poll',
 	'less!./user-bar.less'
-], function (
-	ko,
-	view,
-	appConfig,
-	state,
-	Component,
-	commonUtils,
-	authApi
-) {
+], function (ko,
+			view,
+			AutoBind,
+			appConfig,
+			state,
+			Component,
+			commonUtils,
+			authApi,
+			jobDetailsService,
+			momentApi,
+			lodash,
+			PollService,
+		) {
 	class UserBar extends Component {
 		constructor(params) {
-			super(params);			
+			super(params);
 			this.model = params.model;
 			this.appConfig = appConfig;
 			this.token = authApi.token;
-			this.tokenExpired = authApi.tokenExpired;    
-			this.authLogin = authApi.subject;		
-			this.pollInterval = null;
-			this.isLoggedIn = ko.computed(() => {
-				return authApi.isAuthenticated();
-			});
+			this.tokenExpired = authApi.tokenExpired;
+			this.authLogin = authApi.subject;
+			this.pollId = null;
 			this.loading = params.model.loading;
+			this.signInOpened = params.model.signInOpened;
+			this.jobListing = state.jobListing;
+			this.sortedJobListing = ko.computed(() => lodash.sortBy(this.jobListing(), el => -1 * el.executionId));
+			this.lastViewedTime=null;
+			this.permissionCheckWarningShown = false;
 
-			this.startPolling = () => {
-				this.pollInterval = setInterval(this.updateJobStatus, appConfig.pollInterval);
-			}
-
-			this.stopPolling = () => {
-				clearInterval(this.pollInterval);
-			}
-
-			this.isLoggedIn.subscribe((isLoggedIn) => {
-				if (isLoggedIn) {
-					this.startPolling();
+			this.jobModalOpened = ko.observable(false);
+			this.jobModalOpened.subscribe(show => {
+				if (authApi.isPermittedPostViewedNotifications()){
+					if (!show) {
+						jobDetailsService.setLastViewedTime(this.lastViewedTime);
+						this.jobListing().forEach(j => {
+							j.viewed(true);
+						});
+						this.jobListing.valueHasMutated();
+					} else {
+						this.lastViewedTime = Date.now()
+					}
 				} else {
-					this.stopPolling();
+					console.warn('There isn\'t permission to post viewed notification');
 				}
 			});
-			
-			this.showJobModal = ko.observable(false);
-			this.jobListing = state.jobListing;
 
 			this.jobNotificationsPending = ko.computed(() => {
 				var unviewedNotificationCount = this.jobListing().filter(j => {
@@ -56,6 +65,20 @@ define([
 				return unviewedNotificationCount;
 			});
 
+			this.isLoggedIn = ko.computed(() => {
+				return authApi.isAuthenticated();
+			});
+			this.isLoggedIn.subscribe((isLoggedIn) => {
+				if (isLoggedIn) {
+					this.start();
+				} else {
+					this.stopPolling();
+				}
+			});
+			if (this.isLoggedIn() || !appConfig.userAuthenticationEnabled) {
+				this.start()
+			}
+		}
 
             this.errorNotifications = state.errorNotifications;
             this.errorNotificationsPending = ko.computed(() => {
@@ -68,70 +91,89 @@ define([
 			this.clearJobNotifications = this.clearJobNotifications.bind(this);
 			this.clearJobNotificationsPending = this.clearJobNotificationsPending.bind(this);
 
+		start() {
+			if (authApi.isPermittedGetViewedNotifications()) {
+				jobDetailsService.getLastViewedTime()
+					.then(({data}) => {
+						this.lastViewedTime = new Date(data);
             this.clearErrorNotifications = this.clearErrorNotifications.bind(this);
             this.clearErrorNotificationsPending = this.clearErrorNotificationsPending.bind(this);
 
 			if (!appConfig.userAuthenticationEnabled) {
-				this.startPolling();
+						this.startPolling();
+					})
+					.catch(() => {
+							console.warn('The server error occurred while getting viewed notifications');
+					});
+			} else {
+				console.warn('There isn\'t permission to get viewed notifications');
 			}
 		}
 
-		updateJobStatus () {
-			if (this.jobListing().length > 0) {
-				this.jobListing().forEach(job => {
-					if (job.isComplete() || job.isFailed()) {
-						return;
-					}
-					
-					if (job.progressUrl) {
-						$.ajax(job.progressUrl, {
-							context: job,
-							success: (progressData) => {
-								if (job.progress() != progressData.progress) {
-									var currentStatus = job.getStatusFromResponse(progressData);
-									job.status(currentStatus);
-									job.viewed(false);
-									this.jobListing.valueHasMutated();
-								}
-							}
-						});
-					}
+		startPolling() {
+			this.pollId = PollService.add({
+				callback: () => this.updateJobStatus(),
+				interval: appConfig.pollInterval,
+			});
+		};
 
-					if (job.statusUrl) {
-						$.ajax(job.statusUrl, {
-							context: job,
-							success: (statusData) => {
-								var currentStatus = job.getStatusFromResponse(statusData);
-								//console.log(job.executionUniqueId() + "::" + currentStatus);
-								if (job.status() != currentStatus) {
-									job.status(currentStatus);
-									job.viewed(false);
-									this.jobListing.valueHasMutated();
-								}
+		stopPolling() {
+			PollService.stop(this.pollId);
+		};
+
+		getExisting(n) {
+			return this.jobListing().find(j => j.executionId === n.executionId);
+		}
+
+		async updateJobStatus() {
+			if (authApi.isPermittedGetAllNotifications()) {
+				try {
+					const notifications = await jobDetailsService.list();
+					notifications.data.forEach(n => {
+						let job = this.getExisting(n);
+
+						const endDate = (n.endDate ? n.endDate : Date.now());
+						const duration = n.startDate ? momentApi.formatDuration(endDate - n.startDate) : '';
+						const displayedEndDate = n.endDate ? momentApi.formatDateTime(new Date(n.endDate)) : '';
+
+						if (job) {
+							if (job.status() !== n.status) {
+								job.status(n.status);
+								job.viewed(false);
+								job.duration = duration;
+								job.endDate = displayedEndDate;
+								this.jobListing.valueHasMutated();
 							}
-						});
-					}
-				});
+						} else {
+							job = {
+								type: n.jobInstance.name,
+								name: n.jobParameters.jobName,
+								status: ko.observable(n.status),
+								executionId: n.executionId,
+								viewed: ko.observable(n.startDate && this.lastViewedTime && (n.endDate || n.startDate) < this.lastViewedTime),
+								url: jobDetailsService.getJobURL(n),
+								executionUniqueId: ko.pureComputed(function () {
+									return job.type + "-" + job.executionId;
+								}),
+								duration,
+								endDate: displayedEndDate,
+							};
+							this.jobListing.push(job);
+							this.jobListing.valueHasMutated();
+
+						}
+					});
+				} catch (e) {
+					console.warn('The server error occurred while getting all notifications');
+				}
+			} else if (!this.permissionCheckWarningShown) {
+				console.warn('There isn\'t permission to get all notifications');
+				this.permissionCheckWarningShown = true;
 			}
 		};
 
-		calculateProgress (j) {
-			return Math.round(j.progress() / j.progressMax * 100) + '%';
-		}
-		
-		clearJobNotifications () {
-			this.jobListing.removeAll();
-		}
-
-		clearJobNotificationsPending () {
-			this.jobListing().forEach(j => {
-				j.viewed(true);
-			});
-			this.jobListing.valueHasMutated();
-		}
-		
-		jobNameClick (j) {
-			$('#jobModal').modal('hide');
+		jobNameClick(j) {
+			this.jobModalOpened(false);
 			window.location = '#/' + j.url;
 		}
 

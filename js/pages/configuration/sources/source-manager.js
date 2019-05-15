@@ -1,15 +1,18 @@
 define([
   'knockout',
   'text!./source-manager.html',
-  'providers/Component',
-  'providers/AutoBind',
+  'components/Component',
+  'utils/AutoBind',
   'utils/CommonUtils',
   'appConfig',
+  'services/Vocabulary',
   'assets/ohdsi.util',
-  'webapi/SourceAPI',
+  'services/SourceAPI',
   'services/role',
   'lodash',
-  'webapi/AuthAPI',
+  'services/AuthAPI',
+  'atlas-state',
+  'pages/configuration/const',
   'components/ac-access-denied',
   'less!./source-manager.less',
   'components/heading',
@@ -21,18 +24,22 @@ define([
     AutoBind,
     commonUtils,
     config,
+    vocabularyProvider,
     ohdsiUtil,
     sourceApi,
     roleService,
     lodash,
-    authApi
+    authApi,
+    sharedState,
+    constants
   ) {
 
   var defaultDaimons = {
     CDM: { tableQualifier: '', enabled: false, priority: 0, sourceDaimonId: null },
     Vocabulary: { tableQualifier: '', enabled: false, priority: 0, sourceDaimonId: null },
     Results: { tableQualifier: '', enabled: false, priority: 0, sourceDaimonId: null },
-    Evidence: { tableQualifier: '', enabled: false, priority: 0, sourceDaimonId: null },
+    CEM: { tableQualifier: '', enabled: false, priority: 0, sourceDaimonId: null },
+    CEMResults: { tableQualifier: '', enabled: false, priority: 0, sourceDaimonId: null },
     Temp: { tableQualifier: '', enabled: false, priority: 0, sourceDaimonId: null },
   };
 
@@ -61,14 +68,14 @@ define([
 
     var data = data || {};
 
-    this.name = ko.observable(data.sourceName || null);
+    this.name = ko.observable(data.sourceName || "New Source");
     this.key = ko.observable(data.sourceKey || null);
     this.dialect = ko.observable(data.sourceDialect || null);
     this.connectionString = ko.observable(data.connectionString || null);
     this.username = ko.observable(data.username || null);
     this.password = ko.observable(data.password || null);
     this.daimons = ko.observableArray(mapDaimons(data.daimons));
-    this.keytabName = ko.observable(data.keytabName);
+    this.keyfileName = ko.observable(data.keyfileName);
     this.krbAuthMethod = ko.observable(data.krbAuthMethod);
     this.krbAdminServer = ko.observable(data.krbAdminServer);
 
@@ -107,10 +114,13 @@ define([
         return authApi.isPermittedEditSource(this.selectedSourceId());
       });
 
+      this.isNameCorrect = ko.computed(() => {
+          return this.selectedSource() && this.selectedSource().name();
+      });
+
       this.canSave = ko.pureComputed(() => {
         return (
-          this.selectedSource()
-          && this.selectedSource().name()
+          this.isNameCorrect()
           && this.selectedSource().key()
           && this.selectedSource().connectionString()
           && this.canEdit()
@@ -131,7 +141,7 @@ define([
 
       this.options.dialectOptions = [
         { name: 'PostgreSQL', id: 'postgresql' },
-        { name: 'SQL server', id: 'sqlserver' },
+        { name: 'SQL server', id: 'sql server' },
         { name: 'Oracle', id: 'oracle' },
         { name: 'Amazon Redshift', id: 'redshift' },
         { name: 'Google BigQuery', id: 'bigquery' },
@@ -141,13 +151,12 @@ define([
       ];
 
       this.sourceCaption = ko.computed(() => {
-        return (this.model.currentSource() == null || this.model.currentSource().key() == null) ? 'New source' :
-          'Source ' + this.model.currentSource().name();
+        return (this.model.currentSource() == null || this.model.currentSource().key() == null) ? 'New source' : 'Source ' + this.model.currentSource().name();
       });
       this.isKrbAuth = ko.computed(() => {
           return this.impalaConnectionStringIncludes("AuthMech=1");
       });
-        
+
       this.krbHostFQDN = ko.computed(() => {
 
         if (this.isImpalaDS() && this.isNonEmptyConnectionString()) {
@@ -180,14 +189,18 @@ define([
       this.init();
 
       this.fieldsVisibility = {
-        username: ko.computed(() => !this.isImpalaDS() || this.isKrbAuth()),
-        password: ko.computed(() => !this.isImpalaDS()),
+        username: ko.computed(() => !this.supportsKeyfileAuth() || this.isKrbAuth()),
+        password: ko.computed(() => !this.supportsKeyfileAuth()),
         krbAuthSettings: this.isKrbAuth,
         showKeytab: ko.computed(() => {
           return this.isKrbAuth() && this.selectedSource().krbAuthMethod() === 'keytab';
         }),
         krbFileInput: ko.computed(() => {
-          return this.isKrbAuth() && (typeof this.selectedSource().keytabName() !== 'string' || this.selectedSource().keytabName().length === 0);
+          return this.isKrbAuth() && (typeof this.selectedSource().keyfileName() !== 'string' || this.selectedSource().keyfileName().length === 0);
+        }),
+        bigQueryAuthSettings: ko.computed(() => this.isBigQueryDS()),
+        bqFileInput: ko.computed(() => {
+          return this.isBigQueryDS() && (typeof this.selectedSource().keyfileName() !== 'string' || this.selectedSource().keyfileName().length === 0);
         }),
         // warnings
         hostWarning: ko.computed(() => {
@@ -219,8 +232,16 @@ define([
       this.dirtyFlag(new ohdsiUtil.dirtyFlag(this.selectedSource()));
     }
 
+    supportsKeyfileAuth() {
+      return this.isImpalaDS() || this.isBigQueryDS();
+    }
+
     isImpalaDS() {
       return this.selectedSource() && this.selectedSource().dialect() === 'impala';
+    }
+
+    isBigQueryDS() {
+      return this.selectedSource() && this.selectedSource().dialect() === 'bigquery';
     }
 
     isNonEmptyConnectionString() {
@@ -234,12 +255,12 @@ define([
     removeKeytab() {
       $('#keytabFile').val(''); // TODO: create "ref" directive
       this.keytab = null;
-      this.selectedSource().keytabName(null);
+      this.selectedSource().keyfileName(null);
     }
 
     uploadFile(file) {
       this.keytab = file;
-      this.selectedSource().keytabName(file.name)
+      this.selectedSource().keyfileName(file.name)
     }
 
     save() {
@@ -255,21 +276,29 @@ define([
         daimons: ko.toJS(this.selectedSource().daimons()).filter(function(d) { return d.enabled; }).map(function(d) {
           return lodash.omit(d, ['enabled']);
         }),
-        keytabName: this.selectedSource().keytabName(),
+        keyfileName: this.selectedSource().keyfileName(),
         keytab: this.keytab,
       };
       this.loading(true);
       sourceApi.saveSource(this.selectedSourceId(), source)
         .then(() => sourceApi.initSourcesConfig())
+        .then(function (appStatus) {
+            sharedState.appInitializationStatus(appStatus);
+            return vocabularyProvider.getDomains();
+        })
         .then(() => {
           roleService.getList()
             .then((roles) => {
               this.model.roles(roles);
-              this.loading(false);
               this.goToConfigure();
             });
         })
-        .catch(() => { this.loading(false); });
+        .catch(({data}) => {
+          this.loading(false);
+          alert('The Source was not saved. ' +
+            (data !== undefined && data.payload !== undefined && data.payload.message !== undefined ?
+             data.payload.message : 'Please contact your administrator to resolve this issue.'));
+         });
     }
 
     close() {
@@ -282,14 +311,35 @@ define([
       this.goToConfigure();
     }
 
+    hasSelectedPriotirizableDaimons() {
+		const otherSources = sharedState.sources().filter(s => s.sourceId !== this.selectedSource().sourceId);
+		const otherPriotirizableDaimons = lodash.flatten(
+			otherSources.map(s => s.daimons.filter(d => constants.priotirizableDaimonTypes.includes(d.daimonType) && d.sourceDaimonId))
+		);
+		const currenPriotirizableDaimons = this.selectedSource().daimons().filter(d => constants.priotirizableDaimonTypes.includes(d.daimonType) && d.sourceDaimonId);
+		const notSelectedCurrentDaimons = currenPriotirizableDaimons.filter(currentDaimon => {
+			// Daimon of the type with higher priority exists
+			return  otherPriotirizableDaimons.find(otherDaimon => currentDaimon.daimonType === otherDaimon.daimonType && currentDaimon.priority < otherDaimon.priority);
+		});
+		return notSelectedCurrentDaimons.length !== currenPriotirizableDaimons.length;
+    }
+
     delete() {
+      if (this.hasSelectedPriotirizableDaimons()) {
+        alert('Some daimons of this source were given highest priority and are in use by application. Select new top-priority diamons to delete the source');
+        return;
+      }
+
       if (!confirm('Delete source? Warning: deletion can not be undone!')) {
         return;
       }
       this.loading(true);
       sourceApi.deleteSource(this.selectedSourceId())
         .then(sourceApi.initSourcesConfig)
-        .then(() => roleService.getList())
+        .then(function (appStatus) {
+            sharedState.appInitializationStatus(appStatus);
+            return roleService.getList();
+        })
         .then((roles) => {
           this.model.roles(roles);
           this.loading(false);
@@ -317,7 +367,7 @@ define([
         }
       }
     }
-    
+
   }
 
   return commonUtils.build('source-manager', SourceManager, view);

@@ -9,10 +9,14 @@ define(
       }
 
       parseModifiers(val) {
-        const list = [];
+        let list = [];
 
         if (typeof val === 'string') {
           list.push(val);
+        }
+
+        if (typeof val === 'object' && Array.isArray(val)) {
+            list = list.concat(val);
         }
 
         return list;
@@ -64,7 +68,7 @@ define(
             model.modifiers = this.parseModifiers(arguments[1]);
           }
           if (typeof arguments[2] !== 'undefined') {
-            model.modifiers = this.parseExtra(arguments[2]);
+            model.extra = this.parseExtra(arguments[2]);
           }
         }
 

@@ -1,11 +1,11 @@
 define([
 	'knockout',
 	'text!./conceptset-compare.html',
-	'providers/Component',
-	'providers/AutoBind',
+	'components/Component',
+	'utils/AutoBind',
 	'utils/CommonUtils',
-	'providers/Vocabulary',
-  'webapi/CDMResultsAPI',
+	'services/Vocabulary',
+  'services/CDMResultsAPI',
   'jquery',
   'atlas-state',
   'components/modal',
@@ -27,26 +27,34 @@ define([
       this.isModalShown = ko.observable(false);
       this.saveConceptSetFn = params.saveConceptSetFn;
       this.saveConceptSetShow = params.saveConceptSetShow;
-      const currentConceptSetItems = sharedState.selectedConcepts().map((conceptSetItem) => {
-        const item = {
-          concept: conceptSetItem.concept,
-          includeDescendants: conceptSetItem.includeDescendants(),
-          includeMapped: conceptSetItem.includeMapped(),
-          isExcluded: conceptSetItem.isExcluded(),
-        }
-        return item;
-      });
-      this.currentConceptSet = ko.observableArray(currentConceptSetItems);
       this.compareCS1Id = ko.observable(this.model.currentConceptSet().id); // Init to the currently loaded cs
       this.compareCS1Caption = ko.observable(this.model.currentConceptSet().name());
-      this.compareCS1ConceptSet = ko.observableArray(this.currentConceptSet());
+      this.compareCS1ConceptSet = ko.observable(sharedState.selectedConcepts());
+      this.compareCS1ConceptSetExpression = ko.pureComputed(() => {
+        if (this.compareCS1Id === this.model.currentConceptSet().id) {
+          return ko.toJS(sharedState.selectedConcepts());
+        } else {
+          return ko.toJS(this.compareCS1ConceptSet);
+        }
+      });
       this.compareCS2Id = ko.observable(0);
       this.compareCS2Caption = ko.observable();
-      this.compareCS2ConceptSet = ko.observableArray(null);
+      this.compareCS2ConceptSet = ko.observable(null);
+      this.compareCS2ConceptSetExpression = ko.pureComputed(() => {
+        if (this.compareCS2Id === this.model.currentConceptSet().id) {
+          return ko.toJS(sharedState.selectedConcepts());
+        } else {
+          return ko.toJS(this.compareCS2ConceptSet);
+        }
+      })
       this.compareResults = ko.observable();
-      this.compareIds = ko.observable(null);
+      this.comparisonTargets = ko.observable(null);
       this.compareError = ko.pureComputed(() => {
-        return (this.compareCS1Id() == this.compareCS2Id())
+        return (
+          this.compareCS1Id() > 0 &&
+          this.compareCS2Id() > 0 &&
+          (this.compareCS1Id() == this.compareCS2Id())
+        )
       });
       this.compareReady = ko.pureComputed(() => {
         // both are specified & not the same
@@ -84,9 +92,9 @@ define([
         // results was changed. In that case, we do not want to show the
         // current results
         let currentComparisonCriteriaUnchanged = true;
-        if (conceptSetsSpecifiedAndDifferent && this.compareIds()) {
+        if (conceptSetsSpecifiedAndDifferent && this.comparisonTargets()) {
           // Check to see if the comparison crtieria has changed
-          currentComparisonCriteriaUnchanged = (this.compareIds() == (this.compareCS1Id() + "-" + this.compareCS2Id()))
+          currentComparisonCriteriaUnchanged = (ko.toJSON(this.comparisonTargets()) === ko.toJSON(this.getCompareTargets()));
         }
 
         return (conceptSetsSpecifiedAndDifferent && currentComparisonCriteriaUnchanged);
@@ -114,10 +122,15 @@ define([
           data: d => d.conceptCode,
         },
         {
-          data: d => {
-            var valid = true; //d.INVALID_REASON_CAPTION == 'Invalid' ? 'invalid' : '';
-            return '<a class=' + valid + ' href=\'#/concept/' + d.conceptId + '\'>' + d.conceptName + '</a>';
-          },
+          render: (s,p,d) => {
+            const concept = {
+              CONCEPT_ID: d.conceptId,
+              CONCEPT_NAME: d.conceptName,
+              INVALID_REASON_CAPTION: d.invalidReason,
+              STANDARD_CONCEPT: d.standardConcept,
+            };
+            return commonUtils.renderLink(s,p,concept)
+          }
         },
         {
           data: d => d.conceptClassId,
@@ -135,7 +148,7 @@ define([
           data: d => d.vocabularyId,
         },
       ];
-    
+
       this.compareResultsOptions = {
         lengthMenu: [
           [10, 25, 50, 100, -1],
@@ -208,7 +221,7 @@ define([
             }
           }
         })
-  
+
         return resultSources;
       });
       this.recordCountsRefreshing = ko.observable(false);
@@ -227,7 +240,7 @@ define([
 		clearCS1() {
 			this.compareCS1Id(0);
 			this.compareCS1Caption(null);
-			this.compareCS1ConceptSet.removeAll();
+			this.compareCS1ConceptSet(null);
 			this.compareResults(null);
 		}
 
@@ -241,17 +254,21 @@ define([
 		clearCS2() {
 			this.compareCS2Id(0);
 			this.compareCS2Caption(null);
-			this.compareCS2ConceptSet.removeAll();
+			this.compareCS2ConceptSet(null);
 			this.compareResults(null);
     }
-    
+
+    getCompareTargets() {
+      return [{
+				items: this.compareCS1ConceptSetExpression()
+			}, {
+				items: this.compareCS2ConceptSetExpression()
+			}];
+    }
+
 		compareConceptSets() {
 			this.compareLoading(true);
-			const compareTargets = [{
-				items: this.compareCS1ConceptSet()
-			}, {
-				items: this.compareCS2ConceptSet()
-			}];
+			const compareTargets = this.getCompareTargets();
 			vocabularyProvider.compareConceptSet(compareTargets)
 				.then((compareResults) => {
 					const conceptIds = compareResults.map((o, n) => {
@@ -261,7 +278,7 @@ define([
 						.then((rowcounts) => {
 							//this.compareResults(null);
 							this.compareResults(compareResults);
-							this.compareIds(this.compareCS1Id() + "-" + this.compareCS2Id()); // Stash the currently selected concept ids so we can use this to determine when to show/hide results
+							this.comparisonTargets(compareTargets); // Stash the currently selected concept sets so we can use this to determine when to show/hide results
 							this.compareLoading(false);
 						});
 				});
@@ -275,7 +292,7 @@ define([
 			conceptSet.id = 0;
 			conceptSet.name = this.compareNewConceptSetName;
 			const selectedConcepts = [];
-			$.each(dtItems, (item) => {
+			$.each(dtItems, (index, item) => {
 				const concept = {
 					CONCEPT_CLASS_ID: item.conceptClassId,
 					CONCEPT_CODE: item.conceptCode,
@@ -299,7 +316,7 @@ define([
 			this.saveConceptSetFn("#txtNewConceptSetName", conceptSet, selectedConcepts);
 			this.saveConceptSetShow(false);
     }
-    
+
     conceptsetSelected(d) {
 			this.isModalShown(false);
 			vocabularyProvider.getConceptSetExpression(d.id)
@@ -309,23 +326,23 @@ define([
 					this.targetExpression(csExpression.items);
 				});
     }
-    
+
     showSaveNewModal() {
 			this.saveConceptSetShow(true);
     }
 
     refreshRecordCounts(obj, event) {
 			if (event.originalEvent) {
-				// User changed event
+        // User changed event
 				this.recordCountsRefreshing(true);
 				$("#dtConeptManagerRC")
-					.toggleClass("fa-database")
-					.toggleClass("fa-circle-o-notch")
-					.toggleClass("fa-spin");
+					.removeClass("fa-database")
+					.addClass("fa-circle-o-notch")
+					.addClass("fa-spin");
 				$("#dtConeptManagerDRC")
-					.toggleClass("fa-database")
-					.toggleClass("fa-circle-o-notch")
-					.toggleClass("fa-spin");
+					.removeClass("fa-database")
+					.addClass("fa-circle-o-notch")
+					.addClass("fa-spin");
 				var compareResults = this.compareResults();
 				var conceptIds = $.map(compareResults, function (o, n) {
 					return o.conceptId;
@@ -333,15 +350,15 @@ define([
 				cdmResultsAPI.getConceptRecordCount(this.currentResultSource().sourceKey, conceptIds, compareResults)
 					.then((rowcounts) => {
 						this.compareResults(compareResults);
-						this.recordCountsRefreshing(false);
+            this.recordCountsRefreshing(false);
 						$("#dtConeptManagerRC")
-							.toggleClass("fa-database")
-							.toggleClass("fa-circle-o-notch")
-							.toggleClass("fa-spin");
+							.addClass("fa-database")
+							.removeClass("fa-circle-o-notch")
+							.removeClass("fa-spin");
 						$("#dtConeptManagerDRC")
-							.toggleClass("fa-database")
-							.toggleClass("fa-circle-o-notch")
-							.toggleClass("fa-spin");
+							.addClass("fa-database")
+							.removeClass("fa-circle-o-notch")
+							.removeClass("fa-spin");
 					});
 			}
 		}

@@ -1,6 +1,6 @@
 define(
-  (require, factory) => {
-    const { AuthorizedRoute } = require('providers/Route');
+	(require, factory) => {
+    const { AuthorizedRoute } = require('pages/Route');
     function routes(appModel, router) {
       return {        
         '/profiles/?((\w|.)*)': new AuthorizedRoute((path) => {

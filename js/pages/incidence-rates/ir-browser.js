@@ -3,8 +3,8 @@ define([
   'text!./ir-browser.html',
   'appConfig',
   'services/IRAnalysis',
-  'webapi/AuthAPI',
-  'providers/Page',
+  'services/AuthAPI',
+  'pages/Page',
   'utils/CommonUtils',
   './const',
   'components/ac-access-denied',
@@ -36,7 +36,9 @@ define([
       });
       
       // startup actions
-      this.refresh();
+      if (this.isAuthenticated() && this.canReadIRs()) {
+        this.refresh();
+      }
     }
 
     refresh() {
@@ -50,11 +52,11 @@ define([
     };
 
     onAnalysisSelected(d) {
-      document.location = constants.apiPaths.analysis(d.id);
+      commonUtils.routeTo(constants.apiPaths.analysis(d.id));
     };
 
     newAnalysis() {
-      document.location = constants.apiPaths.createAnalysis();
+      commonUtils.routeTo(constants.apiPaths.createAnalysis());
     };
 
   }

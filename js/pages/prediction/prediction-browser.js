@@ -3,13 +3,13 @@ define([
 	'text!./prediction-browser.html',
 	'appConfig',
 	'./const',
-	'webapi/MomentAPI',
+	'services/MomentAPI',
 	'./PermissionService',
-	'providers/Page',
-	'providers/AutoBind',
+	'pages/Page',
 	'utils/CommonUtils',
+    'utils/DatatableUtils',
 	'services/Prediction',
-	'components/cohortcomparison/ComparativeCohortAnalysis',
+	'services/AuthAPI',
 	'faceted-datatable',
 	'components/ac-access-denied',
 	'components/heading',
@@ -23,39 +23,39 @@ define([
 	momentApi,
 	PermissionService,
 	Page,
-	AutoBind,
 	commonUtils,
+    datatableUtils,
 	PredictionService,
+	authAPI,
 ) {
-  class PredictionBrowser extends AutoBind(Page) {
+  class PredictionBrowser extends Page {
 		constructor(params) {
 			super(params);
 			this.model = params.model;
 			this.reference = ko.observableArray();
 			this.loading = ko.observable(false);
+			this.config = config;
 
 			this.canReadPredictions = PermissionService.isPermittedList;
 			this.canCreatePrediction = PermissionService.isPermittedCreate;
 
+			this.isAuthenticated = authAPI.isAuthenticated;
+			this.hasAccess = authAPI.isPermittedReadPlps;
+
 			this.options = {
 				Facets: [
-					{
-						'caption': 'Last Modified',
-						'binding': function (o) {
-							var daysSinceModification = (new Date().getTime() - new Date(o.modified).getTime()) / 1000 / 60 / 60 / 24;
-							if (daysSinceModification < .01) {					
-								return 'Just Now';
-							} else if (daysSinceModification < 1) {					
-								return 'Within 24 Hours';
-							} else if (daysSinceModification < 7) {
-								return 'This Week';
-							} else if (daysSinceModification < 14) {
-								return 'Last Week';
-							} else {
-								return '2+ Weeks Ago';
-							}
-						}
-					}
+                    {
+                        'caption': 'Created',
+                        'binding': (o) => datatableUtils.getFacetForDate(o.createdDate)
+                    },
+                    {
+                        'caption': 'Updated',
+                        'binding': (o) => datatableUtils.getFacetForDate(o.modifiedDate)
+                    },
+                    {
+                        'caption': 'Author',
+                        'binding': datatableUtils.getFacetForCreatedBy,
+                    },
 				]
 			};
 			
@@ -71,20 +71,22 @@ define([
 				},
 				{
 					title: 'Name',
-					data: d => {
-						return '<span class=\'linkish\'>' + d.name + '</span>';
-					},
+					render: datatableUtils.getLinkFormatter(d => ({
+						link: constants.paths.analysis(d.analysisId),
+						label: d['name']
+					})),
+
 				},
 				{
 					title: 'Created',
-					type: 'date',
+					type: 'datetime-formatted',
 					render: function (s, p, d) {
 						return momentApi.formatDateTimeUTC(d.createdDate);
 					}
 				},
 				{
 					title: 'Modified',
-					type: 'date',
+					type: 'datetime-formatted',
 					render: function (s, p, d) {
 						return momentApi.formatDateTimeUTC(d.modifiedDate);
 					}
@@ -94,7 +96,9 @@ define([
 					data: 'createdBy'
 				}
 			];
+		}
 
+		onPageCreated() {
 			if (this.canReadPredictions()) {
 				this.loading(true);
 				PredictionService.getPredictionList()
@@ -105,12 +109,8 @@ define([
 			}
 		}
 
-		rowClick(d) {
-			document.location = constants.apiPaths.analysis(d.analysisId);
-		}
-
 		newPrediction() {
-			document.location = constants.apiPaths.createAnalysis();
+			document.location = constants.paths.createAnalysis();
 		}
 	}
 

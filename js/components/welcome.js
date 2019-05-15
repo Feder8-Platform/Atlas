@@ -2,16 +2,23 @@ define([
     'knockout',
     'text!./welcome.html',
     'appConfig',
-    'webapi/AuthAPI',
+    'services/AuthAPI',
+	'utils/BemHelper',
+    'less!welcome.less'
 ],
     function (
     ko,
     view,
     appConfig,
-    authApi
+    authApi,
+	BemHelper
     ) {
+    const componentName = 'welcome';
+
     function welcome(params) {
         var self = this;
+        const bemHelper = new BemHelper(componentName);
+		this.classes = bemHelper.run.bind(bemHelper);
         self.token = authApi.token;
         self.setAuthParams = authApi.setAuthParams;
         self.resetAuthParams = authApi.resetAuthParams;
@@ -30,13 +37,18 @@ define([
         });
         self.tokenExpired = authApi.tokenExpired;
         self.isLoggedIn = authApi.isAuthenticated;
+		self.isGoogleIapAuth = ko.computed(() => authApi.authProvider() === authApi.AUTH_PROVIDERS.IAP);
         self.status = ko.computed(function () {
             if (self.isInProgress())
                 return "Please wait...";
             if (self.errorMsg())
                 return self.errorMsg();
             if (self.isLoggedIn()) {
-                return "Logged in as '" + self.login() + "' (exp: " + self.expiration() + ")";
+                if (self.expiration()) {
+                    return "Logged in as '" + self.login() + "' (exp: " + self.expiration() + ")";
+                } else {
+                    return "Logged in as '" + self.login() + "'";
+                }
             }
             return 'Not logged in';
         });
@@ -52,6 +64,22 @@ define([
             return "Bearer " + self.token();
         };
 
+        self.onLoginSuccessful = function(data, textStatus, jqXHR) {
+            self.setAuthParams(jqXHR.getResponseHeader(authApi.TOKEN_HEADER)).then(() => {
+                self.errorMsg(null);
+                self.isBadCredentials(null);
+                self.isInProgress(false);
+            });
+        };
+
+        self.onLoginFailed = function(jqXHR, defaultMessage) {
+            self.isInProgress(false);
+            self.resetAuthParams();
+            self.isBadCredentials(true);
+            const msg = jqXHR.getResponseHeader('x-auth-error');
+            self.errorMsg(msg || defaultMessage);
+        };
+
         self.signinWithLoginPass = function(data) {
             self.isInProgress(true);
             $.ajax({
@@ -61,20 +89,8 @@ define([
                     login: data.elements.lg_username.value,
                     password: data.elements.lg_password.value
                 },
-                success: function (data, textStatus, jqXHR) {
-                    self.setAuthParams(jqXHR.getResponseHeader(authApi.TOKEN_HEADER));
-                    self.errorMsg(null);
-                    self.isBadCredentials(false);
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    self.resetAuthParams();
-                    self.isBadCredentials(true);
-                    var msg = jqXHR.getResponseHeader('x-auth-error');
-                    self.errorMsg(msg || "Bad credentials");
-                },
-                complete: function (data) {
-                    self.isInProgress(false);
-                }
+                success: self.onLoginSuccessful,
+                error: (jqXHR, textStatus, errorThrown) => self.onLoginFailed(jqXHR, 'Bad credentials'),
             });
         };
 
@@ -94,19 +110,8 @@ define([
                     xhrFields: {
                         withCredentials: true
                     },
-                    success: function (data, textStatus, jqXHR) {
-                        self.setAuthParams(jqXHR);
-                        self.errorMsg(null);
-                        self.isBadCredentials(false);
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        self.resetAuthParams();
-                        self.errorMsg("Login failed.");
-                        self.isBadCredentials(true);
-                    },
-                    complete: function (data) {
-                        self.isInProgress(false);
-                    }
+                    success: self.onLoginSuccessful,
+                    error: (jqXHR, textStatus, errorThrown) => self.onLoginFailed(jqXHR, 'Login failed'),
                 });
             } else {
                 document.location = loginUrl;
@@ -133,6 +138,10 @@ define([
                 }
             });
         };
+
+        self.signoutIap = function () {
+            window.location = '/_gcp_iap/clear_login_cookie';
+		}
     }
 
     var component = {
@@ -140,6 +149,6 @@ define([
         template: view
     };
 
-    ko.components.register('welcome', component);
+    ko.components.register(componentName, component);
     return component;
 });

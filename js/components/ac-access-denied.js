@@ -1,7 +1,7 @@
 define([
 	'knockout',
 	'text!./ac-access-denied.html',
-	'providers/Component',
+	'components/Component',
 	'utils/CommonUtils',
 	'forbidden',
 	'unauthenticated',
@@ -16,6 +16,7 @@ define([
 		constructor(params) {
 			super(params);
 			this.isAuthenticated = params.isAuthenticated;
+			this.isPermitted = params.isPermitted || (() => false);
 		}
 	}
 

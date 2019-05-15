@@ -1,10 +1,10 @@
 define([
     'knockout',
     'text!./roles.html',
-    'providers/Component',
-    'providers/AutoBind',
+    'components/Component',
+    'utils/AutoBind',
     'utils/CommonUtils',
-    'webapi/AuthAPI',
+    'services/AuthAPI',
     'atlas-state',
     'databindings',
     'components/ac-access-denied',
@@ -36,11 +36,15 @@ define([
         }
         
         selectRole(data) {
-            document.location = '#/role/' + data.id;
+            commonUtils.routeTo('/role/' + data.id);
         }
 
         newRole() {
-            document.location = '#/role/0'
+            commonUtils.routeTo('/role/0');
+        }
+
+        importRoles() {
+            commonUtils.routeTo('/import/roles');
         }
     }
 

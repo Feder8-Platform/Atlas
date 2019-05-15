@@ -1,7 +1,5 @@
-define(
-    (require, factory) => {
-
-        const momentApi = require('webapi/MomentAPI');
+define(['services/MomentAPI'],
+    (momentApi) => {
 
         const getLinkFormatter = (builder) => (s, p, d) => {
             const {
@@ -11,8 +9,8 @@ define(
             return `<a ${link ? ('href="' + link + '"') : ''}>${label}</a>`;
         };
 
-        const getDateFieldFormatter = (field = 'createdAt') => (s, p, d) => {
-            return momentApi.formatDateTimeUTC(d[field]);
+        const getDateFieldFormatter = (field = 'createdAt', defaultValue = false) => (s, p, d) => {
+            return (defaultValue && d[field]) || d[field] ? momentApi.formatDateTimeUTC(d[field]) : defaultValue;
         };
 
         const getFacetForDate = function(date) {
@@ -36,12 +34,18 @@ define(
 
         const getFacetForCreatedBy = getCreatedByLogin;
 
+        const getFacetForDomain = (domain) => domain !== null ? domain : 'None';
+
+        const renderCountColumn = (value) => value ? value : '...';
+
         return {
             getDateFieldFormatter,
             getFacetForDate,
             getLinkFormatter,
             getCreatedByFormatter,
             getFacetForCreatedBy,
+            renderCountColumn,
+            getFacetForDomain,
         };
     }
 );

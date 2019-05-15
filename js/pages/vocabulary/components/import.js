@@ -1,11 +1,13 @@
 define([
 	'knockout',
 	'text!./import.html',
-	'providers/Component',
-	'providers/AutoBind',
-	'providers/Vocabulary',
+	'components/Component',
+	'utils/AutoBind',
+	'services/Vocabulary',
 	'utils/CommonUtils',
 	'atlas-state',
+	'services/AuthAPI',
+	'../PermissionService',
 	'less!./import.less',
 ], function (
 	ko,
@@ -15,6 +17,8 @@ define([
 	vocabularyProvider,
 	commonUtils,
 	sharedState,
+	AuthAPI,
+	PermissionService,
 ) {
 	class Import extends AutoBind(Component) {
 		constructor(params) {
@@ -22,6 +26,10 @@ define([
 			this.model = params.model;
 			this.loading = ko.observable(false);
 			this.error = ko.observable('');
+
+			this.isAuthenticated = AuthAPI.isAuthenticated;
+			this.isPermittedLookupIds = ko.computed(() => PermissionService.isPermittedLookupIds());
+			this.isPermittedLookupCodes = ko.computed(() => PermissionService.isPermittedLookupCodes());
 		}
 
 		showConceptSet() {

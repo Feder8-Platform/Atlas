@@ -1,17 +1,17 @@
 define([
 	'knockout',
 	'text!./conceptset-manager.html',
-	'providers/Page',
-	'providers/AutoBind',
+	'pages/Page',
+	'utils/AutoBind',
 	'utils/CommonUtils',
 	'appConfig',
 	'./const',
 	'components/conceptset/utils',
-	'providers/Vocabulary',
+	'services/Vocabulary',
 	'conceptsetbuilder/InputTypes/ConceptSet',
 	'atlas-state',
 	'services/ConceptSet',
-	'webapi/AuthAPI',
+	'services/AuthAPI',
 	'databindings',
 	'bootstrap',
 	'faceted-datatable',
@@ -47,24 +47,50 @@ define([
 	class ConceptsetManager extends AutoBind(Page) {
 		constructor(params) {
 			super(params);
-			this.componentParams = params;			
+			this.componentParams = params;
 			this.model = params.model;
+			this.currentConceptSet = this.model.currentConceptSet;
 			this.isOptimizeModalShown = ko.observable(false);
 			this.selectedConcepts = sharedState.selectedConcepts;
 			this.conceptSetName = ko.observable("New Concept Set");
 			this.loading = ko.observable();
+			this.fade = ko.observable(true);
 			this.canEdit = this.model.canEditCurrentConceptSet;
+			this.isNameCorrect = ko.computed(() => {
+				return this.currentConceptSet() && this.currentConceptSet().name();
+			});
 			this.canSave = ko.computed(() => {
 				return (
 					!this.loading()
 					&& this.model.currentConceptSet() != null
 					&& this.model.currentConceptSetDirtyFlag().isDirty()
+					&& this.isNameCorrect()
 				);
 			});
 			this.canCreate = ko.computed(() => {
 				return authApi.isPermittedCreateConceptset();
 			});
+			this.hasAccess = authApi.isPermittedReadConceptsets;
+			this.isAuthenticated = authApi.isAuthenticated;
+			this.conceptSetCaption = ko.computed(() => {
+				if (this.model.currentConceptSet()) {
+					if (this.model.currentConceptSet().id === 0) {
+						return 'New Concept Set';
+					} else {
+						return 'Concept Set #' + this.model.currentConceptSet().id;
+					}
+				}
+			});
 			this.canDelete = this.model.canDeleteCurrentConceptSet;
+			this.canOptimize = ko.computed(() => {
+				return (
+					this.currentConceptSet() 
+					&& this.currentConceptSet().id != 0 
+					&& sharedState.selectedConcepts().length > 1
+					&& this.canCreate()
+					&& this.canEdit()
+				);
+			}); 
 			this.optimalConceptSet = ko.observable(null);
 			this.optimizerRemovedConceptSet = ko.observable(null);
 			this.optimizerSavingNew = ko.observable(false);
@@ -80,7 +106,15 @@ define([
 				return returnVal;
 			});
 			this.saveConceptSetShow = ko.observable(false);
-
+			this.canCopy = ko.computed(() => {
+				return this.currentConceptSet() && this.currentConceptSet().id > 0;
+			});
+			this.isSaving = ko.observable(false);
+			this.isDeleting = ko.observable(false);
+			this.isOptimizing = ko.observable(false);
+			this.isProcessing = ko.computed(() => {
+				return this.isSaving() || this.isDeleting() || this.isOptimizing();
+			});
 			this.tabs = [
 				{
 						title: 'Concept Set Expression',
@@ -133,12 +167,19 @@ define([
 				this.selectedTab(this.getIndexByComponentName(mode));
 			}
 		}
+
+		dispose() {
+			this.fade(false); // To close modal immediately, otherwise backdrop will freeze and remain at new page
+			this.isOptimizeModalShown(false);
+			this.conceptSetCaption.dispose();
+		}
 		
 		saveClick() {
 			this.saveConceptSet("#txtConceptSetName");
 		}
 
 		saveConceptSet(txtElem, conceptSet, selectedConcepts) {
+			this.isSaving(true);
 			this.loading(true);
 			if (conceptSet === undefined) {
 				conceptSet = {};
@@ -154,7 +195,7 @@ define([
 			}
 			var abortSave = false;
 
-			// Do not allow someone to save a concept set with the default name of "New Concept Set
+			// Do not allow someone to save a concept set with the default name of "New Concept Set"
 			if (conceptSet && conceptSet.name() === this.defaultConceptSetName) {
 				this.raiseConceptSetNameProblem('Please provide a different name for your concept set', txtElem);
 				this.loading(false);
@@ -164,18 +205,19 @@ define([
 			// Next check to see that a concept set with this name does not already exist
 			// in the database. Also pass the conceptSetId so we can make sure that the
 			// current concept set is excluded in this check.
-			conceptSetService.exists(conceptSet.name, conceptSet.id)
+			conceptSetService.exists(conceptSet.name(), conceptSet.id)
 				.then((results) => {
-          if (results.length > 0) {
-            this.raiseConceptSetNameProblem('A concept set with this name already exists. Please choose a different name.', txtElem);
-            abortSave = true;
-          }
+					if (results.data.length > 0) {
+						this.raiseConceptSetNameProblem('A concept set with this name already exists. Please choose a different name.', txtElem);
+						abortSave = true;
+					}
 				}, function(){
-          alert('An error occurred while attempting to find a concept set with the name you provided.');
+					alert('An error occurred while attempting to find a concept set with the name you provided.');
 				})
 				.then(() => {
 					if (abortSave) {
 						this.loading(false);
+						this.isSaving(false);
 						return;
 					}
 
@@ -188,11 +230,14 @@ define([
 					conceptSetService.saveConceptSet(conceptSet)
 						.then(itemsPromise)
 						.then(() => {
+							//order of setting 'dirtyFlag' and 'loading' affects correct behaviour of 'canSave' (it prevents duplicates)
+							this.model.currentConceptSetDirtyFlag().reset();
 							this.loading(false);
-              document.location = '#/conceptset/' + conceptSetId + '/details';
-              this.model.currentConceptSetDirtyFlag().reset();
+							this.isSaving(false);
+							document.location = '#/conceptset/' + conceptSetId + '/details';
 						})
 						.catch(() => {
+							this.isSaving(false);
 							alert('Unable to save concept set');
 						});
 				});
@@ -224,6 +269,7 @@ define([
 		}
 
 		optimize() {
+			this.isOptimizing(true);
 			this.activeUtility("optimize");
 			this.loading(true);
 			this.optimalConceptSet(null);
@@ -260,13 +306,15 @@ define([
 					this.optimizerRemovedConceptSet(removedConcepts);
 					this.loading(false);
 					this.activeUtility("");
+					this.isOptimizing(false);
 				});
 		}
 
 		delete() {
 			if (!confirm("Delete concept set? Warning: deletion can not be undone!"))
 				return;
-
+			
+			this.isDeleting(true);
 			// reset view after save
 			conceptSetService.deleteConceptSet(this.model.currentConceptSet().id)
 				.then(() => {
@@ -339,6 +387,7 @@ define([
 			});
 			this.saveConceptSet("#txtOptimizerSavingNewName", conceptSet, selectedConcepts);
 			this.optimizerSavingNew(false);
+			this.isOptimizeModalShown(false);
 		}
 
 		cancelSaveNewOptimizedConceptSet() {

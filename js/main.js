@@ -1,109 +1,84 @@
 const bustCache = (() => {
-	const key = 'bustCache';
-	let hash = localStorage.getItem(key) || (localStorage[key] = Math.random().toString(36).substring(7));
-	return '_=' + hash;
+    const key = 'bustCache';
+    let hash = localStorage.getItem(key) || (localStorage[key] = Math.random().toString(36).substring(7));
+    return '_=' + hash;
 })();
 
 const localRefs = {
-	"configuration": "components/configuration",
-	"conceptset-editor": "components/conceptset/conceptset-editor",
-	"conceptset-modal": "components/conceptsetmodal/conceptSetSaveModal",
-	"conceptset-list-modal": "components/conceptset/conceptset-list-modal",
-	"user-bar": "components/user-bar",
-	"faceted-datatable": "components/faceted-datatable",
-	"explore-cohort": "components/explore-cohort",
-	"r-manager": "components/r-manager",
-	"home": "components/home",
-	"welcome": "components/welcome",
-	"forbidden": "components/ac-forbidden",
-	"unauthenticated": "components/ac-unauthenticated",
-	"roles": "components/roles",
-	"role-details": "components/role-details",
-	"loading": "components/loading",
-	"atlas-state": "components/atlas-state",
-	"feedback": "components/feedback",
+    "configuration": "components/configuration",
+    "conceptset-editor": "components/conceptset/conceptset-editor",
+    "conceptset-modal": "components/conceptsetmodal/conceptSetSaveModal",
+    "conceptset-list-modal": "components/conceptset/conceptset-list-modal",
+    "user-bar": "components/user-bar",
+    "faceted-datatable": "components/faceted-datatable",
+    "explore-cohort": "components/explore-cohort",
+    "r-manager": "components/r-manager",
+    "home": "components/home",
+    "welcome": "components/welcome",
+    "forbidden": "components/ac-forbidden",
+    "unauthenticated": "components/ac-unauthenticated",
+    "roles": "components/roles",
+    "role-details": "components/role-details",
+    "loading": "components/loading",
+    "atlas-state": "components/atlas-state",
+    "feedback": "components/feedback",
     "export-button": "components/export-button",
     "import-button": "components/import-button",
-	"conceptsetbuilder": "modules/conceptsetbuilder",
-	"conceptpicker": "modules/conceptpicker",
-	"webapi": "modules/WebAPIProvider",
-	"errors": "components/errors",
-	"vocabularyprovider": "modules/WebAPIProvider/VocabularyProvider",
-	"css": "plugins/css.min",
+    "conceptsetbuilder": "modules/conceptsetbuilder",
+    "conceptpicker": "modules/conceptpicker",
+    "webapi": "modules/WebAPIProvider",
+    "errors": "components/errors",
+    "vocabularyprovider": "modules/WebAPIProvider/VocabularyProvider",
+    "css": "plugins/css.min",
 };
 
-// set 'optional' path prior to first call to require
-requirejs.config({waitSeconds: 30, paths: {"optional": "plugins/optional", "text": "plugins/text"}});
+require(["./settings"], (settings) => {
+    requirejs.config({
+        ...settings,
+        paths: {
+            ...settings.paths,
+            ...settings.localRefs,
+        },
+//		urlArgs: bustCache,
+    });
+    require([
+        'bootstrap',
+        'ko.sortable',
+        ...Object.values(settings.cssPaths),
+    ], function () { // bootstrap must come first
+        $.fn.bstooltip = $.fn.tooltip;
+        require([
+                'knockout',
+                'Application',
+                'Model',
+                'const',
+                'pages/Router',
+                'atlas-state',
+                'loading',
+                'user-bar',
+                'welcome',
+                'components/white-page',
+                'components/terms-and-conditions/terms-and-conditions',
+            ],
+            (
+                ko,
+                Application,
+                Model,
+                constants,
+                Router,
+                sharedState,
+            ) => {
+                const app = new Application(new Model(), new Router());
 
-require([
-	'./settings',
-	'optional', // require this plugin separately to check in advance whether we have a local config
-	'config',
-], (settings, optional, appConfig) => {
-	const cdnRefs = {
-		css: {},
-		js: {},
-	};
-	const styles = [];
-	Object.entries(settings.paths).forEach(([name, path]) => {
-		cdnRefs.js[name] = appConfig.useBundled3dPartyLibs
-			? 'assets/bundle/bundle'
-			: path;
-	});
-	Object.entries(settings.cssPaths).forEach(([name, path]) => {
-		cdnRefs.css[name] = appConfig.useBundled3dPartyLibs
-			? 'assets/bundle/bundle.css'
-			: path;
-		styles.push(`css!${name}`);
-	});
+                app.bootstrap()
+                    .then(() => app.checkOAuthError())
+                    .then(() => app.synchronize())
+                    .catch(er => {
+                        sharedState.appInitializationStatus(constants.applicationStatuses.failed);
+                        console.error('App initialization failed', er);
+                    });
 
-	requirejs.config({
-		...settings,
-		urlArgs: bustCache,
-		paths: {
-			...localRefs,
-			...cdnRefs.js,
-		},
-		map: {
-			'*': {
-				...settings.map['*'],
-				...cdnRefs.css,
-			},
-		}
-	});	
-	require(['bootstrap', ...styles], function () { // bootstrap must come first
-    $.fn.bstooltip = $.fn.tooltip;
-		require([
-			'knockout',
-			'providers/Application',
-			'providers/Model',
-			'providers/Router',
-			'atlas-state',
-			'jquery.ui.autocomplete.scroll',
-			'loading',
-			'user-bar',
-			'welcome',
-			'components/white-page',
-			'components/terms-and-conditions/terms-and-conditions',
-		],
-			(
-				ko,
-				Application,
-				Model,
-				Router,
-				sharedState,
-			) => {
-				const app = new Application(new Model(), new Router());
-
-				app.bootstrap()
-					.then(() => app.synchronize())
-					.then(() => app.run())
-					.catch(er => {
-						sharedState.appInitializationStatus(Model.applicationStatuses.failed);
-						console.error('App initialization failed', er);
-					});
-
-				return app;
-		});
-	});
+                return app;
+            });
+    });
 });

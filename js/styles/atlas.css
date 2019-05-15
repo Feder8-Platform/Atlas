@@ -1,3 +1,8 @@
+html, body {
+  height: 100%;
+  min-height: 1px;
+}
+
 table.cohort-generate-sources {
   width: 100%;
   border-bottom: solid 1px #888;
@@ -66,6 +71,7 @@ body {
   font-size: 12px;
   /* researched font stack used by github */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  overflow: hidden;
 }
 
 
@@ -227,6 +233,8 @@ pre span.key {
   cursor: pointer;
   text-align: center;
   border-bottom: solid 1px #CCC;
+  flex-shrink: 0;
+  flex-grow: 0;
 }
 
 #wrapperLogo img {
@@ -236,20 +244,13 @@ pre span.key {
   margin-top: -5px;
 }
 
-#wrapperMainWindow {
-  position: absolute;
-  left: 174px;
-  top: 0px;
-  right: 0px;
-  height: 100%;
-}
-
 #wrapperMainWindowContainer {
   position: relative;
   margin-left: 1px;
   height: 100%;
   display: flex;
   flex-direction: column;
+  min-width: 768px;
 }
 
 .flexed {
@@ -369,7 +370,6 @@ pre span.key {
   max-height: 75px;
   overflow-y: auto;
   border-bottom: solid 1px #eee;
-  margin-bottom: ;
 }
 
 #wrapperSearchResultsTable {
@@ -466,6 +466,15 @@ table.datatable thead th {
   display: none;
 }
 
+.empty-name-error {
+   font-size: 1.4rem;
+   color: #F44;
+}
+
+.empty-name-error .i {
+   margin-right: 0.5rem
+ }
+
 .conceptDetail {
   background-color: #505050;
   padding: 2px 7px 2px 7px;
@@ -485,6 +494,14 @@ span.classification {
   color: #fff;
   background-color: #a335ee;
   padding: 5px;
+}
+
+a.classification {
+  color: #a335ee;
+}
+
+a.non-standard {
+  color: #a71a19;
 }
 
 td.invalid {
@@ -759,7 +776,7 @@ ul.ColVis_collection li {
 }
 
 /*#wrapperLeftMenu i.fa {
-   line-height: 7px; 
+   line-height: 7px;
 }*/
 
 #wrapperReportMenu {
@@ -785,6 +802,10 @@ ul.ColVis_collection li {
 
 .form-control.invalid {
   color: #c00;
+}
+
+.form-control.text-cursor {
+  cursor: text;
 }
 
 .form-control option {
@@ -832,12 +853,6 @@ input.btn.btn-default {
 
 .pad-10 {
   padding: 10px;
-}
-
-.report table {
-  width: 100%;
-  background-color: #fff;
-  margin-bottom: 15px;
 }
 
 .report svg {
@@ -917,7 +932,8 @@ code {
 }
 
 pre {
-  border-radius: 0 font-size: 10px;
+  border-radius: 0;
+  font-size: 10px;
   background-color: #eee;
   margin: 5px 0px;
 }
@@ -984,6 +1000,10 @@ pre {
 
 .input-group-addon.input-lg {
   border-radius: 0
+}
+
+.fe-save-btn {
+  display: inline-block;
 }
 
 @media(min-width:768px) {
@@ -1272,6 +1292,10 @@ ul.ColVis_collection li {
   padding: 7px;
 }
 
+ .app.modal-open {
+  padding-right: 0px!important;
+}
+
 circle {
   fill: #fff;
   transition: fill .5s;
@@ -1484,7 +1508,7 @@ div.button-overlay {
 }
 
 textarea.code {
-  font-style='Courier New';
+  font-style: 'Courier New';
   /* font-size: 8px; */
 }
 
@@ -1509,10 +1533,13 @@ textarea.code {
 }*/
 
 .asset-heading input {
-  width: 500px;
   padding: 3px;
   color: #003142;
   font-size: 12px;
+}
+
+.asset-heading-restricted {
+  width: 500px;
 }
 
 .nav-tabs>li>a:hover {
@@ -1621,6 +1648,11 @@ table.inclusionRules td div.description {
   font-size: 75%;
   font-style: italic;
   white-space: pre-wrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 table.inclusionRules td {
@@ -2049,7 +2081,6 @@ button i.fa.fa-question-circle {
 div#wrapper_ohdsi {
   background-color: #eee;
   width:175px;
-  position: absolute;
   text-align: center;
   font-size: 12px;
   color: #020202;
@@ -2058,6 +2089,8 @@ div#wrapper_ohdsi {
   border-right: solid 1px #868686;
   border-top: solid 1px #868686;
   padding-top:10px;
+  flex-shrink: 0;
+  flex-grow: 0;
 }
 
 div#wrapper_ohdsi img {
@@ -2112,7 +2145,6 @@ div#wrapper_ohdsi a {
 }
 
 #report {
-  overflow-y: scroll;
   flex-grow: 1;
 }
 
@@ -2123,7 +2155,7 @@ div#wrapper_ohdsi a {
   color: #454D57;
   border: 1px solid #CBCED1;
   padding-left: 3px;
-  padding-right: 3px; 
+  padding-right: 3px;
   padding-bottom: 5px;
   padding-top: 5px;
   background-color: #F2F3F4;
@@ -2139,4 +2171,27 @@ div#wrapper_ohdsi a {
 .editor-heading {
   font-weight: bold;
   height: 17px;
+}
+
+.numericInputField {
+	padding-left: 3px;
+	padding-right: 3px;
+	margin-right: 3px;
+	line-height: 17px;
+	min-width: 18px;
+	min-height:19px;
+	border: solid 1px;
+	display: inline-block;
+	background-color: white;
+	color: black;
+	border-color: gray;
+	text-indent: 0px;
+}
+
+.dropdown {
+	margin: 2px 0px;
+	padding-right: 18px;
+	background-image: url(images/arrow_down.png);
+	background-position: center right;
+	background-repeat: no-repeat;
 }

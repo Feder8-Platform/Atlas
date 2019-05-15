@@ -1,18 +1,19 @@
 define(['knockout',
 	'text!./negative-controls.html',
-	'providers/Component',
+	'components/Component',
 	'appConfig',
 	'../options',
 	'components/evidence/utils',
-	'webapi/EvidenceAPI',
-	'webapi/CDMResultsAPI',
+	'services/EvidenceAPI',
+	'services/CDMResultsAPI',
 	'services/ConceptSet',
 	'atlas-state',
-	'job/jobDetail',
-  	'webapi/MomentAPI',
+	'services/JobDetailsService',
+  	'services/MomentAPI',
 	'assets/ohdsi.util',
 	'databindings',
 	'evidence',
+	'conceptset-modal',
 ], function (
 	ko, 
 	view,
@@ -24,7 +25,7 @@ define(['knockout',
 	cdmResultsAPI, 
 	conceptSetService, 
 	sharedState, 
-	jobDetail, 
+	jobDetailsService, 
 	momentApi
 ) {
 	class NegativeControls extends Component {
@@ -56,6 +57,7 @@ define(['knockout',
 			this.selectedReportCaption = ko.observable();
 			this.recordCountsRefreshing = ko.observable(false);
 			this.showEvidencePairs = ko.observable(false);
+			this.showNegControlsSaveNewModal = ko.observable(false);
 			this.linkoutDrugConceptIds = [];
 			this.linkoutConditionConceptIds = [];
 			this.sourceIds = config.cemOptions.evidenceLinkoutSources;
@@ -176,23 +178,11 @@ define(['knockout',
 				this.negativeControls(null);
 				this.loadingResults(false);
 
-				// Create a job to monitor progress
-				var job = new jobDetail({
-					name: this.conceptSet().name() + "_" + service.sourceKey(),
-					type: 'negative-controls',
-					status: 'PENDING',
-					executionId: String(this.conceptSet().id) + String(service.sourceId()),
-					statusUrl: config.api.url + 'conceptset/' + this.conceptSet().id + '/generationinfo',
-					statusValue: 'status',
-					viewed: false,
-					url: 'conceptset/' + this.conceptSet().id + '/evidence',
-				});
-
 				// Kick the job off
 				$.when(negativeControlsJob)
-					.done(jobInfo => {
+					.done(info => {
+						jobDetailsService.createJob(info);
 						pollTimeout = setTimeout(() => {
-							sharedState.jobListing.queue(job);
 							this.pollForInfo();
 						}, 5000);
 					})
@@ -236,10 +226,10 @@ define(['knockout',
 						conceptDomainId = "Drug";
 						targetDomainId = "Condition";
 					} else {
-						this.conceptSetValidText("Your saved concepts come from multiple Domains (Condition, Drug). The concept set must contain ONLY conditions OR drugs in order to explore evidence.");
+						this.conceptSetValidText("Your saved concepts come from multiple domains or from a domain outside of conditions or drugs. The concept set must contain ONLY conditions OR drugs in order to explore evidence.");
 					}
 				} else {
-					this.conceptSetValidText("You must define a concept set with drugs found in the RxNorm vocbulary at the Ingredient class level OR Conditions from SNOMED. The concept set must contain ONLY conditions OR drugs in order to explore evidence.");
+					this.conceptSetValidText("You must define a concept set with drugs found in the RxNorm vocabulary at the Ingredient class level OR Conditions from SNOMED. The concept set must contain ONLY conditions OR drugs in order to explore evidence.");
 				}
 				this.conceptSetValid(conceptSetValid);
 				this.conceptDomainId(conceptDomainId);
@@ -250,7 +240,7 @@ define(['knockout',
 				var evidenceSources = [];
 
 				$.each(sharedState.sources(), function (i, source) {
-					if (source.hasEvidence) {
+					if (source.hasEvidence && source.hasCEMResults) {
 						var sourceInfo = {};
 						sourceInfo.sourceId = ko.observable(source.sourceId);
 						sourceInfo.sourceKey = ko.observable(source.sourceKey);
@@ -486,11 +476,6 @@ define(['knockout',
 				}
 			}
 
-			this.showNegControlsSaveNewModal = () => {
-				$('negative-controls #modalNegControlsSaveNew')
-					.modal('show');
-			}
-
 			this.saveNewConceptSet = () => {
 				var dtItems = $('#negControlResults table')
 					.DataTable()
@@ -523,8 +508,7 @@ define(['knockout',
 					selectedConcepts.push(newItem);
 				})
 				this.saveConceptSet("#txtNewConceptSetName", conceptSet, selectedConcepts);
-				$('conceptset-manager #modalSaveNew')
-					.modal('hide');
+				this.showNegControlsSaveNewModal(false);
 			}
 			
 			this.chooseIncludeConceptSet = (source) => {

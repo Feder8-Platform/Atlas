@@ -1,4 +1,4 @@
-define(['knockout', 'lscache', 'job/jobDetail', 'assets/ohdsi.util', 'appConfig'], function (ko, cache, jobDetail, ohdsiUtil, config) {
+define(['knockout', 'lscache', 'services/job/jobDetail', 'assets/ohdsi.util', 'const'], function (ko, cache, jobDetail, ohdsiUtil, constants) {
 	var state = {};
 	state.resultsUrl = ko.observable();
 	state.vocabularyUrl = ko.observable();
@@ -9,8 +9,12 @@ define(['knockout', 'lscache', 'job/jobDetail', 'assets/ohdsi.util', 'appConfig'
 	state.roles = ko.observableArray();
 	state.sources = ko.observableArray([]);
 
-	// Extending the jobListing array to include a 'queue' 
-	// function that will check if an existing job is 
+    state.sourceKeyOfVocabUrl = ko.computed(() => {
+        return state.vocabularyUrl() ? state.vocabularyUrl().replace(/\/$/, '').split('/').pop() : null;
+    });
+
+    // Extending the jobListing array to include a 'queue'
+	// function that will check if an existing job is
 	// already present in the list and replace it.
 	state.jobListing.queue = function(newItem) {
 		var oldItem = state.jobListing().find(j => j.executionUniqueId() == newItem.executionUniqueId());
@@ -24,7 +28,6 @@ define(['knockout', 'lscache', 'job/jobDetail', 'assets/ohdsi.util', 'appConfig'
 	state.errorNotifications.queue = function(newItem) {
 		state.errorNotifications.push(newItem);
 	}
-
 
     var errorNotificationsCacheKey = "atlas:errorNotifications";
     var errorNotificationCache = cache.get(errorNotificationsCacheKey);
@@ -50,7 +53,7 @@ define(['knockout', 'lscache', 'job/jobDetail', 'assets/ohdsi.util', 'appConfig'
 	// shared concept selection state
 	state.selectedConceptsIndex = {};
 	state.selectedConcepts = ko.observableArray(null);
-	state.appInitializationStatus = ko.observable('initializing');
+	state.appInitializationStatus = ko.observable(constants.applicationStatuses.initializing);
 
 	state.clearSelectedConcepts = function () {
 		this.selectedConceptsIndex = {};
@@ -63,6 +66,19 @@ define(['knockout', 'lscache', 'job/jobDetail', 'assets/ohdsi.util', 'appConfig'
 	}
 	state.IRAnalysis.dirtyFlag = ko.observable(new ohdsiUtil.dirtyFlag(state.IRAnalysis.current()));
 
+	//Cohort characterizations
+	state.CohortCharacterization = {
+		current: ko.observable(null),
+		selectedId: ko.observable(null),
+	};
+	state.CohortCharacterization.dirtyFlag = ko.observable(new ohdsiUtil.dirtyFlag(state.CohortCharacterization.current()));
+
+	state.FeatureAnalysis = {
+		current: ko.observable(null),
+		selectedId: ko.observable(null),
+	};
+	state.FeatureAnalysis.dirtyFlag = ko.observable(new ohdsiUtil.dirtyFlag(state.FeatureAnalysis.current()));
+
 	// Pathways State
 	state.CohortPathways = {
 		current: ko.observable(null),
@@ -73,6 +89,7 @@ define(['knockout', 'lscache', 'job/jobDetail', 'assets/ohdsi.util', 'appConfig'
 	
 	state.estimationAnalysis = {
 		current: ko.observable(null),
+		analysisPath: null,
 		selectedId: ko.observable(null),
 		comparisons: ko.observableArray(),
 	}
@@ -80,6 +97,7 @@ define(['knockout', 'lscache', 'job/jobDetail', 'assets/ohdsi.util', 'appConfig'
 
 	state.predictionAnalysis = {
 		current: ko.observable(null),
+		analysisPath: null,
 		selectedId: ko.observable(null),
 		targetCohorts: ko.observableArray(),
 		outcomeCohorts: ko.observableArray(), 

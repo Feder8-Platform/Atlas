@@ -8,7 +8,6 @@ define(function () {
   };
   appConfig.cacheSources = false;
   appConfig.pollInterval = 60000;
-  appConfig.useBundled3dPartyLibs = false;
 	appConfig.cohortComparisonResultsEnabled = false;
 	appConfig.userAuthenticationEnabled = false;
 	appConfig.plpResultsEnabled = false;
@@ -47,6 +46,12 @@ define(function () {
       "url": "user/oauth/facebook",
       "ajax": false,
       "icon": "fa fa-facebook"
+    },
+    {
+      "name": "Github",
+      "url": "user/oauth/github",
+      "ajax": false,
+      "icon": "fa fa-github"
     },
     {
       "name": "DB",
@@ -104,7 +109,6 @@ define(function () {
     },
   };
   appConfig.enableTermsAndConditions = true;
-	
 	appConfig.webAPIRoot = appConfig.api.url;
 	
 	return appConfig;

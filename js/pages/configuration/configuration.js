@@ -1,13 +1,14 @@
 define([
   'knockout',
   'text!./configuration.html',
-  'providers/Page',
-  'providers/AutoBind',
+  'pages/Page',
+  'utils/AutoBind',
   'utils/CommonUtils',
   'appConfig',
-  'webapi/AuthAPI',
-  'webapi/SourceAPI',
+  'services/AuthAPI',
+  'services/SourceAPI',
   'atlas-state',
+  'const',
   'less!./configuration.less',
   'components/heading'
 ], function (
@@ -19,7 +20,8 @@ define([
   config,
   authApi,
   sourceApi,
-  sharedState
+  sharedState,
+  constants
 ) {
 	class Configuration extends AutoBind(Page) {
     constructor(params) {
@@ -35,8 +37,10 @@ define([
       ];
   
       this.isAuthenticated = authApi.isAuthenticated;
-      this.initializationCompleted = ko.pureComputed(() => sharedState.appInitializationStatus() === 'running' || sharedState.appInitializationStatus() === 'no-sources-available');
-      this.hasAccess = ko.pureComputed(() => {
+      this.initializationCompleted = ko.pureComputed(() => sharedState.appInitializationStatus() === constants.applicationStatuses.running || 
+          sharedState.appInitializationStatus() === constants.applicationStatuses.noSourcesAvailable);
+      this.hasSourceAccess = authApi.hasSourceAccess;
+      this.hasPageAccess = ko.pureComputed(() => {
         return (config.userAuthenticationEnabled && this.isAuthenticated() && authApi.isPermittedEditConfiguration()) || !config.userAuthenticationEnabled;
       });
       this.canReadRoles = ko.pureComputed(() => {
@@ -58,6 +62,11 @@ define([
       });
       
 		  this.canImport = ko.pureComputed(() => this.isAuthenticated() && authApi.isPermittedImportUsers());
+    }
+
+    async onPageCreated() {
+      sourceApi.initSourcesConfig();
+      super.onPageCreated();
     }
 
     canReadSource(source) {
@@ -113,7 +122,7 @@ define([
     updateEvidencePriority() {
       var newEvidenceUrl = sharedState.evidenceUrl();
       var selectedSource = sharedState.sources().find((item) => { return item.evidenceUrl === newEvidenceUrl; });
-      this.updateSourceDaimonPriority(selectedSource.sourceKey, 'Evidence');
+      this.updateSourceDaimonPriority(selectedSource.sourceKey, 'CEM');
       return true;
     };
 
@@ -125,11 +134,12 @@ define([
     };
     
     checkSourceConnection(source) {
-      sourceApi.checkSourceConnection(source.sourceKey).then(
-        () => source.connectionCheck(sourceApi.connectionCheckState.success), 
-        () => source.connectionCheck(sourceApi.connectionCheckState.failed)
-      );
-      source.connectionCheck(sourceApi.connectionCheckState.checking);
+      sourceApi.checkSourceConnection(source.sourceKey)
+        .then( ({ data }) =>
+           source.connectionCheck(data.sourceId === undefined ?
+               sourceApi.connectionCheckState.failed : sourceApi.connectionCheckState.success))
+        .catch(() => {source.connectionCheck(sourceApi.connectionCheckState.failed);});
+        source.connectionCheck(sourceApi.connectionCheckState.checking);
     };
     
     getCheckButtonStyles(source) {

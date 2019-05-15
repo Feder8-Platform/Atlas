@@ -5,17 +5,21 @@ define([
 	'pages/characterizations/const',
 	'text!./characterization-executions.html',
 	'appConfig',
-	'webapi/AuthAPI',
+	'services/AuthAPI',
 	'moment',
-	'providers/Component',
-	'providers/AutoBind',
+	'components/Component',
+	'utils/AutoBind',
 	'utils/CommonUtils',
 	'utils/DatatableUtils',
+	'utils/ExecutionUtils',
 	'services/Source',
 	'lodash',
+	'services/JobDetailsService',
+	'services/Poll',
 	'less!./characterization-executions.less',
 	'./characterization-results',
-	'databindings/tooltipBinding'
+	'databindings/tooltipBinding',
+	'components/modal-exit-message',
 ], function(
 	ko,
 	CharacterizationService,
@@ -29,8 +33,11 @@ define([
 	AutoBind,
 	commonUtils,
 	datatableUtils,
+	ExecutionUtils,
 	SourceService,
-	lodash
+	lodash,
+	jobDetailsService,
+	PollService,
 ) {
 	class CharacterizationViewEditExecutions extends AutoBind(Component) {
 		constructor(params) {
@@ -39,21 +46,26 @@ define([
 			this.ccGenerationStatusOptions = consts.ccGenerationStatus;
 
 			this.characterizationId = params.characterizationId;
-			const currentHash = ko.computed(() => params.design().hash);
+			this.designDirtyFlag = params.designDirtyFlag;
+			this.currentHash = ko.computed(() => params.design() ? params.design().hashCode : 0);
 
 			this.isViewGenerationsPermitted = this.isViewGenerationsPermittedResolver();
 			this.isExecutionPermitted = this.isExecutionPermitted.bind(this);
 			this.isResultsViewPermitted = this.isResultsViewPermitted.bind(this);
-
 			this.loading = ko.observable(false);
 			this.expandedSection = ko.observable();
 			this.isExecutionDesignShown = ko.observable(false);
+			this.stopping = ko.observable({});
+			this.isSourceStopping = (source) => this.stopping()[source.sourceKey];
+			this.isExitMessageShown = ko.observable(false);
+			this.exitMessage = ko.observable();
+			this.pollId = null;
 
 			this.execColumns = [{
 					title: 'Date',
 					className: this.classes('col-exec-date'),
 					render: datatableUtils.getDateFieldFormatter('startTime'),
-					type: 'date'
+					type: 'datetime-formatted'
 				},
 				{
 					title: 'Design',
@@ -61,7 +73,7 @@ define([
 					render: (s, p, d) => {
 						return (
 							PermissionService.isPermittedExportGenerationDesign(d.id) ?
-							`<a data-bind="css: $component.classes('design-link'), click: () => $component.showExecutionDesign(${d.id})">${(d.hashCode || '-')}</a>${currentHash() === d.hashCode ? ' (same as now)' : ''}` :
+							`<a href='#' data-bind="css: $component.classes('design-link'), click: () => $component.showExecutionDesign(${d.id})">${(d.hashCode || '-')}</a>${this.currentHash() === d.hashCode ? ' (same as now)' : ''}` :
 							(d.hashCode || '-')
 						);
 					}
@@ -70,6 +82,15 @@ define([
 					title: 'Status',
 					data: 'status',
 					className: this.classes('col-exec-status'),
+					render: (s, p, d) => {
+						if (s === 'FAILED') {
+							return `<a href='#' data-bind="css: $component.classes('status-link'), click: () => $component.showExitMessage('${d.sourceKey}', ${d.id})">${s}</a>`;
+						} else if (s === 'STOPPED') {
+							return 'CANCELED';
+						} else {
+							return s;
+						}
+					},
 				},
 				{
 					title: 'Duration',
@@ -84,24 +105,26 @@ define([
 					data: 'results',
 					className: this.classes('col-exec-results'),
 					render: (s, p, d) => {
-						return d.status === this.ccGenerationStatusOptions.COMPLETED ? `<a data-bind="css: $component.classes('reports-link'), click: $component.goToResults.bind(null, id)">View reports</a>` : '-'; // ${d.reportCount}
+						return d.status === this.ccGenerationStatusOptions.COMPLETED ? `<a href='#' data-bind="css: $component.classes('reports-link'), click: $component.goToResults.bind(null, id)">View reports</a>` : '-'; // ${d.reportCount}
 					}
 				}
 			];
 
 			this.executionGroups = ko.observableArray([]);
 			this.executionDesign = ko.observable(null);
+			this.isViewGenerationsPermitted() && this.startPolling();
+		}
 
-			if (this.isViewGenerationsPermitted()) {
-				this.loadData();
-				this.intervalId = setInterval(() => this.loadData({
-					silently: true
-				}), 10000)
-			}
+		startPolling() {
+			this.pollId = PollService.add({
+				callback: silently => this.loadData({ silently }),
+				interval: 10000,
+				isSilentAfterFirstCall: true,
+			});
 		}
 
 		dispose() {
-			clearInterval(this.intervalId);
+			PollService.stop(this.pollId);
 		}
 
 		isViewGenerationsPermittedResolver() {
@@ -111,27 +134,29 @@ define([
 		}
 
 		isExecutionPermitted(sourceKey) {
-			return PermissionService.isPermittedGenerateCC(this.characterizationId(), sourceKey);
+			return PermissionService.isPermittedGenerateCC(this.characterizationId(), sourceKey) && !this.designDirtyFlag().isDirty();
 		}
 
 		isResultsViewPermitted(sourceKey) {
 			return PermissionService.isPermittedGetCCGenerationResults(sourceKey);
 		}
 
-		loadData({
+		getExecutionGroupStatus(submissions) {
+			return submissions().find(s => s.status === this.ccGenerationStatusOptions.STARTED) ?
+				this.ccGenerationStatusOptions.STARTED :
+				this.ccGenerationStatusOptions.COMPLETED;
+		}
+
+		async loadData({
 			silently = false
 		} = {}) {
 			!silently && this.loading(true);
 
-			const ccId = this.characterizationId();
+			try {
+				const ccId = this.characterizationId();
+				const allSources = await SourceService.loadSourceList();
+				const executionList = await CharacterizationService.loadCharacterizationExecutionList(ccId);
 
-			Promise.all([
-				SourceService.loadSourceList(),
-				CharacterizationService.loadCharacterizationExecutionList(ccId)
-			]).then(([
-				allSources,
-				executionList
-			]) => {
 				let sourceList = allSources.filter(source => {
 					return (source.daimons.filter(function(daimon) {
 							return daimon.daimonType == "CDM";
@@ -140,11 +165,11 @@ define([
 							return daimon.daimonType == "Results";
 						}).length > 0)
 				});
-				
+
 				sourceList = lodash.sortBy(sourceList, ["sourceName"]);
 
 				sourceList.forEach(s => {
-					let group = this.executionGroups().find(g => g.sourceKey == s.sourceKey);
+					let group = this.executionGroups().find(g => g.sourceKey === s.sourceKey);
 					if (!group) {
 						group = {
 							sourceKey: s.sourceKey,
@@ -157,34 +182,43 @@ define([
 
 
 					group.submissions(executionList.filter(e => e.sourceKey === s.sourceKey));
-					group.status(group.submissions().find(s => s.status === this.ccGenerationStatusOptions.STARTED) ?
-						this.ccGenerationStatusOptions.STARTED :
-						this.ccGenerationStatusOptions.COMPLETED);
+					group.status(this.getExecutionGroupStatus(group.submissions));
 
-				})
+				});
+			} catch (e) {
+				console.error(e);
+			} finally {
 				this.loading(false);
-			});
+			}
 		}
 
-		generate(source) {
-			let confirmPromise;
-
-			if ((this.executionGroups().find(g => g.sourceKey === source) || {}).status === this.ccGenerationStatusOptions.STARTED) {
-				confirmPromise = new Promise((resolve, reject) => {
-					if (confirm('A generation for the source has already been started. Are you sure you want to start a new one in parallel?')) {
-						resolve();
-					} else {
-						reject();
-					}
-				})
-			} else {
-				confirmPromise = new Promise(res => res());
+		generate(source, lastestDesign) {
+			if(lastestDesign === this.currentHash()) {
+				if (!confirm('No changes have been made since last execution. Do you still want to run new one?')) {
+					return false;
+				}
 			}
 
-			confirmPromise
+			this.stopping({...this.stopping(), [source]: false});
+			const executionGroup = this.executionGroups().find(g => g.sourceKey === source);
+			executionGroup.status(this.ccGenerationStatusOptions.PENDING);
+
+			ExecutionUtils.StartExecution(executionGroup)
 				.then(() => CharacterizationService.runGeneration(this.characterizationId(), source))
-				.then(() => this.loadData())
-				.catch(() => {});
+				.then((data) => {
+					jobDetailsService.createJob(data);
+					this.loadData();
+				})
+				.catch(() => {
+					executionGroup.status(this.getExecutionGroupStatus(executionGroup.submissions));
+				});
+		}
+
+		cancelGenerate(source) {
+			this.stopping({...this.stopping(), [source.sourceKey]: true});
+			if (confirm('Do you want to stop generation?')) {
+				CharacterizationService.cancelGeneration(this.characterizationId(), source.sourceKey);
+			}
 		}
 
 		showExecutionDesign(executionId) {
@@ -197,6 +231,15 @@ define([
 					this.executionDesign(res);
 					this.loading(false);
 				});
+		}
+
+		showExitMessage(sourceKey, id) {
+			const group = this.executionGroups().find(g => g.sourceKey === sourceKey) || { submissions: ko.observableArray() };
+			const submission = group.submissions().find(s => s.id === id);
+			if (submission && submission.exitMessage) {
+				this.exitMessage(submission.exitMessage);
+				this.isExitMessageShown(true);
+			}
 		}
 
 		toggleSection(idx) {

@@ -1,18 +1,25 @@
-<heading-title params="name: $component.sourceCaption, icon: 'database', theme: 'dark'"></heading-title>
+<heading-title params="name: $component.sourceCaption(), icon: 'database', theme: 'dark'"></heading-title>
 <div data-bind="if:$component.hasAccess, css: classes()">
+	<loading data-bind="visible:loading()"></loading>
 	<div data-bind="visible: !loading()">
 			<!-- ko if: selectedSource() != null -->
 			<div data-bind="if:$component.canReadSource">
 					<div class="asset-heading">
-							<input type="text" data-bind="textInput: selectedSource().name, enable: canEdit()"/>
-							<div class="btn-group" role="group">
-									<button class="btn btn-sm btn-success" title="Save"
+						<div class="input-group">
+							<input type="text" class="form-control" data-bind="textInput: selectedSource().name, enable: canEdit(), css: { emptyInput: !isNameCorrect() }"/>
+							<div class="input-group-btn" role="group">
+									<button class="btn btn-success" title="Save"
 													data-bind="click: save, enable: dirtyFlag().isDirty() && canSave(), css: {'disabled': !dirtyFlag().isDirty, 'btn-success': dirtyFlag().isDirty}">
 											<i class="fa fa-save"></i></button>
-									<button class="btn btn-sm btn-primary" title="Close" data-bind="click: close"><i
+									<button class="btn btn-primary" title="Close" data-bind="click: close"><i
 													class="fa fa-times"></i></button>
-									<button class="btn btn-sm btn-danger" title="Delete" data-bind="click: $component.delete, enable: canDelete()"><i class="fa fa-trash-o"></i></button>
+									<button class="btn btn-danger" title="Delete" data-bind="click: $component.delete, enable: canDelete()"><i class="fa fa-trash-o"></i></button>
 							</div>
+						</div>
+						<div data-bind="visible: !isNameCorrect()" class="empty-name-error">
+							<i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+							<label>Source name is empty.</label>
+						</div>
 					</div>
 					<div class="pad-10">
 							<div class="panel panel-primary">
@@ -40,11 +47,11 @@
 													</div>
                                                 <div data-bind="visible: fieldsVisibility.realmWarning" class="source-manager__error">
 													<i class="source-manager__error-ico fa fa-exclamation-circle" aria-hidden="true"></i>
-													<label>"KrbRealm" is empty.</label>
+													<label>"KrbRealm" is empty. Please specify it in the following format: "KrbRealm=[value];"</label>
 												</div>
                                                 <div data-bind="visible: fieldsVisibility.hostWarning" class="source-manager__error">
 													<i class="source-manager__error-ico fa fa-exclamation-circle" aria-hidden="true"></i>
-													<label>"KrbHostFQDN" is empty.</label>
+													<label>"KrbHostFQDN" is empty. Please specify it in the following format: "KrbHostFQDN=[value];"</label>
 												</div>
 												<div class="source-row">
 													<div class="source-manager__control-group control-group" data-bind="visible: fieldsVisibility.username">
@@ -89,12 +96,12 @@
 													<label>Kerberos authentication method:</label>
 												</div>
 												<label>
-													<input type="radio" value="keytab" data-bind="checked: selectedSource().krbAuthMethod" class="source-manager__radio-btn"/>
+													<input type="radio" value="keyfile" data-bind="checked: selectedSource().krbAuthMethod" class="source-manager__radio-btn"/>
 													<span class="source-manager__radio-btn-label">Keytab</span>
 												</label>
 												<div data-bind="visible: fieldsVisibility.showKeytab" class="source-manager__keytab">
 													<input type="file" id="keytabFile" name="keytabFile" accept=".keytab" data-bind="event: { change: function() { uploadFile($element.files[0]) } }, visible: fieldsVisibility.krbFileInput()"/>
-													<span data-bind="text: selectedSource().keytabName, visible: !fieldsVisibility.krbFileInput()"></span>
+													<span data-bind="text: selectedSource().keyfileName, visible: !fieldsVisibility.krbFileInput()"></span>
 													<button type="button" class="btn btn-sm btn-danger source-manager__remove-btn" data-bind="visible: !fieldsVisibility.krbFileInput(), click: removeKeytab">Remove</button>
 												 </div>
 												<label class="source-manager__pwd-label">
@@ -107,6 +114,18 @@
 														<input title="Password" data-bind="textInput: selectedSource().password, enable: canEdit()" class="form-control" type="password"/>
 													</div>
 												</div>
+												</div>
+											</div>
+											<div data-bind="visible: fieldsVisibility.bigQueryAuthSettings">
+												<div class="source-row">
+													<div data-bind="css: classes({element: 'auth-title', extra: 'control-group'})">
+														<label>Service account key file (OAuthPvtKeyPath)</label>
+													</div>
+													<div data-bind="css: classes('keytab')">
+														<input type="file" name="keyfileFile" data-bind="event: { change: function() { uploadFile($element.files[0]) } }, visible: fieldsVisibility.bqFileInput()">
+														<span data-bind="text: selectedSource().keyfileName, hidden: fieldsVisibility.bqFileInput()"></span>
+														<button type="button" data-bind="css: classes({element: 'remove-btn', extra: 'btn btn-sm btn-danger'}), hidden: fieldsVisibility.bqFileInput(), click: removeKeytab">Remove</button>
+													</div>
 												</div>
 											</div>
 											<div class="panel panel-primary">
@@ -125,16 +144,10 @@
 							</div>
 					</div>
 			</div>
-			<div data-bind="ifnot:$component.canReadSource">
-					<div class="padded">
-							<access-denied params="isAuthenticated: isAuthenticated"></access-denied>
-					</div>
-			</div>
+
+			<access-denied params="isAuthenticated: isAuthenticated, isPermitted: $component.canReadSource"></access-denied>
 			<!-- /ko -->
 	</div>
 </div>
-<div data-bind="ifnot:$component.hasAccess">
-	<div class="padded">
-		<access-denied params="isAuthenticated: isAuthenticated"></access-denied>
-	</div>
-</div>
+
+<access-denied params="isAuthenticated: isAuthenticated, isPermitted: $component.hasAccess"></access-denied>

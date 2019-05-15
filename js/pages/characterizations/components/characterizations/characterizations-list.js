@@ -4,8 +4,8 @@ define([
     'pages/characterizations/services/PermissionService',
     'text!./characterizations-list.html',
     'appConfig',
-    'webapi/AuthAPI',
-    'providers/Component',
+    'services/AuthAPI',
+    'components/Component',
     'utils/CommonUtils',
     'utils/DatatableUtils',
     'pages/characterizations/const',
@@ -49,13 +49,13 @@ define([
                 {
                     title: 'Created',
                     className: this.classes('tbl-col', 'created'),
-                    type: 'date',
+                    type: 'datetime-formatted',
                     render: datatableUtils.getDateFieldFormatter(),
                 },
                 {
                     title: 'Updated',
                     className: this.classes('tbl-col', 'updated'),
-                    type: 'date',
+                    type: 'datetime-formatted',
                     render: datatableUtils.getDateFieldFormatter(),
                 },
                 {

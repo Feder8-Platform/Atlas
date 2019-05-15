@@ -1,45 +1,46 @@
 define([
 	'knockout',
-	'text!./concept-manager.html',
-	'providers/Component',
-	'providers/AutoBind',
-	'providers/Vocabulary',
+	'text!./concept-manager.html', 
+	'pages/Page',
+	'utils/AutoBind',
+	'services/Vocabulary',
 	'utils/CommonUtils',
 	'atlas-state',
 	'services/http',
+	'./const',
+	'services/AuthAPI',
+	'./PermissionService',
 	'faceted-datatable',
 	'components/heading',
 ], function (
 	ko,
 	view,
-	Component,
+	Page,
 	AutoBind,
 	vocabularyProvider,
 	commonUtils,
 	sharedState,
 	httpService,
+	constants,
+	authApi,
+	PermissionService
 ) {
-	class ConceptManager extends AutoBind(Component) {
+	class ConceptManager extends AutoBind(Page) {
 		constructor(params) {
 			super(params);
 			this.model = params.model;
 			this.subscriptions = [];
+			this.currentConceptId = ko.observable();
 
 			this.commonUtils = commonUtils;
 			this.sourceCounts = ko.observableArray();
 			this.loadingSourceCounts = ko.observable(false);
-			this.loadingRelated = ko.observable(false);
+			this.loadingRelated = ko.observable(true);
 
-			this.currentConceptId = params.model.currentConceptId;
+			this.isAuthenticated = authApi.isAuthenticated;
 
-			this.subscriptions.push(
-				this.currentConceptId.subscribe((value) => {
-					if (this.model.currentConceptMode() == 'recordcounts') {
-						this.loadRecordCounts();
-					}
-					this.loadConcept(value);
-				})
-			);
+			this.hasInfoAccess = ko.computed(() => PermissionService.isPermittedGetInfo(sharedState.sourceKeyOfVocabUrl(), this.currentConceptId()));
+			this.hasRCAccess = ko.computed(() => this.hasInfoAccess() && PermissionService.isPermittedGetRC(sharedState.sourceKeyOfVocabUrl()));
 
 			this.subscriptions.push(
 				this.model.currentConceptMode.subscribe((mode) => {
@@ -126,10 +127,7 @@ define([
 			}, {
 				title: 'Name',
 				data: 'CONCEPT_NAME',
-				render: function (s, p, d) {
-					var valid = d.INVALID_REASON_CAPTION == 'Invalid' ? 'invalid' : '';
-					return '<a class="' + valid + '" href=\"#/concept/' + d.CONCEPT_ID + '\">' + d.CONCEPT_NAME + '</a>';
-				}
+				render: commonUtils.renderLink,
 			}, {
 				title: 'Class',
 				data: 'CONCEPT_CLASS_ID'
@@ -341,24 +339,48 @@ define([
 					}]
 				}
 			};
-			this.currentConceptArray = ko.observableArray();			
-			this.loadConcept(this.model.currentConceptId());
+
+			this.currentConceptArray = ko.observableArray();
+		}
+		
+		async onPageCreated() {
+			this.model.currentConceptMode('details');
+			this.currentConceptId(this.routerParams.conceptId);
+			this.loadConcept(this.currentConceptId());
+			super.onPageCreated();
+		}
+
+		onRouterParamsChanged({ conceptId }) {			
+			if (conceptId !== this.currentConceptId() && conceptId !== undefined) {
+				this.currentConceptId(conceptId);
+				if (this.model.currentConceptMode() == 'recordcounts') {
+					this.loadRecordCounts();
+				}
+				this.loadConcept(this.currentConceptId());
+			}
 		}
 
 		async fetchRecordCounts(sources) {
+			const promises = [];
 			const sourceData = [];
 			for (const source of sources) {
-				const { data } = await httpService.doPost(`${source.resultsUrl}conceptRecordCount`, [this.currentConceptId()]);
-				const recordCountObject = Object.values(data[0])[0];
-				if (recordCountObject) {
-					sourceData.push({
-						sourceName: this.source.sourceName,
-						recordCount: recordCountObject[0],
-						descendantRecordCount: recordCountObject[1]
+				if (authApi.hasSourceAccess(source.sourceKey)) {
+					// await is harmless here since it will pull data sequentially while it can be done in parallel
+					let promise = httpService.doPost(`${source.resultsUrl}conceptRecordCount`, [this.currentConceptId()]).then(({ data }) => {
+						const recordCountObject = data.length > 0 ? Object.values(data[0])[0] : null;
+						if (recordCountObject) {
+							sourceData.push({
+								sourceName: source.sourceName,
+								recordCount: recordCountObject[0],
+								descendantRecordCount: recordCountObject[1]
+							});
+						}
 					});
+					promises.push(promise);
 				}
 			}
 
+			await Promise.all(promises);
 			return sourceData;
 		}
 
@@ -386,22 +408,25 @@ define([
 		metagorize(metarchy, related) {
 			var concept = this.model.currentConcept();
 			var key = concept.VOCABULARY_ID + '.' + concept.CONCEPT_CLASS_ID;
-			if (this.metatrix[key] != undefined) {
-				var meta = this.metatrix[key];
-				if (this.hasRelationship(related, meta.childRelationships)) {
-					metarchy.children.push(related);
-				}
-				if (this.hasRelationship(related, meta.parentRelationships)) {
-					metarchy.parents.push(related);
-				}
+			var meta = this.metatrix[key] || constants.defaultConceptHierarchyRelationships;
+			if (this.hasRelationship(related, meta.childRelationships)) {
+				metarchy.children.push(related);
+			}
+			if (this.hasRelationship(related, meta.parentRelationships)) {
+				metarchy.parents.push(related);
 			}
 		}
 
 		async loadConcept(conceptId) {
+			if (!this.hasInfoAccess()) {
+				this.loadingRelated(false);
+				return;
+			}
+
 			const { data } = await httpService.doGet(sharedState.vocabularyUrl() + 'concept/' + conceptId);
 			var exists = false;
 			for (var i = 0; i < this.model.recentConcept().length; i++) {
-				if (this.model.recentConcept()[i].CONCEPT_ID == c.CONCEPT_ID)
+				if (this.model.recentConcept()[i].CONCEPT_ID == data.CONCEPT_ID)
 					exists = true;
 			}
 			if (!exists) {
@@ -426,7 +451,11 @@ define([
 			
 			await vocabularyProvider.loadDensity(related);
 			var currentConceptObject = _.find(related, c => c.CONCEPT_ID == this.currentConceptId());
-			this.currentConceptArray.push(currentConceptObject);
+			if (currentConceptObject !== undefined){
+			    this.currentConceptArray([currentConceptObject]);
+			} else {
+				this.currentConceptArray([]);
+			}
 			this.model.relatedConcepts(related);
 
 			this.loadingRelated(false);

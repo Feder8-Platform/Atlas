@@ -2,9 +2,9 @@ define([
 	'knockout',
 	'text!./cohort-definition-browser.html',
 	'appConfig',
-	'webapi/AuthAPI',
-	'webapi/MomentAPI',
-	'providers/Component',
+	'services/AuthAPI',
+	'services/MomentAPI',
+	'components/Component',
 	'utils/CommonUtils',
 	'services/http',
 	'faceted-datatable',
@@ -74,14 +74,14 @@ define([
 				},
 				{
 					title: 'Created',
-					type: 'date',
+					type: 'datetime-formatted',
 					render: function (s, p, d) {
 						return momentApi.formatDateTimeUTC(d.createdDate);
 					}
 				},
 				{
 					title: 'Updated',
-					type: 'date',
+					type: 'datetime-formatted',
 					render: function (s, p, d) {
 						return momentApi.formatDateTimeUTC(d.modifiedDate);
 					}

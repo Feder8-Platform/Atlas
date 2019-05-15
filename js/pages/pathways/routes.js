@@ -2,7 +2,7 @@ define((require, factory) => {
 	const ko = require('knockout');
 	const {
 		AuthorizedRoute
-	} = require('providers/Route');
+	} = require('pages/Route');
 
 	// return the routes that #/pathways responds to
 	function routes(appModel, router) {
@@ -24,7 +24,7 @@ define((require, factory) => {
 				router.setCurrentView('pathways-browser');
 			});
 		})
-		
+
 		return {
 			'pathways': pathwaysBrowser,
 			'pathways/:id:': pathwaysManager,
