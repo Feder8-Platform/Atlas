@@ -2,11 +2,10 @@ define([
     'knockout',
     'text!./hss-service-user.html',
     'appConfig',
-    'webapi/AuthAPI',
+    'services/AuthAPI',
     'utils/CommonUtils',
-    'providers/Page',
-    'providers/AutoBind',
-], function (ko, view, config, authApi, commonUtils, AutoBind, Page) {
+    'utils/AutoBind',
+], function (ko, view, config, authApi, commonUtils, AutoBind) {
 
     class HssServiceUser extends AutoBind {
         constructor(params) {

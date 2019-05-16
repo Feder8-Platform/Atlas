@@ -4,7 +4,7 @@ define(
         'text!./export-button.html',
         'appConfig',
         'atlas-state',
-        'webapi/AuthAPI',
+        'services/AuthAPI',
         'databindings'],
     function (ko, view, config, sharedState, authApi) {
 

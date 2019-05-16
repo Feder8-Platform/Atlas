@@ -504,56 +504,34 @@ define(
 					this.clearConceptSet();
 				}
 				this.currentView('loading');
-				let definitionPromise, infoPromise, organizationPromise;
 
 				if (cohortDefinitionId == '0') {
-					this.currentCohortDefinition(new CohortDefinition({ id: '0', name: 'New Cohort Definition' }));
-					definitionPromise = Promise.resolve();
-					infoPromise = Promise.resolve();
-                    if(config.isCentralInstance) {
-                        organizationPromise = httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/organizations');
-                    }
-                    let cohortDefinition = { id: '0', name: 'New Cohort Definition' };
-                    if(organizationPromise) {
-                        organizationPromise.then(({data: organizations}) => {
-                            organizations.forEach(el => el.organizationCanRead = ko.observable(el.canRead));
-                            cohortDefinition.organizations = organizations;
-                            this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
-                        })
-                    } else {
-                        this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
-                    }
+					let cohortDefinition = { id: '0', name: 'New Cohort Definition' };
 
+                    if(config.isCentralInstance) {
+						const { data: organizations } = await httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/organizations');
+						organizations.forEach(el => el.organizationCanRead = ko.observable(el.canRead));
+						cohortDefinition.organizations = organizations;
+						this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
+                    } else {
+						this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
+					}
 					this.currentCohortDefinitionInfo([]);
 				} else {
 					const { data: cohortDefinition } = await httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId);
-					definitionPromise = httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId);
-					infoPromise = httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/info');
-					if(config.isCentralInstance) {
-                        organizationPromise = httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/organizations');
-                    }
-
-					definitionPromise.then(({ data: cohortDefinition }) => {
 					cohortDefinition.expression = JSON.parse(cohortDefinition.expression);
-						if(organizationPromise) {
-                            organizationPromise.then(({data: organizations}) => {
-                                organizations.forEach(el => el.organizationCanRead = ko.observable(el.canRead));
-                                cohortDefinition.organizations = organizations;
-                                this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
+					if(config.isCentralInstance) {
+						const {data: organizations} = await httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/organizations');
+						organizations.forEach(el => el.organizationCanRead = ko.observable(el.canRead));
+						cohortDefinition.organizations = organizations;
+					}
+					this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
 
 					const { data: generationInfo } = await httpService.doGet(config.api.url + 'cohortdefinition/' + cohortDefinitionId + '/info');
-                            })
-                        } else {
-                            this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
-						}
-					});
-					infoPromise.then(({ data: generationInfo }) => {
 					this.currentCohortDefinitionInfo(generationInfo);
 				}
 
 				try {
-				Promise.all([infoPromise, definitionPromise, organizationPromise])
-					.then(() => {
 						// Now that we have loaded up the cohort definition, we'll need to
 						// resolve all of the concepts embedded in the concept set collection
 						// to ensure they have all of the proper properties for editing in the cohort

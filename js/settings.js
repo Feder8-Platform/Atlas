@@ -181,6 +181,9 @@ const settingsObject = {
 		"conceptsetbuilder": "components/conceptsetbuilder",
 		"conceptpicker": "components/conceptpicker",
 		"css": "extensions/plugins/css",
+		"export-button": "components/export-button",
+		"import-button": "components/import-button",
+		"errors": "components/errors",
 	},
 };
 

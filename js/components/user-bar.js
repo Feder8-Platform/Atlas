@@ -38,12 +38,12 @@ define([
 			this.signInOpened = params.model.signInOpened;
 			this.jobListing = state.jobListing;
 			this.sortedJobListing = ko.computed(() => lodash.sortBy(this.jobListing(), el => -1 * el.executionId));
-			this.lastViewedTime=null;
+			this.lastViewedTime = null;
 			this.permissionCheckWarningShown = false;
 
 			this.jobModalOpened = ko.observable(false);
 			this.jobModalOpened.subscribe(show => {
-				if (authApi.isPermittedPostViewedNotifications()){
+				if (authApi.isPermittedPostViewedNotifications()) {
 					if (!show) {
 						jobDetailsService.setLastViewedTime(this.lastViewedTime);
 						this.jobListing().forEach(j => {
@@ -78,28 +78,26 @@ define([
 			if (this.isLoggedIn() || !appConfig.userAuthenticationEnabled) {
 				this.start()
 			}
-		}
 
-            this.errorNotifications = state.errorNotifications;
-            this.errorNotificationsPending = ko.computed(() => {
-                return this.errorNotifications().filter(j => {
-                    return !j.viewed();
-                }).length;
-            });
+			this.errorNotifications = state.errorNotifications;
+			this.errorNotificationsPending = ko.computed(() => {
+				return this.errorNotifications().filter(j => {
+					return !j.viewed();
+				}).length;
+			});
 
 			this.updateJobStatus = this.updateJobStatus.bind(this);
 			this.clearJobNotifications = this.clearJobNotifications.bind(this);
 			this.clearJobNotificationsPending = this.clearJobNotificationsPending.bind(this);
+		}
 
 		start() {
 			if (authApi.isPermittedGetViewedNotifications()) {
 				jobDetailsService.getLastViewedTime()
 					.then(({data}) => {
 						this.lastViewedTime = new Date(data);
-            this.clearErrorNotifications = this.clearErrorNotifications.bind(this);
-            this.clearErrorNotificationsPending = this.clearErrorNotificationsPending.bind(this);
-
-			if (!appConfig.userAuthenticationEnabled) {
+            			this.clearErrorNotifications = this.clearErrorNotifications.bind(this);
+            			this.clearErrorNotificationsPending = this.clearErrorNotificationsPending.bind(this);
 						this.startPolling();
 					})
 					.catch(() => {

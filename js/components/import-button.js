@@ -2,7 +2,7 @@ define([
     'knockout',
     'text!./import-button.html',
     'appConfig',
-    'webapi/AuthAPI',
+    'services/AuthAPI',
 	'atlas-state',
     'databindings'], function (ko, view, config, authApi, sharedState) {
     function importButton(params) {

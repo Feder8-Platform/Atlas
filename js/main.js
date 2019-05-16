@@ -4,34 +4,6 @@ const bustCache = (() => {
     return '_=' + hash;
 })();
 
-const localRefs = {
-    "configuration": "components/configuration",
-    "conceptset-editor": "components/conceptset/conceptset-editor",
-    "conceptset-modal": "components/conceptsetmodal/conceptSetSaveModal",
-    "conceptset-list-modal": "components/conceptset/conceptset-list-modal",
-    "user-bar": "components/user-bar",
-    "faceted-datatable": "components/faceted-datatable",
-    "explore-cohort": "components/explore-cohort",
-    "r-manager": "components/r-manager",
-    "home": "components/home",
-    "welcome": "components/welcome",
-    "forbidden": "components/ac-forbidden",
-    "unauthenticated": "components/ac-unauthenticated",
-    "roles": "components/roles",
-    "role-details": "components/role-details",
-    "loading": "components/loading",
-    "atlas-state": "components/atlas-state",
-    "feedback": "components/feedback",
-    "export-button": "components/export-button",
-    "import-button": "components/import-button",
-    "conceptsetbuilder": "modules/conceptsetbuilder",
-    "conceptpicker": "modules/conceptpicker",
-    "webapi": "modules/WebAPIProvider",
-    "errors": "components/errors",
-    "vocabularyprovider": "modules/WebAPIProvider/VocabularyProvider",
-    "css": "plugins/css.min",
-};
-
 require(["./settings"], (settings) => {
     requirejs.config({
         ...settings,
