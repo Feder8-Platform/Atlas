@@ -85,10 +85,6 @@ define([
 					return !j.viewed();
 				}).length;
 			});
-
-			this.updateJobStatus = this.updateJobStatus.bind(this);
-			this.clearJobNotifications = this.clearJobNotifications.bind(this);
-			this.clearJobNotificationsPending = this.clearJobNotificationsPending.bind(this);
 		}
 
 		start() {

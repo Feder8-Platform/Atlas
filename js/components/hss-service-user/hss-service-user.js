@@ -1,13 +1,14 @@
 define([
     'knockout',
     'text!./hss-service-user.html',
+    'components/Component',
     'appConfig',
     'services/AuthAPI',
     'utils/CommonUtils',
     'utils/AutoBind',
-], function (ko, view, config, authApi, commonUtils, AutoBind) {
+], function (ko, view, Component, config, authApi, commonUtils, AutoBind) {
 
-    class HssServiceUser extends AutoBind {
+    class HssServiceUser extends AutoBind(Component) {
         constructor(params) {
             super(params);
             this.userName = ko.observable('');
