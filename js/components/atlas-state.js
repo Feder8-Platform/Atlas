@@ -13,19 +13,7 @@ define(['knockout', 'lscache', 'services/job/jobDetail', 'assets/ohdsi.util', 'c
         return state.vocabularyUrl() ? state.vocabularyUrl().replace(/\/$/, '').split('/').pop() : null;
     });
 
-    // Extending the jobListing array to include a 'queue'
-	// function that will check if an existing job is
-	// already present in the list and replace it.
-	state.jobListing.queue = function(newItem) {
-		var oldItem = state.jobListing().find(j => j.executionUniqueId() == newItem.executionUniqueId());
-		if (oldItem != null) {
-			state.jobListing.replace(oldItem, newItem);
-		} else {
-			state.jobListing.push(newItem);
-		}
-	}
-
-	state.errorNotifications.queue = function(newItem) {
+    state.errorNotifications.queue = function(newItem) {
 		state.errorNotifications.push(newItem);
 	}
 
@@ -36,19 +24,6 @@ define(['knockout', 'lscache', 'services/job/jobDetail', 'assets/ohdsi.util', 'c
             state.errorNotifications.push(j);
         })
     }
-
-	// job listing notification management
-	var jobListingCacheKey = "atlas:jobListing";
-	var jobListingCache = cache.get(jobListingCacheKey);
-	if (jobListingCache) {
-		jobListingCache.forEach(j => {
-			state.jobListing.push(new jobDetail(j));
-		})
-	}
-
-	state.jobListing.subscribe(function (data) {
-		cache.set(jobListingCacheKey, ko.toJSON(data));
-	});
 
 	// shared concept selection state
 	state.selectedConceptsIndex = {};
