@@ -1,5 +1,5 @@
 <heading-title params="name: 'Configuration', icon: 'cogs', theme: 'dark'"></heading-title>
-<div data-bind="ifnot:$component.hasAccess(), css: `${$component.hasAccess() ? '' : 'flexed'}`">
+<div data-bind="ifnot:$component.hasPageAccess(), css: `${$component.hasPageAccess() ? '' : 'flexed'}`">
 	<access-denied params="isAuthenticated: isAuthenticated" class="flexed"></access-denied>
 </div>
 <div data-bind="if: $component.hasPageAccess(), css: classes({ extra: 'paddedWrapper' })">
