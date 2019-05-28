@@ -59,9 +59,9 @@ define(
             }
 						const handler = routes[key].handler.bind(null, ...args);
 						const title = routes[key].title;
-                        if(args.length > 0 && pattern.test(args[0])) {
-                          authApi.token(null);
-                        }
+            if(args.length > 0 && pattern.test(args[0])) {
+              authApi.token(null);
+            }
 						routes[key].checkPermission()
 							.then(() => handler())
 							.catch((ex) => {

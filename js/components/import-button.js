@@ -190,7 +190,7 @@ define([
                         self.importing(false);
                         if(self.job) {
                             self.job().status(result.status || "COMPLETE");
-                            sharedState.jobListing.queue(self.job());
+                            //sharedState.jobListing.queue(self.job());
                         }
                         if (config.userAuthenticationEnabled) {
                             refreshPromise = authApi.loadUserInfo();

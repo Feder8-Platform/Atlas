@@ -4,9 +4,10 @@ define(
         'text!./export-button.html',
         'appConfig',
         'atlas-state',
+        'services/JobDetailsService',
         'services/AuthAPI',
         'databindings'],
-    function (ko, view, config, sharedState, authApi) {
+    function (ko, view, config, sharedState, jobDetailsService, authApi) {
 
         const resultKeys=['cohort',
             'cohortInclusion',
@@ -23,7 +24,10 @@ define(
             var job = params.job;
             if (job) {
                 job().status('RUNNING');
-                sharedState.jobListing.queue(job());
+                
+                console.log("export job");
+                jobDetailsService.createJob(params);
+            //    sharedState.jobListing.queue(job());
             }
             return job;
         }
@@ -94,7 +98,7 @@ define(
                 var refreshPromise = null;
                 var res = null;
 
-                var job = createJob(params);
+                //var job = createJob(params);
 
                 $.ajax(endpoint, {
                     success: function (response, status, headers) {
@@ -102,14 +106,14 @@ define(
                             refreshPromise = authApi.loadUserInfo();
                         }
                         res = response;
-                        if (job) {
-                            setJob(job, 'COMPLETE')
-                        }
+                        //if (job) {
+                        //    setJob(job, 'COMPLETE')
+                        //}
                     },
                     error: function (err) {
-                        if (job) {
-                            setJob(job, 'ERROR')
-                        }
+                        //if (job) {
+                        //    setJob(job, 'ERROR')
+                        //}
                     }
                 }).always(function(){
                     if(refreshPromise === null){
