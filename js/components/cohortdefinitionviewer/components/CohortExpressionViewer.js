@@ -21,6 +21,8 @@ define(['knockout', 'components/cohortbuilder/options', 'text!./CohortExpression
 				return "condition-era-criteria-viewer";
 			else if (data.hasOwnProperty("DrugExposure"))
 				return "drug-exposure-criteria-viewer";
+			else if (data.hasOwnProperty("TreatmentLine"))
+				return "treatment-line-criteria-viewer";
 			else if (data.hasOwnProperty("DrugEra"))
 				return "drug-era-criteria-viewer";
 			else if (data.hasOwnProperty("DoseEra"))

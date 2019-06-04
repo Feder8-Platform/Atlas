@@ -65,6 +65,15 @@ define([
 			}, unwrappedExpression.ConceptSets));
 		};
 
+		self.addTreatmentLineCriteria = function () {
+			var unwrappedExpression = ko.utils.unwrapObservable(self.expression);
+			self.group().CriteriaList.push(new AdditionalCriteria({
+				Criteria: {
+					TreatmentLine: {}
+				}
+			}, unwrappedExpression.ConceptSets));
+		};
+
 		self.addDrugEraCriteria = function () {
 			var unwrappedExpression = ko.utils.unwrapObservable(self.expression);
 			self.group().CriteriaList.push(new AdditionalCriteria({
@@ -186,6 +195,7 @@ define([
 		self.actions[consts.CriteriaTypes.DEVICE_EXPOSURE] = self.addDeviceCriteria;
 		self.actions[consts.CriteriaTypes.DRUG_ERA] = self.addDrugEraCriteria;
 		self.actions[consts.CriteriaTypes.DRUG_EXPOSURE] = self.addDrugExposureCriteria;
+		self.actions[consts.CriteriaTypes.TREATMENT_LINE] = self.addTreatmentLineCriteria;
 		self.actions[consts.CriteriaTypes.MEASUREMENT] = self.addMeasurementCriteria;
 		self.actions[consts.CriteriaTypes.OBSERVATION] = self.addObservationCriteria;
 		self.actions[consts.CriteriaTypes.OBSERVATION_PERIOD] = self.addObservationPeriodCriteria;
@@ -214,6 +224,7 @@ define([
 				case "death-criteria":
 				case "drug-era-criteria":
 				case "dose-era-criteria":
+				case "treatment-line-criteria":
 				case "observation-period-criteria":
 				case "specimen-criteria":
 					return false;

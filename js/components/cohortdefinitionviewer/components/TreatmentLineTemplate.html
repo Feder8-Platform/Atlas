@@ -1,0 +1,41 @@
+<!-- ko with: Criteria -->
+a treatment line of <conceptset-reference params="{conceptSetId: CodesetId, conceptSets: $component.expression.ConceptSets, defaultName: 'Any Treatment Line'}"></conceptset-reference>
+<ul>
+<!-- ko if: ko.utils.unwrapObservable(First) != null -->
+	<li>for the first time in the person's history</li>
+<!-- /ko -->
+<!-- ko if: ko.utils.unwrapObservable(TreatmentLineStartDate) != null -->
+	<li>treatment line start is <date-range-viewer params="Range: TreatmentLineStartDate"></date-range-viewer></li>
+<!-- /ko -->
+<!-- ko if: ko.utils.unwrapObservable(TreatmentLineEndDate) != null -->
+	<li>treatment line end is <date-range-viewer params="Range: TreatmentLineEndDate"></date-range-viewer></li>
+<!-- /ko -->
+<!-- ko if: ko.utils.unwrapObservable(TreatmentLineDrugEraStartDate) != null -->
+	<li>treatment line drug era start is <date-range-viewer params="Range: TreatmentLineDrugEraStartDate"></date-range-viewer></li>
+<!-- /ko -->
+<!-- ko if: ko.utils.unwrapObservable(TreatmentLineDrugEraEndDate) != null -->
+	<li>treatment line drug era end is <date-range-viewer params="Range: TreatmentLineDrugEraEndDate"></date-range-viewer></li>
+<!-- /ko -->
+<!-- ko if: ko.utils.unwrapObservable(TreatmentLineNumber) != null -->
+	<li>with Treatment Line Number <numeric-range-viewer params="Range: TreatmentLineNumber"></numeric-range-viewer></li>
+<!-- /ko -->
+<!-- ko if: ko.utils.unwrapObservable(TotalCycleNumber) != null -->
+	<li>with Total Cycle Number <numeric-range-viewer params="Range: TotalCycleNumber"></numeric-range-viewer></li>
+<!-- /ko -->
+<!-- ko if: ko.utils.unwrapObservable(DrugExposureCount) != null -->
+	<li>with Drug Exposure Count <numeric-range-viewer params="Range: DrugExposureCount"></numeric-range-viewer></li>
+<!-- /ko -->
+<!-- ko if: ko.utils.unwrapObservable(TreatmentTypeId) != null -->
+	<li>with Treatment Type Id <numeric-range-viewer params="Range: TreatmentTypeId"></numeric-range-viewer></li>
+<!-- /ko -->
+<!-- ko if: ko.utils.unwrapObservable(Age) != null -->
+	<li>with age <numeric-range-viewer params="Range: Age"></numeric-range-viewer></li>
+<!-- /ko -->
+<!-- ko if: ko.utils.unwrapObservable(Gender) != null -->
+	<li>gender is any of: <concept-list-viewer params="ConceptList: ko.utils.unwrapObservable(Gender)"></concept-list-viewer></li>
+<!-- /ko -->
+</ul>
+<!-- ko if: ko.utils.unwrapObservable(CorrelatedCriteria) != null -->
+		<criteria-group-viewer params="{expression: $component.expression, group: CorrelatedCriteria}"></criteria-group-viewer>	
+<!-- /ko -->
+<!-- /ko -->

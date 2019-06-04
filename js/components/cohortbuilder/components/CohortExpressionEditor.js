@@ -84,6 +84,16 @@ define(['knockout', 'jquery', '../options', '../CriteriaGroup', '../CriteriaType
 				}
 			},
 			{
+				text: "Add Treatment Line",
+				selected: false,
+				description: "Find patients with a specific treatment line.",
+				action: function () {
+					self.expression().PrimaryCriteria().CriteriaList.push({
+						TreatmentLine: new criteriaTypes.TreatmentLine(null, self.expression().ConceptSets)
+					});
+				}
+			},
+			{
 				text: "Add Measurement",
 				selected: false,
 				description: "Find patients based on Measurement.",
@@ -222,6 +232,16 @@ define(['knockout', 'jquery', '../options', '../CriteriaGroup', '../CriteriaType
 				action: function () {
 					self.expression().CensoringCriteria.push({
 						DrugExposure: new criteriaTypes.DrugExposure(null, self.expression().ConceptSets)
+					});
+				}
+			},
+			{
+				text: "Add Treatment Line",
+				selected: false,
+				description: "Exit cohort based on following a specific treatment line(s).",
+				action: function () {
+					self.expression().CensoringCriteria.push({
+						TreatmentLine: new criteriaTypes.TreatmentLine(null, self.expression().ConceptSets)
 					});
 				}
 			},
@@ -367,6 +387,8 @@ define(['knockout', 'jquery', '../options', '../CriteriaGroup', '../CriteriaType
 				return "condition-era-criteria";
 			else if (data.hasOwnProperty("DrugExposure"))
 				return "drug-exposure-criteria";
+			else if (data.hasOwnProperty("TreatmentLine"))
+				return "treatment-line-criteria";
 			else if (data.hasOwnProperty("DrugEra"))
 				return "drug-era-criteria";
 			else if (data.hasOwnProperty("DoseEra"))

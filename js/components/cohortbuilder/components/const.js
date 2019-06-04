@@ -13,6 +13,7 @@ function (
 		DOSE_ERA: "DoseEra",
 		DRUG_ERA: "DrugEra",
 		DRUG_EXPOSURE: "DrugExposure",
+		TREATMENT_LINE: "TreatmentLine",
 		MEASUREMENT: "Measurement",
 		OBSERVATION: "Observation",
 		OBSERVATION_PERIOD: "ObservationPeriod",
@@ -70,6 +71,12 @@ function (
 		selected: false,
 		description: "Find patients with exposure to specific drugs or drug classes.",
 		type: CriteriaTypes.DRUG_EXPOSURE,
+	};
+	const AddTreatmentLine = {
+		text: "Add Treatment Line",
+		selected: false,
+		description: "Find patients with exposure to specific treatment line.",
+		type: CriteriaTypes.TREATMENT_LINE,
 	};
 	const AddMeasurement = {
 		text: "Add Measurement",
@@ -129,6 +136,7 @@ function (
 		AddDoseEra,
 		AddDrugEra,
 		AddDrugExposure,
+		AddTreatmentLine,
 		AddMeasurement,
 		AddObservation,
 		AddObservationPeriod,
@@ -148,6 +156,7 @@ function (
 		AddDoseEra,
 		AddDrugEra,
 		AddDrugExposure,
+		AddTreatmentLine,
 		AddMeasurement,
 		AddObservation,
 		AddObservationPeriod,
