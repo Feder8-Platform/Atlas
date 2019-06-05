@@ -143,10 +143,8 @@ define(['knockout', '../options', '../InputTypes/Range', '../InputTypes/Text', '
 						}));
 					break;
 				case 25:
-					if (self.Criteria.TreatmentTypeId() == null)
-						self.Criteria.TreatmentTypeId(new Range({
-							Op: "lt"
-						}));
+					if (self.Criteria.TreatmentLineType() == null)
+						self.Criteria.TreatmentLineType(ko.observableArray());
 					break;
 			}
 		}

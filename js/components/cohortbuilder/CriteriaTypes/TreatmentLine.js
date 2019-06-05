@@ -24,7 +24,6 @@ define(['knockout', './Criteria', '../InputTypes/Range','conceptpicker/InputType
 		self.TreatmentLineNumber = ko.observable(data.TreatmentLineNumber && new Range(data.TreatmentLineNumber));
 		self.TotalCycleNumber = ko.observable(data.TotalCycleNumber && new Range(data.TotalCycleNumber));
 		self.DrugExposureCount = ko.observable(data.DrugExposureCount && new Range(data.DrugExposureCount));
-		self.TreatmentTypeId = ko.observable(data.TreatmentTypeId && new Range(data.TreatmentTypeId));
 
 		// Verbatim fields
 		self.CodesetId = ko.observable(data.CodesetId);
@@ -40,6 +39,10 @@ define(['knockout', './Criteria', '../InputTypes/Range','conceptpicker/InputType
 
 		// Linked Fields
 		self.Gender = ko.observable(data.Gender && ko.observableArray(data.Gender.map(function (d) {
+			return new Concept(d);
+		})));
+
+		self.TreatmentLineType = ko.observable(data.TreatmentLineType && ko.observableArray(data.TreatmentLineType.map(function (d) {
 			return new Concept(d);
 		})));
 	}

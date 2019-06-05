@@ -25,8 +25,8 @@ a treatment line of <conceptset-reference params="{conceptSetId: CodesetId, conc
 <!-- ko if: ko.utils.unwrapObservable(DrugExposureCount) != null -->
 	<li>with Drug Exposure Count <numeric-range-viewer params="Range: DrugExposureCount"></numeric-range-viewer></li>
 <!-- /ko -->
-<!-- ko if: ko.utils.unwrapObservable(TreatmentTypeId) != null -->
-	<li>with Treatment Type Id <numeric-range-viewer params="Range: TreatmentTypeId"></numeric-range-viewer></li>
+<!-- ko if: ko.utils.unwrapObservable(TreatmentLineType) != null -->
+	<li>with Treatment Type <concept-list-viewer params="ConceptList: ko.utils.unwrapObservable(TreatmentLineType)"></concept-list-viewer></li>
 <!-- /ko -->
 <!-- ko if: ko.utils.unwrapObservable(Age) != null -->
 	<li>with age <numeric-range-viewer params="Range: Age"></numeric-range-viewer></li>
