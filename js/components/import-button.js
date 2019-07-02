@@ -31,12 +31,15 @@ define([
 
         self.job = params.job;
 
+        self.error = ko.observable("");
+
         function load() {
             self.loadingDefinitionsToImport(true);
             $.ajax(params.importUrl(), {
                 contentType: 'application/json',
                 timeout: 5000,
                 success: function (data) {
+                    self.error("");
                     var elements = []
 
                     data.forEach(function (element) {
@@ -52,6 +55,11 @@ define([
                     })
 
                     self.cohortDefinitions(elements);
+                },
+                error: function(err) {
+                    if(!config.isCentralInstance){
+                        self.error(err.responseJSON.message);
+                    }
                 }
             }).always(function(){
                 self.loadingDefinitionsToImport(false);

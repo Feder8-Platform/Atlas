@@ -6,58 +6,26 @@ define([
     'services/AuthAPI',
     'utils/CommonUtils',
     'utils/AutoBind',
-], function (ko, view, Component, config, authApi, commonUtils, AutoBind) {
+    'services/HSS'
+], function (ko, view, Component, config, authApi, commonUtils, AutoBind, hssService) {
 
     class HssServiceUser extends AutoBind(Component) {
         constructor(params) {
             super(params);
-            this.userName = ko.observable('');
-            this.userPassword = ko.observable('');
+            this.userName = hssService.userName;
+            this.userPassword = hssService.userPassword;
 
-            this.usernameInvalid = ko.observable(false);
-            this.passwordInvalid = ko.observable(false);
-            this.submitted = ko.observable(false);
+            this.usernameInvalid = hssService.usernameInvalid;
+            this.passwordInvalid = hssService.passwordInvalid;
+            this.submitted = hssService.submitted;
 
-            this.validSubmit = ko.observable(false);
-            this.invalidSubmit = ko.observable(false);
-            this.error = ko.observable();
+            this.validSubmit = hssService.validSubmit;
+            this.invalidSubmit = hssService.invalidSubmit;
+            this.error = hssService.error;
         }
 
         submit() {
-            this.validSubmit(false);
-            this.invalidSubmit(false);
-            if(this.userPassword() === ''){
-                this.passwordInvalid(true);
-            } else {
-                this.passwordInvalid(false)
-            }
-            if(this.userName() === ''){
-                this.usernameInvalid(true);
-            } else {
-                this.usernameInvalid(false)
-            }
-            this.submitted(true);
-            if(this.userName() === '' || this.userPassword() === ''){
-                return;
-            }
-
-            $.ajax({
-                url: config.api.url + 'hss/user',
-                data: JSON.stringify({"username":this.userName(), "plainTextPassword":this.userPassword()}),
-                method: 'POST',
-                contentType: 'application/json',
-                success: () => {
-                    this.validSubmit(true);
-                    this.invalidSubmit(false);
-                    this.userName('');
-                    this.userPassword('');
-                },
-                error: (err) => {
-                    this.invalidSubmit(true);
-                    this.validSubmit(false);
-                    this.error(err.status + " - " + err.responseText);
-                }
-            })
+            hssService.submit();
         }
     }
 
