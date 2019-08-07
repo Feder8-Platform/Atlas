@@ -37,7 +37,7 @@ define([
             self.loadingDefinitionsToImport(true);
             $.ajax(params.importUrl(), {
                 contentType: 'application/json',
-                timeout: 5000,
+                timeout: 20000,
                 success: function (data) {
                     self.error("");
                     var elements = []
