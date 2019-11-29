@@ -3,7 +3,7 @@ define([
     'text!./import-button.html',
     'appConfig',
     'services/AuthAPI',
-	'atlas-state',
+    'atlas-state',
     'databindings'], function (ko, view, config, authApi, sharedState) {
     function importButton(params) {
 
@@ -21,6 +21,7 @@ define([
         self.fileUuid = ko.observable('');
         self.disable = params.disable;
         self.loadingDefinitionsToImport = ko.observable(true);
+        self.isFileSelected = ko.observable(false);
 
         self.currentTab = ko.observable('listTab');
 
@@ -145,17 +146,15 @@ define([
             console.log(d)
         }
 
-        self.submitFile = function() {
-            self.importing(true);
-            if (self.currentTab() === "listTab" && self.cohortDefinitions().filter(definition => definition.selected()).length !== 1){
-                alert("Please select one file.");
-                return;
-            }
+        self.checkFileSelected = function() {
             let input = document.getElementById('cohortInput');
-            if (self.currentTab() === "fileTab" && input && typeof input.files[0] === "undefined") {
-                alert("Please select a file.");
-                return;
-            }
+            self.isFileSelected(input && typeof input.files[0] !== "undefined");
+        }
+
+
+        self.submitFile = function() {
+            let input = document.getElementById('cohortInput');
+            self.importing(true);
             let endpoint;
             let data;
             if(self.currentTab() === "listTab"){
