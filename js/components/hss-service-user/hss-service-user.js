@@ -22,10 +22,15 @@ define([
             this.validSubmit = hssService.validSubmit;
             this.invalidSubmit = hssService.invalidSubmit;
             this.error = hssService.error;
+            this.isValidating = hssService.isValidating;
+            this.isValidHSSUser = hssService.isValidHSSUser;
+            hssService.validationCheck();
         }
 
         submit() {
-            hssService.submit();
+            hssService.submit().done(function() {
+                hssService.validationCheck();
+            });
         }
     }
 

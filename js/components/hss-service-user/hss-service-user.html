@@ -7,15 +7,27 @@
 
     <form data-bind="submit: submit">
 
-        <!-- ko if: $component.submitted && $component.invalidSubmit -->
-        <div class="alert alert-danger">
-            <strong>Error:</strong> <span data-bind="text: $component.error()"></span> .
+        <!-- ko if: $component.isValidating() -->
+        <div class="alert alert-info">
+            <strong>Validating...</strong>
         </div>
         <!-- /ko -->
 
-        <!-- ko if: $component.submitted && $component.validSubmit -->
+        <!-- ko if: $component.error() && !$component.isValidating() -->
+        <div class="alert alert-danger">
+            <strong>Error:</strong> <span data-bind="text: $component.error()"></span>
+        </div>
+        <!-- /ko -->
+
+        <!-- ko if: $component.submitted() && $component.validSubmit() -->
         <div class="alert alert-success">
             <strong>Success:</strong><span> You succesfully updated the service user</span> .
+        </div>
+        <!-- /ko -->
+
+        <!-- ko if: $component.isValidHSSUser() && !$component.isValidating() -->
+        <div class="alert alert-success">
+            <span>Correct Service User</span> .
         </div>
         <!-- /ko -->
 

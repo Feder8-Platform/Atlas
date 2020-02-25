@@ -6,13 +6,16 @@ define(function (require, exports) {
     var userName = ko.observable('');
     var userPassword = ko.observable('');
 
-    var usernameInvalid = ko.observable(false);;
-    var passwordInvalid = ko.observable(false);;
-    var submitted = ko.observable(false);;
+    var usernameInvalid = ko.observable(false);
+    var passwordInvalid = ko.observable(false);
+    var submitted = ko.observable(false);
 
-    var validSubmit = ko.observable(false);;
-    var invalidSubmit = ko.observable(false);;
-    var error = ko.observable();;
+    var validSubmit = ko.observable(false);
+    var invalidSubmit = ko.observable(false);
+    var error = ko.observable();
+
+    var isValidating = ko.observable(false);
+    var isValidHSSUser = ko.observable(false);
 
     var submit = function () {
         this.validSubmit(false);
@@ -32,7 +35,7 @@ define(function (require, exports) {
             return;
         }
 
-        $.ajax({
+        return $.ajax({
             url: config.api.url + 'hss/user',
             data: JSON.stringify({ "username": this.userName(), "plainTextPassword": this.userPassword() }),
             method: 'POST',
@@ -51,6 +54,25 @@ define(function (require, exports) {
         })
     }
 
+    var validationCheck = function () {
+        this.isValidating(true);
+        $.ajax({
+            url: config.api.url + 'hss/token',
+            method: 'GET',
+            contentType: 'application/json',
+            success: () => {
+                this.error(undefined);
+                this.isValidating(false);
+                this.isValidHSSUser(true);
+            },
+            error: (err) => {
+                this.error(err.responseJSON.message);
+                this.isValidating(false);
+                this.isValidHSSUser(false);
+            }
+        })
+    }
+
     var hss = {
         userName: userName,
         userPassword, userPassword,
@@ -60,7 +82,10 @@ define(function (require, exports) {
         validSubmit: validSubmit,
         invalidSubmit: invalidSubmit,
         error: error,
-        submit: submit
+        submit: submit,
+        validationCheck: validationCheck,
+        isValidating: isValidating,
+        isValidHSSUser: isValidHSSUser
     };
 
     return hss;
