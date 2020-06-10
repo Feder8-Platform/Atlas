@@ -10,4 +10,4 @@ echo "   config.isCentralInstance = false;">>js/config-local.js
 echo "   return config;">>js/config-local.js
 echo "});">>js/config-local.js
 
-docker run --rm -v $(pwd):/opt/app node:12.15.0-alpine sh -c "cd /opt/app && npm run build"
+docker run --rm -v $(pwd):/opt/app node:12.15.0-alpine sh -c "cd /opt/app; npm run build; chown -R $(id -u) /opt/app"
