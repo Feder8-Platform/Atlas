@@ -19,4 +19,4 @@ ECHO         }];>>js/config-local.js
 ECHO     return config;>>js/config-local.js
 ECHO });>>js/config-local.js
 
-CALL docker run --rm -v %CD%:/opt/app node:12.15.0-alpine sh -c "cd /opt/app && npm run build"
+CALL docker run --rm -v %CD%:/opt/app node:12.15.0-buster-slim sh -c "cd /opt/app && npm run build"
