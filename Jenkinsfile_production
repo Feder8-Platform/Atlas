@@ -1,10 +1,12 @@
 pipeline {
     agent any
-    
+
     stages {
         stage("re-tag and upload image") {
             steps {
-                sh './publish_central_production.sh'
+                dir('Atlas') {
+                    sh './publish_central_production.sh'
+                }
             }
         }
     }
