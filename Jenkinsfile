@@ -36,7 +36,7 @@ pipeline {
             image: gcr.io/kaniko-project/executor:v1.5.2-slim
             imagePullPolicy: IfNotPresent
             command:
-            - /busybox/cat
+            - cat
             tty: true
             volumeMounts:
             - name: docker-auth
