@@ -19,7 +19,7 @@ pipeline {
             volumeMounts:
             - name: docker-auth
               mountPath: /root/.docker
-          - name: node-12-15.0-builder
+          - name: node-12-15-builder
             image: node:12.15-buster-slim
             imagePullPolicy: IfNotPresent
             command:
