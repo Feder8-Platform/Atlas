@@ -19,8 +19,8 @@ pipeline {
             volumeMounts:
             - name: docker-auth
               mountPath: /root/.docker
-          - name: node-12-15-0-builder
-            image: node:12.15.0-buster-slim
+          - name: node-12-15.0-builder
+            image: node:12.15-buster-slim
             imagePullPolicy: IfNotPresent
             command:
             - cat
@@ -67,7 +67,7 @@ pipeline {
             cat /root/.docker/config.json
             '''.stripIndent()
         }
-        container('node-12-15-0-builder') {
+        container('node-12-15-builder') {
           dir('Atlas') {
             sh "./build_central.sh"
           }
