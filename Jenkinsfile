@@ -33,7 +33,7 @@ pipeline {
                 cpu: 1
                 memory: 1Gi
           - name: kaniko
-            image: gcr.io/kaniko-project/executor:v1.5.2-slim
+            image: gcr.io/kaniko-project/executor:1.5.2
             imagePullPolicy: IfNotPresent
             command:
             - cat
