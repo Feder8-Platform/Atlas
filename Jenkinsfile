@@ -20,7 +20,7 @@ pipeline {
             - name: docker-auth
               mountPath: /root/.docker
           - name: node-12-15-builder
-            image: node:12.15-buster-slim
+            image:node:12.15-buster-slim
             imagePullPolicy: IfNotPresent
             command:
             - cat
