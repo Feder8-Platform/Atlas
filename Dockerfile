@@ -41,12 +41,12 @@ COPY ./docker/optimization.conf /etc/nginx/conf.d/optimization.conf
 COPY ./docker/30-atlas-env-subst.sh /docker-entrypoint.d/30-atlas-env-subst.sh
 
 # Load code
-COPY ./images /usr/share/nginx/html/atlas/images
-COPY ./README.md ./LICENSE /usr/share/nginx/html/atlas/
-COPY --from=builder /code/index.html* /usr/share/nginx/html/atlas/
-COPY --from=builder /code/node_modules /usr/share/nginx/html/atlas/node_modules
-COPY --from=builder /code/js /usr/share/nginx/html/atlas/js
+COPY ./images /usr/share/nginx/html/images
+COPY ./README.md ./LICENSE /usr/share/nginx/html/
+COPY --from=builder /code/index.html* /usr/share/nginx/html/
+COPY --from=builder /code/node_modules /usr/share/nginx/html/node_modules
+COPY --from=builder /code/js /usr/share/nginx/html/js
 
 # Load Atlas local config with current user, so it can be modified
 # with env substitution
-COPY --chown=101 docker/config-local.js /usr/share/nginx/html/atlas/js/config-local.js
+COPY --chown=101 docker/config-local.js /usr/share/nginx/html/js/config-local.js
