@@ -1,11 +1,13 @@
 pipeline {
-    agent any
+    agent {
+        label 'amzl-honeur'
+    }
 
     stages {
         stage("build") {
             steps {
                 dir('Atlas') {
-                    sh './build_central.sh'
+                    sh './build.sh'
                 }
             }
         }
@@ -13,7 +15,7 @@ pipeline {
         stage("upload image") {
             steps {
                 dir('Atlas') {
-                    sh './publish_central.sh'
+                    sh './publish.sh'
                 }
             }
         }

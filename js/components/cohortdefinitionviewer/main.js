@@ -18,9 +18,6 @@ define(function (require, exports) {
 	var drugExposure = require('./components/DrugExposure');
 	ko.components.register('drug-exposure-criteria-viewer', drugExposure);
 
-	var treatmentLine = require('./components/TreatmentLine');
-	ko.components.register('treatment-line-criteria-viewer', treatmentLine);
-
 	var drugEra = require('./components/DrugEra');
 	ko.components.register('drug-era-criteria-viewer', drugEra);	
 	
@@ -86,5 +83,8 @@ define(function (require, exports) {
 	
 	var payerPlanPeriod = require('./components/PayerPlanPeriod');
 	ko.components.register('payer-plan-period-criteria-viewer', payerPlanPeriod);
+
+	var locationRegion = require('./components/LocationRegion');
+	ko.components.register('location-region-viewer', locationRegion);
 	
 });

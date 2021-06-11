@@ -16,27 +16,22 @@ define([
 			this.chartFormats = {};
 
 			this.context = params.context;
+			this.sourceName = ko.observable(this.context.currentSource().sourceName);
 			this.title = ko.computed(() => {
 				const title = this.context.currentReport() ?
-					`${this.context.currentSource() ? (this.context.currentSource().sourceName) : ''} ${this.context.currentReport().name} Report` :
-					'';
+					`${this.context.currentSource() ? (this.context.currentSource().sourceName) : ''} ${this.context.currentReport().name()}` + ko.i18n('dataSources.reports.titleTail', ' Report')() : '';
 				return title;
 			});
 			this.sourceKey = ko.computed(() => this.context.currentSource() ? this.context.currentSource().sourceKey : null);
 			this.path = this.context.currentReport().path;
 			this.conceptId = null;
-
-			this.sourceKeySubscription = this.sourceKey.subscribe(newSource => {
+			this.subscriptions.push(this.sourceKey.subscribe(newSource => {
 				if (!newSource) {
 					this.context.currentReport(null);
 				} else {
 					this.loadData();
 				}
-			});
-		}
-
-		dispose() {
-			this.sourceKeySubscription.dispose();
+			}));
 		}
 
 		getData() {
@@ -53,7 +48,7 @@ define([
 			response.catch((error) => {
 					this.context.hasError(true);
 					if (error.status === 403) {
-						this.context.errorMessage('You have no permissions to see this report');
+						this.context.errorMessage(ko.i18n('dataSources.noPermission', 'You have no permissions to see this report'));
 					}
 					console.error(error);
 				})

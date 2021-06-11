@@ -5,21 +5,20 @@ define((require, factory) => {
 	} = require('pages/Route');
 
 	// return the routes that #/pathways responds to
-	function routes(appModel, router) {
+	function routes(router) {
 
 		const pathwaysManager = new AuthorizedRoute((id, section, subId) => {
-			appModel.activePage(this.title);
 			require(['./components/manager'], function () {
 				router.setCurrentView('pathways-manager', {
 					analysisId: id,
 					section: section,
-					subId: subId
+					executionId: section === 'results' ? subId : null,
+					sourceId:  section === 'executions' ? subId : null,
 				});
 			});
 		});
 
 		const pathwaysBrowser = new AuthorizedRoute(() => {
-			appModel.activePage(this.title);
 			require(['./components/browser'], function () {
 				router.setCurrentView('pathways-browser');
 			});

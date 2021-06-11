@@ -9,7 +9,8 @@ define([
 	'pages/Page',
 	'utils/CommonUtils',
 	'utils/DatatableUtils',
-	'less!./browser.less'
+	'less!./browser.less',
+	'components/heading'
 ], function (
 	ko,
 	view,
@@ -28,7 +29,7 @@ define([
 			this.loading = ko.observable(false);
 			this.config = config;
 			this.analysisList = ko.observableArray();
-
+			this.tableOptions = commonUtils.getTableOptions('L');
 			this.canList = PermissionService.isPermittedList;
 			this.canCreate = PermissionService.isPermittedCreate;
 		}
@@ -40,6 +41,7 @@ define([
 		async loadData() {
 			this.loading(true);
 			const analysisList = await PathwayService.list();
+			datatableUtils.coalesceField(analysisList.content, 'modifiedDate', 'createdDate');
 			this.analysisList(analysisList.content);
 			this.loading(false);
 		}
@@ -49,9 +51,13 @@ define([
 		}
 
 		get gridColumns() {
-			return [
+			return ko.computed(() => [
 				{
-					title: 'Name',
+					title: ko.i18n('columns.id', 'Id'),
+					data: 'id'
+				},
+				{
+					title: ko.i18n('columns.name', 'Name'),
 					data: 'name',
 					className: this.classes('tbl-col', 'name'),
 					render: datatableUtils.getLinkFormatter(d => ({
@@ -60,41 +66,44 @@ define([
 					}))
 				},
 				{
-					title: 'Created',
+					title: ko.i18n('columns.created', 'Created'),
 					className: this.classes('tbl-col', 'created'),
-					type: 'datetime-formatted',
 					render: datatableUtils.getDateFieldFormatter('createdDate'),
 				},
 				{
-					title: 'Updated',
+					title: ko.i18n('columns.updated', 'Updated'),
 					className: this.classes('tbl-col', 'updated'),
-					type: 'datetime-formatted',
 					render: datatableUtils.getDateFieldFormatter('modifiedDate'),
 				},
 				{
-					title: 'Author',
-					data: (d) => (d.createdBy && d.createdBy.login) || "",
+					title: ko.i18n('columns.author', 'Author'),
+                    render: datatableUtils.getCreatedByFormatter(),
 					className: this.classes('tbl-col', 'author'),
 				}
-			];
+			]);
 		}
 
 		get gridOptions() {
-			return {
-				Facets: [{
-					'caption': 'Created',
-					'binding': (o) => datatableUtils.getFacetForDate(o.createdAt)
-				},
+			return ko.observable({
+				Facets: [
 					{
-						'caption': 'Updated',
-						'binding': (o) => datatableUtils.getFacetForDate(o.updatedAt)
+						'caption': ko.i18n('facets.caption.created', 'Created'),
+						'binding': (o) => datatableUtils.getFacetForDate(o.createdDate)
 					},
 					{
-						'caption': 'Author',
-						'binding': (o) => (o.createdBy && o.createdBy.login) || "",
+						'caption': ko.i18n('facets.caption.updated', 'Updated'),
+						'binding': (o) => datatableUtils.getFacetForDate(o.modifiedDate)
+					},
+					{
+						'caption': ko.i18n('facets.caption.author', 'Author'),
+						'binding': datatableUtils.getFacetForCreatedBy,
+					},
+					{
+						'caption': ko.i18n('facets.caption.designs', 'Designs'),
+						'binding': datatableUtils.getFacetForDesign,
 					},
 				]
-			};
+			});
 		}
 	}
 

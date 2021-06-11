@@ -3,7 +3,6 @@ define(function (require, exports) {
 	var ConditionOccurrence = require("./CriteriaTypes/ConditionOccurrence");
 	var ConditionEra = require("./CriteriaTypes/ConditionEra");
 	var DrugExposure = require("./CriteriaTypes/DrugExposure");
-	var TreatmentLine = require("./CriteriaTypes/TreatmentLine");
 	var DrugEra = require("./CriteriaTypes/DrugEra");
 	var DoseEra = require("./CriteriaTypes/DoseEra");
 	var Observation = require("./CriteriaTypes/Observation");
@@ -16,6 +15,7 @@ define(function (require, exports) {
 	var Death = require("./CriteriaTypes/Death");
 	var DemographicCriteria = require("./CriteriaTypes/DemographicCriteria");
 	var PayerPlanPeriod = require("./CriteriaTypes/PayerPlanPeriod");
+	var LocationRegion = require("./CriteriaTypes/LocationRegion");
 	
 	function GetCriteriaFromObject (data, conceptSets)
 	{
@@ -32,10 +32,6 @@ define(function (require, exports) {
 		} else if (data.hasOwnProperty("DrugExposure")) {
 			return {
 				DrugExposure: new exports.DrugExposure(data.DrugExposure, conceptSets)
-			};
-		} else if (data.hasOwnProperty("TreatmentLine")) {
-			return {
-				TreatmentLine: new exports.TreatmentLine(data.TreatmentLine, conceptSets)
 			};
 		} else if (data.hasOwnProperty("DrugEra")) {
 			return {
@@ -85,13 +81,16 @@ define(function (require, exports) {
 			return {
 				PayerPlanPeriod: new exports.PayerPlanPeriod(data.PayerPlanPeriod, conceptSets)
 			};
-		};	
+		}	else if (data.hasOwnProperty("LocationRegion")) {
+			return {
+				LocationRegion: new exports.LocationRegion(data.LocationRegion, conceptSets)
+			};
+		};
 	}
 	
 	exports.ConditionOccurrence = ConditionOccurrence;
 	exports.ConditionEra = ConditionEra;
 	exports.DrugExposure = DrugExposure;
-	exports.TreatmentLine = TreatmentLine;
 	exports.DrugEra = DrugEra;
 	exports.DoseEra = DoseEra;
 	exports.Observation = Observation;
@@ -104,6 +103,7 @@ define(function (require, exports) {
 	exports.Death = Death;
 	exports.DemographicCriteria = DemographicCriteria;
 	exports.PayerPlanPeriod = PayerPlanPeriod;
+	exports.LocationRegion = LocationRegion;
 	
 	exports.GetCriteriaFromObject = GetCriteriaFromObject;
 

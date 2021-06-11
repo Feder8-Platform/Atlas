@@ -5,11 +5,13 @@ define([
 	'../StratifyRule',
 	'components/cohortbuilder/options',
 	'components/Component',
+	'utils/AutoBind',	
 	'utils/CommonUtils',
 	'conceptsetbuilder/components',
 	'components/cohort-definition-browser',				
 	'databindings',
-	'components/cohortbuilder/components'
+	'components/cohortbuilder/components',
+	'less!./editor.less',
 ], function (
 	ko,
 	view,
@@ -17,11 +19,12 @@ define([
 	StratifyRule,
 	options,
 	Component,
-	commonUtils
+	AutoBind,
+	commonUtils,
 ) {
-	class IRAnalysisEditorModel extends Component {
+	class IRAnalysisEditorModel extends AutoBind(Component) {
 		constructor(params) {
-			super(params);					
+			super(params);
 			this.options = options;
 			
 			this.analysis = params.analysis;
@@ -32,26 +35,23 @@ define([
 			this.selectedStrataRule = ko.observable();
 			this.selectedStrataRuleIndex = null;
 			this.isEditable = params.isEditable;
+			this.defaultStratifyRuleName = ko.i18n('components.inclusionRuleEditor.unnamedCriteria', 'Unnamed Criteria');
 
-			this.fieldOptions = [{id: 'StartDate', name: 'start date'}, {id: 'EndDate', name: 'end date'}];
+			this.fieldOptions = [
+				{
+					id: 'StartDate',
+					name: ko.i18n('ir.editor.timeAtRiskStartDate', 'start date')
+				},
+				{
+					id: 'EndDate',
+					name: ko.i18n('ir.editor.timeAtRiskEndDate', 'end date')
+				}
+			];
 			// Subscriptions
-		
-			this.analysisSubscription = this.analysis.subscribe((newVal) => {
+			this.subscriptions.push(this.analysis.subscribe((newVal) => {
 				console.log("New analysis set.");
 				this.selectedStrataRule(params.analysis().strata()[this.selectedStrataRuleIndex]);
-			});
-
-			this.addStudyWindow = this.addStudyWindow.bind(this);
-			this.addTargetCohort = this.addTargetCohort.bind(this);
-			this.addOutcomeCohort = this.addOutcomeCohort.bind(this);			
-			this.deleteTargetCohort = this.deleteTargetCohort.bind(this);
-			this.deleteOutcomeCohort = this.deleteOutcomeCohort.bind(this);
-			this.cohortSelected = this.cohortSelected.bind(this);
-			this.copyStrataRule = this.copyStrataRule.bind(this);
-			this.deleteStrataRule = this.deleteStrataRule.bind(this);
-			this.selectStrataRule = this.selectedStrataRule.bind(this);
-			this.addStrataRule = this.addStrataRule.bind(this);
-			this.dispose = this.dispose.bind(this);
+			}));
 		}
 			
 		addStudyWindow() {
@@ -69,11 +69,11 @@ define([
 		};
 		
 		deleteTargetCohort(cohortDef) {
-			this.analysis().targetIds.remove(cohortDef.id);	
+			this.analysis().targetIds.remove(cohortDef.id);
 		};
 
 		deleteOutcomeCohort(cohortDef) {
-			this.analysis().outcomeIds.remove(cohortDef.id);	
+			this.analysis().outcomeIds.remove(cohortDef.id);
 		};
 		
 		cohortSelected(cohortId) {
@@ -84,32 +84,33 @@ define([
 		};
 
 		copyStrataRule(rule) {
-				var copiedRule = new StratifyRule(ko.toJS(rule), this.analysis().ConceptSets);
-				copiedRule.name("Copy of: " + copiedRule.name());
+				const copiedRule = new StratifyRule(ko.toJS(rule), this.analysis().ConceptSets);
+				const name = copiedRule.name() || this.defaultStratifyRuleName();
+				copiedRule.name(ko.i18nformat('common.copyOf', 'Copy of <%=name%>', {name: name})());
 				this.analysis().strata.push(copiedRule);
-				this.selectedStrataRule(copiedRule);
+				this.selectStrataRule(copiedRule);
 		};
 		
 		deleteStrataRule(rule) {
 			this.selectedStrataRule(null);
+			this.selectedStrataRuleIndex = null;
 			this.analysis().strata.remove(rule);
 		};
 	
 		selectStrataRule(rule) {
 			this.selectedStrataRule(rule);	
-			this.selectedStrataRuleIndex = params.analysis().strata().indexOf(rule);
-			console.log("Selected Index: " + this.selectedStrataRuleIndex);
+			this.selectedStrataRuleIndex = this.analysis().strata().indexOf(rule);
 		};
 				
 		addStrataRule() {
-			var newStratifyRule = new StratifyRule(null, this.analysis().ConceptSets);
+			const newStratifyRule = new StratifyRule(null, this.analysis().ConceptSets);
 			this.analysis().strata.push(newStratifyRule);
-			this.selectedStrataRule(newStratifyRule);			
+			this.selectStrataRule(newStratifyRule);
 		};
 		
 		dispose() {
+			super.dispose();
 			console.debug && console.debug("IR Analysis Editor Dispose.");
-			this.analysisSubscription.dispose();
 		};
 	}
 

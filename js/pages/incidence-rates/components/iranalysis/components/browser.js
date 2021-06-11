@@ -4,78 +4,72 @@ define([
 	'components/Component',
 	'utils/CommonUtils',
 	'services/MomentAPI',
+    'utils/DatatableUtils',
 	'faceted-datatable'
 ], function (
 	ko,
 	view,
 	Component,
 	commonUtils,
-	momentApi
+	momentApi,
+	datatableUtils,
 ) {
-	
+
 	class IRAnalysisBrowserModel extends Component {
 		constructor(params) {
 			super(params);
 			this.analysisList = params.analysisList;
-			
+			this.tableOptions = params.tableOptions || commonUtils.getTableOptions('M');
 			this.options = {
 				Facets: [
 					{
-						'caption': 'Last Modified',
-						'binding': function (o) {
-							var daysSinceModification = (new Date().getTime() - new Date(o.modifiedDate || o.createdDate).getTime()) / 1000 / 60 / 60 / 24;
-							if (daysSinceModification < 7) {
-								return 'This Week';
-							} else if (daysSinceModification < 14) {
-								return 'Last Week';
-							} else {
-								return '2+ Weeks Ago';
-							}
-						}
+						'caption': ko.i18n('facets.caption.created', 'Created'),
+						'binding': (o) => datatableUtils.getFacetForDate(o.createdDate)
 					},
 					{
-						'caption': 'Author',
-						'binding': function (o) {
-							return o.createdBy;
-						}
-					}
+						'caption': ko.i18n('facets.caption.updated', 'Updated'),
+						'binding': (o) => datatableUtils.getFacetForDate(o.modifiedDate)
+					},
+					{
+						'caption': ko.i18n('facets.caption.author', 'Author'),
+						'binding': datatableUtils.getFacetForCreatedBy,
+					},
+					{
+						'caption': ko.i18n('facets.caption.designs', 'Designs'),
+						'binding': datatableUtils.getFacetForDesign,
+					},
 				]
 			};
 
 			this.columns = [
 				{
-					title: 'Id',
+					title: ko.i18n('columns.id', 'Id'),
 					data: 'id'
 				},
 				{
-					title: 'Name',
-					render: (s, p, d) => {
-						return '<span class="linkish">' + d.name + '</span>';
-					}
+					title: ko.i18n('columns.name', 'Name'),
+					render: datatableUtils.getLinkFormatter(d => ({
+						label: d['name'],
+						linkish: true,
+					})),
 				},
 				{
-					title: 'Created',
-					type: 'datetime-formatted',
-					render: function (s, p, d) {
-						return momentApi.formatDateTimeUTC(d.createdDate);
-					}
+					title: ko.i18n('columns.created', 'Created'),
+					render: datatableUtils.getDateFieldFormatter('createdDate'),
 				},
 				{
-					title: 'Updated',
-					type: 'datetime-formatted',
-					render: function (s, p, d) {
-						return momentApi.formatDateTimeUTC(d.modifiedDate);
-					}
+					title: ko.i18n('columns.updated', 'Updated'),
+					render: datatableUtils.getDateFieldFormatter('modifiedDate'),
 				},
 				{
-					title: 'Author',
-					data: 'createdBy'
+					title: ko.i18n('columns.author', 'Author'),
+					render: datatableUtils.getCreatedByFormatter(),
 				}
 			];
 
 			this.rowClick = this.rowClick.bind(this);
 		}
-		
+
 		rowClick (d) {
 			this.selected(d.id);
 		}

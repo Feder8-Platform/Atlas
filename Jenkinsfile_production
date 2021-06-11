@@ -1,11 +1,13 @@
 pipeline {
-    agent any
+    agent {
+        label 'amzl-honeur'
+    }
 
     stages {
         stage("re-tag and upload image") {
             steps {
                 dir('Atlas') {
-                    sh './publish_central_production.sh'
+                    sh './publish_production.sh'
                 }
             }
         }

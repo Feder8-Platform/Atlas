@@ -1,7 +1,7 @@
 define([
   'knockout',
   'text!./source-manager.html',
-  'components/Component',
+  'pages/Page',
   'utils/AutoBind',
   'utils/CommonUtils',
   'appConfig',
@@ -20,7 +20,7 @@ define([
   function (
     ko,
     view,
-    Component,
+    Page,
     AutoBind,
     commonUtils,
     config,
@@ -34,6 +34,8 @@ define([
     constants
   ) {
 
+
+  //todo yar should we translate daimons?
   var defaultDaimons = {
     CDM: { tableQualifier: '', enabled: false, priority: 0, sourceDaimonId: null },
     Vocabulary: { tableQualifier: '', enabled: false, priority: 0, sourceDaimonId: null },
@@ -68,7 +70,8 @@ define([
 
     var data = data || {};
 
-    this.name = ko.observable(data.sourceName || "New Source");
+    this.sourceId = ko.observable(data.sourceId || 0);
+    this.name = ko.observable(data.sourceName || ko.unwrap(ko.i18n('configuration.newSource', 'New Source')));
     this.key = ko.observable(data.sourceKey || null);
     this.dialect = ko.observable(data.sourceDialect || null);
     this.connectionString = ko.observable(data.connectionString || null);
@@ -82,17 +85,19 @@ define([
     return this;
   }
 
-  class SourceManager extends AutoBind(Component) {
+  class SourceManager extends AutoBind(Page) {
     constructor(params) {
       super(params);
       this.config = config;
-      this.model = params.model;
+      this.roles = sharedState.roles;
       this.loading = ko.observable(false);
-      this.dirtyFlag = this.model.currentSourceDirtyFlag;
-      this.selectedSource = params.model.currentSource;
-      this.selectedSourceId = params.model.selectedSourceId;
+      this.dirtyFlag = sharedState.ConfigurationSource.dirtyFlag;
+      this.selectedSource = sharedState.ConfigurationSource.current;
+      this.selectedSourceId = sharedState.ConfigurationSource.selectedId;
       this.options = {};
       this.isAuthenticated = authApi.isAuthenticated;
+      this.roles = sharedState.roles;
+      this.appInitializationStatus = sharedState.appInitializationStatus;
 
       this.hasAccess = ko.pureComputed(() => {
         if (!config.userAuthenticationEnabled) {
@@ -107,7 +112,7 @@ define([
       });
 
       this.isDeletePermitted = ko.pureComputed(() => {
-        return authApi.isPermittedDeleteSource(this.selectedSource().key());
+        return authApi.isPermittedDeleteSource(this.selectedSource() && this.selectedSource().key());
       });
 
       this.canEdit = ko.pureComputed(() => {
@@ -117,7 +122,9 @@ define([
       this.isNameCorrect = ko.computed(() => {
           return this.selectedSource() && this.selectedSource().name();
       });
-
+      this.isNew = ko.pureComputed(() => {
+        return parseInt(this.selectedSourceId()) === 0;
+      })
       this.canSave = ko.pureComputed(() => {
         return (
           this.isNameCorrect()
@@ -130,28 +137,30 @@ define([
       this.canDelete = () => {
         return (
           this.selectedSource()
+          && !this.isNew()
           && this.selectedSource().key()
           && this.isDeletePermitted()
         );
       };
 
-      this.canEditKey = ko.pureComputed(() => {
-        return !this.selectedSourceId();
-      });
+      this.canEditKey = ko.pureComputed(this.isNew);
+
+
 
       this.options.dialectOptions = [
-        { name: 'PostgreSQL', id: 'postgresql' },
-        { name: 'SQL server', id: 'sql server' },
-        { name: 'Oracle', id: 'oracle' },
-        { name: 'Amazon Redshift', id: 'redshift' },
-        { name: 'Google BigQuery', id: 'bigquery' },
-        { name: 'Impala', id: 'impala' },
-        { name: 'Microsoft PDW', id: 'pdw' },
-        { name: 'IBM Netezza', id: 'netezza' },
+        { id: 'postgresql', name: ko.i18n('configuration.viewEdit.dialect.options.postgresql', 'PostgreSQL') },
+        { id: 'sql server', name: ko.i18n('configuration.viewEdit.dialect.options.sqlserver', 'SQL server') },
+        { id: 'oracle', name: ko.i18n('configuration.viewEdit.dialect.options.oracle', 'Oracle') },
+        { id: 'redshift', name: ko.i18n('configuration.viewEdit.dialect.options.redshift', 'Amazon Redshift') },
+        { id: 'bigquery', name: ko.i18n('configuration.viewEdit.dialect.options.bigquery', 'Google BigQuery') },
+        { id: 'impala', name: ko.i18n('configuration.viewEdit.dialect.options.impala', 'Impala') },
+        { id: 'pdw', name: ko.i18n('configuration.viewEdit.dialect.options.pdw', 'Microsoft PDW') },
+        { id: 'netezza', name: ko.i18n('configuration.viewEdit.dialect.options.netezza', 'IBM Netezza') },
+        { id: 'hive', name: ko.i18n('configuration.viewEdit.dialect.options.hive', 'Hive LLAP')},
       ];
 
       this.sourceCaption = ko.computed(() => {
-        return (this.model.currentSource() == null || this.model.currentSource().key() == null) ? 'New source' : 'Source ' + this.model.currentSource().name();
+        return (this.selectedSource() == null || this.selectedSource().key() == null) ? ko.i18n('const.newEntityNames.source', 'New Source') : ko.i18nformat('configuration.viewEdit.source.title', 'Source <%=name%>', {name: this.selectedSource().name()});
       });
       this.isKrbAuth = ko.computed(() => {
           return this.impalaConnectionStringIncludes("AuthMech=1");
@@ -186,22 +195,20 @@ define([
         }
         return "";
       });
-      this.init();
 
       this.fieldsVisibility = {
         username: ko.computed(() => !this.supportsKeyfileAuth() || this.isKrbAuth()),
         password: ko.computed(() => !this.supportsKeyfileAuth()),
-        krbAuthSettings: this.isKrbAuth,
-        showKeytab: ko.computed(() => {
-          return this.isKrbAuth() && this.selectedSource().krbAuthMethod() === 'keytab';
-        }),
+        krbAuthSettings: ko.computed(() => this.isKrbAuth()),
         krbFileInput: ko.computed(() => {
           return this.isKrbAuth() && (typeof this.selectedSource().keyfileName() !== 'string' || this.selectedSource().keyfileName().length === 0);
         }),
+        showKrbKeyfile: ko.computed(() => this.isImpalaDS() && this.selectedSource().krbAuthMethod() === 'keytab'),
         bigQueryAuthSettings: ko.computed(() => this.isBigQueryDS()),
         bqFileInput: ko.computed(() => {
           return this.isBigQueryDS() && (typeof this.selectedSource().keyfileName() !== 'string' || this.selectedSource().keyfileName().length === 0);
         }),
+
         // warnings
         hostWarning: ko.computed(() => {
           var showWarning = this.isKrbAuth() && this.krbHostFQDN() === "";
@@ -252,19 +259,19 @@ define([
       return this.isImpalaDS() && this.isNonEmptyConnectionString() && this.selectedSource().connectionString().includes(substr);
     }
 
-    removeKeytab() {
-      $('#keytabFile').val(''); // TODO: create "ref" directive
-      this.keytab = null;
+    removeKeyfile() {
+      $('#keyfile').val(''); // TODO: create "ref" directive
+      this.keyfile = null;
       this.selectedSource().keyfileName(null);
     }
 
     uploadFile(file) {
-      this.keytab = file;
+      this.keyfile = file;
       this.selectedSource().keyfileName(file.name)
     }
 
-    save() {
-      var source = {
+    async save() {
+      const source = {
         name: this.selectedSource().name() || null,
         key: this.selectedSource().key() || null,
         dialect: this.selectedSource().dialect() || null,
@@ -277,37 +284,34 @@ define([
           return lodash.omit(d, ['enabled']);
         }),
         keyfileName: this.selectedSource().keyfileName(),
-        keytab: this.keytab,
+        keyfile: this.keyfile,
       };
-      this.loading(true);
-      sourceApi.saveSource(this.selectedSourceId(), source)
-        .then(() => sourceApi.initSourcesConfig())
-        .then(function (appStatus) {
-            sharedState.appInitializationStatus(appStatus);
-            return vocabularyProvider.getDomains();
-        })
-        .then(() => {
-          roleService.getList()
-            .then((roles) => {
-              this.model.roles(roles);
-              this.goToConfigure();
-            });
-        })
-        .catch(({data}) => {
-          this.loading(false);
-          alert('The Source was not saved. ' +
-            (data !== undefined && data.payload !== undefined && data.payload.message !== undefined ?
-             data.payload.message : 'Please contact your administrator to resolve this issue.'));
-         });
+      try {
+        this.loading(true);
+        const sourceId = this.isNew() ? null : this.selectedSourceId();
+        await sourceApi.saveSource(sourceId, source);
+        const appStatus = await sourceApi.initSourcesConfig();
+        this.appInitializationStatus(appStatus);
+        await vocabularyProvider.getDomains();
+        const roles = await roleService.getList();
+        this.roles(roles);
+        this.goToConfigure();
+      } catch ({ data = {} }) {
+        this.loading(false);
+        const {
+          payload: {
+            message = ko.unwrap(ko.i18n('configuration.viewEdit.source.alerts.save.errorMessage', 'Please contact your administrator to resolve this issue.'))
+          } = {}
+        } = data;
+        alert(ko.unwrap(ko.i18nformat('configuration.viewEdit.source.alerts.save.error', 'The Source was not saved. <%= message %>', {message: message})));
+      }
     }
 
     close() {
-      if (this.dirtyFlag().isDirty() && !confirm('Source changes are not saved. Would you like to continue?')) {
+
+      if (this.dirtyFlag().isDirty() && !confirm(ko.unwrap(ko.i18n('configuration.viewEdit.source.confirms.close', 'Source changes are not saved. Would you like to continue?')))) {
         return;
       }
-      this.selectedSource(null);
-      this.selectedSourceId(null);
-      this.dirtyFlag().reset();
       this.goToConfigure();
     }
 
@@ -324,50 +328,62 @@ define([
 		return notSelectedCurrentDaimons.length !== currenPriotirizableDaimons.length;
     }
 
-    delete() {
+    async delete() {
       if (this.hasSelectedPriotirizableDaimons()) {
-        alert('Some daimons of this source were given highest priority and are in use by application. Select new top-priority diamons to delete the source');
+        alert(ko.unwrap(ko.i18n('configuration.viewEdit.source.alerts.delete.hasSelectedPriotirizableDaimons', 'Some daimons of this source were given highest priority and are in use by application. Select new top-priority diamons to delete the source.')));
         return;
       }
 
-      if (!confirm('Delete source? Warning: deletion can not be undone!')) {
+      if (!confirm(ko.unwrap(ko.i18n('configuration.viewEdit.source.confirms.delete', 'Delete source? Warning: deletion can not be undone!')))) {
         return;
       }
-      this.loading(true);
-      sourceApi.deleteSource(this.selectedSourceId())
-        .then(sourceApi.initSourcesConfig)
-        .then(function (appStatus) {
-            sharedState.appInitializationStatus(appStatus);
-            return roleService.getList();
-        })
-        .then((roles) => {
-          this.model.roles(roles);
-          this.loading(false);
-          this.goToConfigure();
-        })
-        .catch(() => this.loading(false));
+      try {
+        this.loading(true);
+        await sourceApi.deleteSource(this.selectedSourceId());
+        const appStatus = await sourceApi.initSourcesConfig();
+        this.appInitializationStatus(appStatus);
+        const roles = await roleService.getList();
+        this.roles(roles);
+        this.goToConfigure();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        this.loading(false);
+      }
     }
 
     goToConfigure() {
-      document.location = '#/configure';
+      this.selectedSource(null);
+      this.selectedSourceId(null);
+      this.dirtyFlag().reset();
+      commonUtils.routeTo('/configure');
     }
 
-    init() {
-      if (this.hasAccess()) {
-        if (this.selectedSourceId() == null) {
-          this.newSource();
-        } else {
-          this.loading(true);
-          sourceApi.getSource(this.selectedSourceId())
-            .then((source) => {
-              this.selectedSource(new Source(source));
-              this.dirtyFlag(new ohdsiUtil.dirtyFlag(this.selectedSource()));
-              this.loading(false);
-            });
-        }
+    onRouterParamsChanged(params = {}) {
+      const selectedSourceId = parseInt(this.selectedSourceId());
+      if (this.isNew() && !this.dirtyFlag().isDirty()) {
+        this.newSource();
+      } else if (selectedSourceId > 0 && selectedSourceId !== (this.selectedSource() && this.selectedSource().sourceId())) {
+        this.onSourceSelected();
       }
     }
 
+    async onSourceSelected() {
+      if (this.hasAccess()) {
+        try {
+          this.loading(true);
+          const source = await sourceApi.getSource(this.selectedSourceId());
+          this.selectedSource(new Source(source));
+          this.dirtyFlag(new ohdsiUtil.dirtyFlag(this.selectedSource()));
+        } catch (e) {
+          console.error(e);
+          alert(ko.unwrap(ko.i18nformat('configuration.viewEdit.source.alerts.sourceSelectedError', 'An error occurred while attempting to get a source with id=<%=selectedSourceId%>.', {selectedSourceId: this.selectedSourceId()})));
+          commonUtils.routeTo('/configure');
+        } finally {
+          this.loading(false);
+        }
+      }
+    }
   }
 
   return commonUtils.build('source-manager', SourceManager, view);

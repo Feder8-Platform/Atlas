@@ -5,6 +5,7 @@ define([
 	'utils/AutoBind',
 	'services/IRAnalysis',
 	'pages/incidence-rates/const',
+	'const',
 	'services/MomentAPI',
 	'services/AuthAPI',
 	'components/Component',
@@ -21,6 +22,7 @@ define([
 	AutoBind,
 	IRAnalysisService,
 	constants,
+	globalConsts,
 	momentApi,
 	authApi,
 	Component,
@@ -32,26 +34,34 @@ define([
 		constructor(params) {
 			super(params);
 			this.sources = params.sources;
+			this.selectedAnalysisId = sharedState.IRAnalysis.selectedId;
+			this.selectedSourceId = sharedState.IRAnalysis.selectedSourceId;
+			this.selectedSourceId.subscribe(() => this.expandSelectedSource());
 			this.hasSourceAccess = authApi.hasSourceAccess;
 			this.generationSources = ko.computed(() => params.sources().map(s => ({
 				...s.source,
 				disabled: this.isInProgress(s) || !this.hasSourceAccess(s.source.sourceKey),
-				disabledReason: this.isInProgress(s) ? 'Generation is in progress' : !this.hasSourceAccess(s.source.sourceKey) ? 'Access denied' : null,
+				disabledReason: this.isInProgress(s)
+					? ko.i18n('ir.results.generationInProgress', 'Generation is in progress')()
+					: !this.hasSourceAccess(s.source.sourceKey) ? ko.i18n('ir.results.accessDenied', 'Access denied')() : null,
 			})));
 			this.execute = params.execute;
 			this.cancelExecution = params.cancelExecution;
 			this.stoppingSources = params.stoppingSources;
+			this.criticalCount = params.criticalCount;
 
 			this.dirtyFlag = params.dirtyFlag;
 			this.analysisCohorts = params.analysisCohorts;
 			this.loadingSummary = params.loadingSummary;
 			this.dirtyFlag = sharedState.IRAnalysis.dirtyFlag;
+			this.isTarValid = params.isTarValid;
 			this.selectedSource = ko.observable();
 			this.selectedReport = ko.observable();
 			this.rateMultiplier = ko.observable(1000);
 			this.selectedTarget = ko.observable();
 			this.selectedOutcome = ko.observable();
 			this.isLoading = ko.observable();
+			this.isEditable = params.isEditable;
 			this.formatDateTime = function(date){
 				return momentApi.formatDateTime(new Date(date));
 			};
@@ -63,32 +73,55 @@ define([
 				var multiplier = this.rateMultiplier();
 				if (multiplier >= 1000)
 					multiplier = (multiplier / 1000) + "k"
-				return "per " + multiplier  + " years";
+				return ko.i18nformat('ir.results.perYears', 'per <%=multiplier%> years', {multiplier: multiplier})();
 			});
 
 			this.ipCaption = ko.pureComputed(() => {
 				var multiplier = this.rateMultiplier();
 				if (multiplier >= 1000)
 					multiplier = (multiplier / 1000) + "k"
-				return "per " + multiplier  + " persons";
+				return ko.i18nformat('ir.results.perPersons', 'per <%=multiplier%> persons', {multiplier: multiplier})();
 			});
 
 			// observable subscriptions
 
-			this.targetSub = this.selectedTarget.subscribe((newVal) => {
-				if (this.selectedSource()) // this will cause a report refresh
-					this.selectSource(this.selectedSource());
+			this.subscriptions.push(this.selectedTarget.subscribe((newVal) => {
+				if (this.selectedSourceId()) // this will cause a report refresh
+					this.expandSelectedSource();
+			}));
+
+			this.subscriptions.push(this.selectedOutcome.subscribe((newVal) => {
+				if (this.selectedSourceId()) // this will cause a report refresh
+					this.expandSelectedSource();
+			}));
+
+			this.executionDisabled = ko.pureComputed(() => {
+				return (this.dirtyFlag().isDirty() || !this.isTarValid() || this.criticalCount() > 0);
 			});
 
-			this.outcomeSub = this.selectedOutcome.subscribe((newVal) => {
-				if (this.selectedSource()) // this will cause a report refresh
-					this.selectSource(this.selectedSource());
+			this.executionDisabledReason = ko.pureComputed(() => {
+				if (!this.executionDisabled()) return null;
+				if (this.dirtyFlag().isDirty()) return ko.unwrap(globalConsts.disabledReasons.DIRTY);
+				if (!this.isTarValid()) return ko.unwrap(globalConsts.disabledReasons.INVALID_TAR);
+				if (this.criticalCount() > 0) return ko.unwrap(globalConsts.disabledReasons.INVALID_DESIGN);
+				return ko.unwrap(globalConsts.disabledReasons.ACCESS_DENIED);
 			});
 
-			this.isExecutionDisabled = ko.computed(() => {
-				return this.dirtyFlag().isDirty();
+			this.disableExportAnalysis = ko.pureComputed(() => {
+				return this.dirtyFlag().isDirty() || !this.sources().some(si => si.info() && si.info().executionInfo.status === constants.status.COMPLETE);
 			});
-			this.executionDisabledReason = () => 'Save changes to generate';
+
+			this.expandSelectedSource();
+		}
+
+		reportDisabledReason(source) {
+			return ko.pureComputed(() => !this.hasSourceAccess(source.sourceKey) ? ko.unwrap(globalConsts.disabledReasons.ACCESS_DENIED) : null);
+		}
+
+		isExecutionDisabled(source) {
+			return ko.pureComputed(() => {
+				return !this.hasSourceAccess(source.sourceKey) || this.dirtyFlag().isDirty()|| !this.isTarValid();
+			});
 		}
 
 		isInProgress(sourceItem) {
@@ -97,6 +130,15 @@ define([
 
 		isSummaryLoading(sourceItem) {
 			return sourceItem.source && this.loadingSummary && this.loadingSummary().find(sourceKey => sourceKey === sourceItem.source.sourceKey);
+		}
+
+		getSourceName() {
+			if (this.selectedSourceId()) {
+				const source = this.sources().find(s => s.source.sourceId === this.selectedSourceId());
+				if (source) {
+					return source.source.sourceName;
+				}
+			}
 		}
 
 		showExitMessage(sourceKey) {
@@ -143,15 +185,39 @@ define([
 		}
 
 		selectSource(source) {
+			if (source) {
+				this.selectedSourceId(source.source.sourceId);
+			}
+		}
 
-			// fail-fast if source/targets are not set,
+		expandSelectedSource() {			
 			if (!(this.selectedTarget() && this.selectedOutcome())) {
-				this.selectedSource(null);
 				this.selectedReport(null);
 				return;
 			}
 
-			this.selectedSource(source);
+			const source = this.sources().find(s => s.source.sourceId === this.selectedSourceId());
+			if (!source) {
+				// no source was selected
+				this.selectedReport(null);
+				return;
+			}
+			// stop subscribing for source loading
+			if (this.sourceInfoSubscribeId) {
+				this.sourceInfoSubscribeId.dispose();
+			}
+			if (!source.info()) {
+				// if sources were not loaded yet - wait for their loading
+				this.sourceInfoSubscribeId = source.info.subscribe(() => this.expandSelectedSource());
+				// prevent further processing
+				return;
+			}
+			if (source.source.sourceId !== this.selectedSourceId()) {				
+				commonUtils.routeTo('/iranalysis/' + this.selectedAnalysisId() + '/generation/' + source.source.sourceId);
+				// prevent further processing
+				return;
+			}
+
 			this.isLoading(true);
 
 			IRAnalysisService.getReport(source.info().executionInfo.id.analysisId, source.source.sourceKey, this.selectedTarget(), this.selectedOutcome())
@@ -169,31 +235,25 @@ define([
 			})
 			.catch(er => {
 				console.error(er);
-				alert('There was an error while loading generation result reports');
+				alert(ko.i18n('ir.results.loadingGenerationResultErrorMessage', 'There was an error while loading generation result reports')());
 				this.isLoading(false);
 			});
 		};
 
 		runGenerations(selectedSources) {
 			if (!this.analysisCohorts().targetCohorts().length || !this.analysisCohorts().outcomeCohorts().length) {
-				alert('You should select at least one target and outcome cohort to generate');
+				alert(ko.i18n('ir.results.selectTargetAndOutcomeAlert', 'You should select at least one target and outcome cohort to generate')());
 				return false;
 			}
 			selectedSources.forEach(source => this.execute(source.sourceKey));
 		}
 
 		closeReport() {
-			this.selectedSource(null);
-			this.selectedReport(null);
+			this.selectedSourceId(null);
 		}
 
 		msToTime(s) {
 			return momentApi.formatDuration(s);
-		};
-
-		dispose() {
-			this.targetSub.dispose();
-			this.outcomeSub.dispose();
 		};
 	}
 

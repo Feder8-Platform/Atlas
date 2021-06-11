@@ -12,8 +12,11 @@ define([
 	'atlascharts',
 	'd3',
 	'components/visualizations/filter-panel/utils',
+	'utils/ChartUtils',
 	'components/visualizations/filter-panel/filter-panel',
 	'components/charts/sunburst',
+	'components/nav-pills',
+	'./pathway-tableview',
 	'less!./pathway-results.less'
 ], function(
 	ko,
@@ -28,11 +31,17 @@ define([
 	momentAPI,
 	AtlasCharts,
 	d3,
-	filterUtils
+	filterUtils,
+	ChartUtils,
 ) {
 
 	const percentFormat = d3.format(".1%");
 	const numberFormat = d3.format(",");
+	const pills = [
+		{ name: ko.i18n('pathways.manager.executions.results.visualization', 'Visualization'), key: "viz"},
+		{ name: ko.i18n('pathways.manager.executions.results.tabular', 'Tabular'), key: "table"}
+	];
+
 
 	class PathwayResults extends AutoBind(Component) {
 
@@ -50,9 +59,16 @@ define([
 			this.isExecutionDesignShown = ko.observable(false);
 			this.executionDesign = ko.observable(null);
 			this.loadExecutionDesignError = ko.observable(false);
-			this.pathwaysObserver = ko.computed(() => this.prepareResultData(this.results(), this.filterList()));
+			this.pathwaysObserver = ko.pureComputed(() => this.prepareResultData(this.results(), this.filterList()));
 
 			this.executionId.subscribe(id => id && this.loadData());
+			this.title = ko.computed(() => ko.unwrap(ko.i18n('pathways.manager.executions.results.title', 'Pathway Report for')) + ' ' + (this.results() && this.results().sourceName));
+
+			this.pills = pills;
+			this.MODE_VISUALIZATION = pills[0].key;
+			this.MODE_TABULAR = pills[1].key;
+
+			this.mode = ko.observable(pills[0].key);  // default to first pill
 
 			this.loadData();
 		}
@@ -131,8 +147,10 @@ define([
 			rows.forEach((r, i) => {
 				if (i> 0) {
 					r.diffPct = rows[i-1].remainPct - r.remainPct;
+					r.diff = rows[i-1].personCount - r.personCount;
 				} else {
 					r.diffPct = 1.0-r.remainPct;
+					r.diff = pathwayData.summary.totalPathways - r.personCount;
 				}
 			});
 
@@ -146,7 +164,7 @@ define([
 			return [
 				{
 					type: 'multiselect',
-					label: 'Cohorts',
+					label: ko.i18n('pathways.manager.executions.results.filters.cohorts', 'Cohorts'),
 					name: 'cohorts',
 					options: ko.observable(cohorts),
 					selectedValues: ko.observable(cohorts.map(c => c.value)),
@@ -164,6 +182,10 @@ define([
 
 		formatPct(value) {
 			return percentFormat(value);
+		}
+
+		formatDetailValue(value, percent) {
+			return this.formatNumber(value) + ' (' + this.formatPct(percent) + ')';
 		}
 
 		// used to 'capture' the data context in the knockout binding for use in the d3 callback
@@ -205,6 +227,7 @@ define([
 				});
 
 				const results = {
+					executionId: this.executionId(),
 					sourceId: source.sourceId,
 					sourceName: source.sourceName,
 					date: execution.endTime,
@@ -228,23 +251,29 @@ define([
 
 
 			const cohortPathways = selectedCohortIds.map(id => {
+				let result = null;
 				const pathwayGroup = results.data.pathwayGroups.find(g => id == g.targetCohortId);
-				const pathway = this.buildHierarchy(pathwayGroup.pathways);
-				const targetCohort = results.design.targetCohorts.find(c => id == c.id);
-				const summary = {...this.summarizeHierarchy(pathway), cohortPersons: pathwayGroup.targetCohortCount, pathwayPersons: pathwayGroup.totalPathwaysCount};
-				return {
-					pathway,
-					targetCohortName: targetCohort.name,
-					targetCohortCount: this.formatNumber(summary.cohortPersons),
-					personsReported: this.formatNumber(summary.pathwayPersons),
-					personsReportedPct: this.formatPct(summary.pathwayPersons/summary.cohortPersons),
-					summary,
-					pathDetails: ko.observable()
-				};
-			});
+				if (pathwayGroup) {
+					const pathway = this.buildHierarchy(pathwayGroup.pathways);
+					const targetCohort = results.design.targetCohorts.find(c => id == c.id);
+					const summary = {...this.summarizeHierarchy(pathway), cohortPersons: pathwayGroup.targetCohortCount, pathwayPersons: pathwayGroup.totalPathwaysCount};
+					result = {
+						pathway,
+						targetCohortName: targetCohort.name,
+						targetCohortCount: this.formatNumber(summary.cohortPersons),
+						personsReported: this.formatNumber(summary.pathwayPersons),
+						personsReportedPct: this.formatPct(summary.pathwayPersons/summary.cohortPersons),
+						summary,
+						pathDetails: ko.observable()
+					};
+				}
+				return result;
+			}).filter(cp => cp);
 
 			const eventCohorts = results.data.eventCodes.filter(ec => !ec.isCombo)
 			const colorScheme = d3.scaleOrdinal(eventCohorts.length > 10 ? d3.schemeCategory20 : d3.schemeCategory10);
+			// initialize colors based on design
+			this.results().design.eventCohorts.forEach((d, i) => colorScheme(Math.pow(2,i)));
 			const fixedColors = {"end": "rgba(185, 184, 184, 0.23)"};
 			const colors = (d) => (fixedColors[d] || colorScheme(d));
 
@@ -270,6 +299,12 @@ define([
 				this.loadExecutionDesignError(true);
 				console.error(e);
 			}
+		}
+
+		exportLegend(data,event) {
+			const tableElement = event.target.parentElement.querySelector('table');
+			const filename = `${data.targetCohortName}.png`;
+			ChartUtils.downloadElementAsPng(tableElement, filename);
 		}
 
 	}

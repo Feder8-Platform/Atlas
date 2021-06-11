@@ -1,6 +1,6 @@
 define(
   (require, exports) => {
-	  const ko = require('knockout');  	
+    const ko = require('knockout');
     const buildRoutes = require('./routes');
     const appState = require('atlas-state');
     const constants = require('./const');
@@ -24,11 +24,11 @@ define(
     });
  
     return {
-      title: 'Estimation',
+      title: ko.i18n('navigation.estimation', 'Estimation'),
       buildRoutes,
       navUrl: navUrl,
-      icon: 'balance-scale',
-			statusCss: statusCss
+      icon: 'balance-scale', 
+      statusCss: statusCss
     };
   }
 );

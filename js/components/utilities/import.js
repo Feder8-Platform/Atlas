@@ -27,7 +27,10 @@ define([
             this.isPermittedImport = params.isPermittedImport || (() => false);
             this.importService = params.importService;
             this.isImportPermitted = this.isImportPermittedResolver();
-            this.importJSON = ko.observable();
+            this.importJSON = params.importJSON ? params.importJSON : ko.observable();
+            this.isJSONValid = params.isJSONValid ? params.isJSONValid : ko.observable(true);
+
+            this.afterImportSuccess = params.afterImportSuccess || ((res) => commonUtils.routeTo(this.routeToUrl + res.id));
         }
 
         isImportPermittedResolver() {
@@ -36,9 +39,14 @@ define([
 
         async doImport() {
             this.loading(true);
-            const res = await this.importService(JSON.parse(this.importJSON()));
-            this.loading(false);
-            commonUtils.routeTo(this.routeToUrl + res.id);
+            try {
+                const res = await this.importService(JSON.parse(this.importJSON()));
+                this.afterImportSuccess(res);
+            } catch (e) {
+                alert("Import failed, please, ensure that importing JSON is valid!");
+            } finally {
+                this.loading(false);
+            }
         }
     }
 

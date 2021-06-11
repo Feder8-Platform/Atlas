@@ -2,7 +2,11 @@ define(
     (require, exports) => {
 
         const consts = require('const');
-        const pageTitle = 'Characterizations';
+        const ko = require('knockout');
+        const pageTitle = ko.computed({
+          read: ko.i18n('navigation.characterizations', 'Characterizations'),
+          write: (value) => false,
+        });
 
         const characterizationsTab = 0;
         const featureAnalysesTab = 1;
@@ -10,14 +14,14 @@ define(
         const gridTabs = [
             {
                 link: '#/cc/characterizations',
-                tabLabel: 'Characterizations',
-                newEntityLabel: 'Characterization',
+                tabLabel: ko.i18n('cc.tabs.characterizations.title', 'Characterizations'),
+                newEntityLabel: ko.i18n('cc.tabs.characterizations.newLabel', 'Characterization'),
                 value: characterizationsTab,
             },
             {
                 link: '#/cc/feature-analyses',
-                tabLabel: 'Feature analyses',
-                newEntityLabel: 'Feature analysis',
+                tabLabel: ko.i18n('cc.tabs.featureAnalyses.title', 'Feature analyses'),
+                newEntityLabel: ko.i18n('cc.tabs.featureAnalyses.newLabel', 'Feature analysis'),
                 value: featureAnalysesTab,
             },
         ];
@@ -25,12 +29,12 @@ define(
         const ccGenerationStatus = consts.generationStatuses;
 
         const feAnalysisTypes = {
-            PRESET: 'Preset',
-            CRITERIA_SET: 'Criteria set',
-            CUSTOM_FE: 'Custom'
+            PRESET: 'PRESET',
+            CRITERIA_SET: 'CRITERIA_SET',
+            CUSTOM_FE: 'CUSTOM_FE'
         };
 
-        const demoCustomSqlAnalysisDesign = `-- Custom analysis producing same results as Feature Extraction's "One covariate per drug in the drug_era table overlapping with any time prior to index." 
+        const demoCustomSqlAnalysisDesign = `-- Custom analysis producing same results as Feature Extraction's "One covariate per drug in the drug_era table overlapping with any time prior to index."
 SELECT
   CAST(drug_concept_id AS BIGINT) * 1000 + @analysis_id AS covariate_id,
   c.concept_name                                                                  AS covariate_name,

@@ -7,7 +7,7 @@ define(
 			domains: () => sharedState.vocabularyUrl() + 'domains',
 			vocabularies: () => sharedState.vocabularyUrl() + 'vocabularies',
 		};
-
+		
 		return {
 			pageTitle,
 			apiPaths,
