@@ -139,6 +139,21 @@ define([
         },
       },
       {
+        ...constants.initialEventList.addTreatmentLine,
+        selected: false,
+        action: function () {
+          self
+            .expression()
+            .PrimaryCriteria()
+            .CriteriaList.push({
+              TreatmentLine: new criteriaTypes.TreatmentLine(
+                null,
+                self.expression().ConceptSets
+              ),
+            });
+        },
+      },
+      {
         ...constants.initialEventList.addMeasurement,
         selected: false,
         action: function () {
@@ -328,6 +343,18 @@ define([
         },
       },
       {
+        ...constants.censoringEventList.addTreatmentLine,
+        selected: false,
+        action: function () {
+          self.expression().CensoringCriteria.push({
+            TreatmentLine: new criteriaTypes.TreatmentLine(
+              null,
+              self.expression().ConceptSets
+            ),
+          });
+        },
+      },
+      {
         ...constants.censoringEventList.addMeasurement,
         selected: false,
         action: function () {
@@ -488,6 +515,8 @@ define([
         return "condition-era-criteria";
       else if (data.hasOwnProperty("DrugExposure"))
         return "drug-exposure-criteria";
+      else if (data.hasOwnProperty("TreatmentLine"))
+        return "treatment-line-criteria";
       else if (data.hasOwnProperty("DrugEra")) return "drug-era-criteria";
       else if (data.hasOwnProperty("DoseEra")) return "dose-era-criteria";
       else if (data.hasOwnProperty("ProcedureOccurrence"))

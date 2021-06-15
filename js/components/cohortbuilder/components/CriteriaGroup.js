@@ -124,6 +124,18 @@ define([
 				}
 			},
 			{
+		...constants.groupAttributes.addTreatmentLine,
+		selected: false,
+		action: function () {
+					var unwrappedExpression = ko.utils.unwrapObservable(self.expression);
+					self.group().CriteriaList.push(new AdditionalCriteria({
+						Criteria: {
+							TreatmentLine: {}
+						}
+					}, unwrappedExpression.ConceptSets));
+				}
+			},
+			{
         ...constants.groupAttributes.addLocationRegion,
         selected: false,
         action: function () {

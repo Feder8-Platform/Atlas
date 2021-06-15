@@ -1404,6 +1404,8 @@ define(['jquery', 'knockout', 'text!./cohort-definition-manager.html',
 				return "condition-era-criteria-viewer";
 			else if (data.hasOwnProperty("DrugExposure"))
 				return "drug-exposure-criteria-viewer";
+			else if (data.hasOwnProperty("TreatmentLine"))
+				return "treatment-line-criteria-viewer";
 			else if (data.hasOwnProperty("DrugEra"))
 				return "drug-era-criteria-viewer";
 			else if (data.hasOwnProperty("DoseEra"))
