@@ -148,6 +148,9 @@ define([
           data: d => d.descendantRecordCount,
         },
         {
+          data: d => d.personRecordCount,
+        },
+        {
           data: d => d.domainId,
         },
         {
@@ -202,6 +205,19 @@ define([
             'caption': ko.i18n('facets.caption.hasDescendantRecords', 'Has Descendant Records'),
             'binding': d => {
               var val = d.descendantRecordCount;
+              if (val.replace)
+                val = parseInt(val.replace(/\,/g, '')); // Remove comma formatting and treat as int
+              if (val > 0) {
+                return 'true'
+              } else {
+                return 'false'
+              }
+            },
+          },
+          {
+            'caption': ko.i18n('facets.caption.hasPersonRecords', 'Has Person Records'),
+            'binding': d => {
+              var val = d.personRecordCount;
               if (val.replace)
                 val = parseInt(val.replace(/\,/g, '')); // Remove comma formatting and treat as int
               if (val > 0) {

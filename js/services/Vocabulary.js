@@ -50,6 +50,7 @@ define(function (require, exports) {
 		for (c = 0; c < results.length; c++) {
 			results[c].RECORD_COUNT = 0;
 			results[c].DESCENDANT_RECORD_COUNT = 0;
+			results[c].PERSON_RECORD_COUNT = 0;
 			searchResultIdentifiers.push(results[c].CONCEPT_ID);
 			resultsIndex.push(c);
 		}

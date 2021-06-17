@@ -129,6 +129,10 @@ define([
 					data: 'DESCENDANT_RECORD_COUNT',
 					className: 'numeric'
 				}, {
+					title: ko.i18n('columns.prc', 'PRC'),
+					data: 'PERSON_RECORD_COUNT',
+					className: 'numeric'
+				}, {
 					title: ko.i18n('columns.domain', 'Domain'),
 					data: 'DOMAIN_ID'
 				}, {
@@ -171,6 +175,11 @@ define([
 						'caption': ko.i18n('facets.caption.hasDescendantRecords', 'Has Descendant Records'),
 						'binding': function (o) {
 							return parseInt(o.DESCENDANT_RECORD_COUNT) > 0;
+						}
+					}, {
+						'caption': ko.i18n('facets.caption.hasPersonRecords', 'Has Person Records'),
+						'binding': function (o) {
+							return parseInt(o.PERSON_RECORD_COUNT) > 0;
 						}
 					}]
 				};

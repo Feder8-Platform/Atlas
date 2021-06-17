@@ -52,6 +52,11 @@ define(['knockout','utils/CommonUtils', 'utils/Renderers', 'services/http','atla
 			className: 'numeric'
 		},
 		{
+			title: ko.i18n('columns.prc', 'DRC'),
+			data: 'PERSON_RECORD_COUNT',
+			className: 'numeric'
+		},
+		{
 			title: ko.i18n('columns.domain', 'Domain'),
 			data: 'DOMAIN_ID'
 		},
@@ -110,6 +115,12 @@ define(['knockout','utils/CommonUtils', 'utils/Renderers', 'services/http','atla
 				'caption': ko.i18n('facets.caption.hasDescendantRecords', 'Has Descendant Records'),
 				'binding': (o) => {
 					return parseInt(o.DESCENDANT_RECORD_COUNT) > 0;
+				}
+			},
+			{
+				'caption': ko.i18n('facets.caption.hasPersonRecords', 'Has Person Records'),
+				'binding': (o) => {
+					return parseInt(o.PERSON_RECORD_COUNT) > 0;
 				}
 			},
 		]

@@ -76,6 +76,12 @@ define([
 					'binding': function (o) {
 						return parseInt(o.DESCENDANT_RECORD_COUNT) > 0;
 					}
+				},
+				{
+					'caption': ko.i18n('facets.caption.hasPersonRecords', 'Has Person Records'),
+					'binding': function (o) {
+						return parseInt(o.PERSON_RECORD_COUNT) > 0;
+					}
 				}
 			]
 		};

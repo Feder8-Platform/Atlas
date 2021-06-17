@@ -79,6 +79,11 @@ define([
 						return parseInt(o.DESCENDANT_RECORD_COUNT) > 0;
 					}
 				}, {
+					'caption': ko.i18n('facets.caption.hasPersonRecords', 'Has Person Records'),
+					'binding': function (o) {
+						return parseInt(o.PERSON_RECORD_COUNT) > 0;
+					}
+				}, {
 					'caption': ko.i18n('facets.caption.distance', 'Distance'),
 					'binding': function (o) {
 						return Math.max.apply(Math, o.RELATIONSHIPS.map(function (d) {
@@ -118,6 +123,10 @@ define([
 			}, {
 				title: ko.i18n('columns.drc', 'DRC'),
 				data: 'DESCENDANT_RECORD_COUNT',
+				className: 'numeric'
+			}, {
+				title: ko.i18n('columns.prc', 'PRC'),
+				data: 'PERSON_RECORD_COUNT',
 				className: 'numeric'
 			}, {
 				title: ko.i18n('columns.distance', 'Distance'),

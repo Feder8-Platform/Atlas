@@ -190,6 +190,12 @@ define(['knockout', 'components/evidence/utils'], function (ko, utils) {
                 return `<span class="ncRecordCount">${d.descendantRecordCount}</span>`;
             },
         },
+        {
+            title: '<i id="dtNegCtrlPRC" class="fa fa-database" aria-hidden="true"></i> PRC',
+            render: (s, p, d) => {
+                return `<span class="ncRecordCount">${d.personRecordCount}</span>`;
+            },
+        },
     ];
 
     options.negControlTableOptions = {

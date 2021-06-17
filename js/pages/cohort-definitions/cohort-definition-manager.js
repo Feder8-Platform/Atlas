@@ -567,6 +567,12 @@ define(['jquery', 'knockout', 'text!./cohort-definition-manager.html',
 								return parseInt(o.DESCENDANT_RECORD_COUNT) > 0;
 							}
 					},
+					{
+						'caption': ko.i18n('facets.caption.hasPersonRecords', 'Has Person Records'),
+							'binding': (o) => {
+								return parseInt(o.PERSON_RECORD_COUNT) > 0;
+							}
+					},
 				]
 			};
 
