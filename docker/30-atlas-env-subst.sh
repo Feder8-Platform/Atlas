@@ -38,3 +38,12 @@ if [ -n "${FEDER8_ATLAS_CENTRAL}" ]; then
   cat "$TFILE" > "$CONFIG_LOCAL"
   rm -f "$TFILE"
 fi
+
+if [ -n "${FEDER8_ATLAS_LDAP_ENABLED}" ]; then
+  CONFIG_LOCAL="/usr/share/nginx/html/js/config-local.js"
+  TFILE=`mktemp`
+  trap "rm -f $TFILE" 0 1 2 3 15
+  envsubst '$FEDER8_ATLAS_LDAP_ENABLED' < "$CONFIG_LOCAL" > "$TFILE"
+  cat "$TFILE" > "$CONFIG_LOCAL"
+  rm -f "$TFILE"
+fi

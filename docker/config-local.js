@@ -11,13 +11,14 @@ define([], function () {
 	configLocal.plpResultsEnabled = false;
 
 	configLocal.userAuthenticationEnabled = ${FEDER8_ATLAS_SECURE};
-	configLocal.isCentralInstance = ${FEDER8_ATLAS_CENTRAL}
+	configLocal.isCentralInstance = ${FEDER8_ATLAS_CENTRAL};
+    configLocal.isLdapEnabled = ${FEDER8_ATLAS_LDAP_ENABLED};
 
     if(configLocal.userAuthenticationEnabled) {
         if(configLocal.isCentralInstance) {
             configLocal.authProviders = [
                 {
-                    "name": "OPENID",
+                    "name": "Login with Central",
                     "url": "user/login/openid",
                     "ajax": false,
                     "icon": "",
@@ -25,19 +26,21 @@ define([], function () {
                 }];
         } else {
             configLocal.authProviders = [{
-                'name': 'Local Security DB',
+                'name': 'Login with database credentials',
                 'url': 'user/login/db',
                 'ajax': true,
                 'icon': 'fa fa-database',
                 'isUseCredentialsForm': true
-            },
-            {
-                'name': 'LDAP',
-                'url': 'user/login/ldap',
-                'ajax': true,
-                'icon': 'fa fa-cubes',
-                'isUseCredentialsForm': true
             }];
+            if(configLocal.isLdapEnabled) {
+                configLocal.authProviders.push({
+                    'name': 'Login with LDAP credentials',
+                    'url': 'user/login/ldap',
+                    'ajax': true,
+                    'icon': 'fa fa-cubes',
+                    'isUseCredentialsForm': true
+                });
+            }
         }
     }
 
