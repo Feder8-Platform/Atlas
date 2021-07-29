@@ -1,4 +1,4 @@
-FROM golang:1.16-buster as golang-build
+FROM golang:1.16-alpine as golang-build
 
 WORKDIR /go/src/app
 COPY cmd cmd
@@ -37,8 +37,7 @@ RUN find . -type f "(" \
 FROM nginxinc/nginx-unprivileged:1.19-alpine
 
 COPY --from=golang-build /go/bin/healthcheck /app/healthcheck
-# HEALTHCHECK --start-period=30s --interval=1m --timeout=10s --retries=10 CMD ["/app/healthcheck"]
-HEALTHCHECK --start-period=30s --interval=1m --timeout=10s --retries=10 CMD ["true"]
+HEALTHCHECK --start-period=30s --interval=1m --timeout=10s --retries=10 CMD ["/app/healthcheck"]
 
 LABEL org.opencontainers.image.title="OHDSI-Atlas"
 LABEL org.opencontainers.image.authors="Joris Borgdorff <joris@thehyve.nl>, Lee Evans - www.ltscomputingllc.com"
