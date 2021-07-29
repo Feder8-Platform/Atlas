@@ -18,7 +18,7 @@ pipeline {
         stage('upload image') {
             steps {
                 script {
-                    dir('HONEUR_Docker/OMOPCDMCustomConcepts') {
+                    dir('Atlas') {
                         therapeuticAreas = ['honeur','phederation','esfurn'] // athena
                         therapeuticAreaDomains = ['honeur.org','phederation.org','esfurn.org'] //athenafederation.org
                         for (int i = 0; i < therapeuticAreas.size(); i++) {
