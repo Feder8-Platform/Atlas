@@ -30,7 +30,7 @@ const settings = {
 				presets: [ "@babel/preset-env" ],
 			}
 		).code;
-  },
+	},
 	findNestedDependencies: true,
 	generateSourceMaps: false,
 	optimize: "none",

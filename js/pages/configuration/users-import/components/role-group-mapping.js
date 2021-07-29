@@ -23,6 +23,7 @@ define([
 			this.rolesMapping = params.rolesMapping || ko.observableArray([]);
 			this.provider = params.provider;
 			this.searchResults = ko.observableArray();
+			this.tableOptions = commonUtils.getTableOptions('L');
 		}
 
 		onRolesRowClick(data) {
@@ -40,7 +41,12 @@ define([
 				return g;
 			});
 			this.selectedRole().groups(selectedGroups);
+			this.rolesMapping.valueHasMutated();
 			this.closeGroupModal();
+		}
+
+		closeGroupModal() {
+			this.isSearchGroupDialog(false);
 		}
 	}
 

@@ -10,6 +10,7 @@ define([
 	'components/heading',
 	'components/charts/histogram',
 	'components/charts/donut',
+	'less!./person.less',
 ], function (
 	ko,
 	view,
@@ -33,8 +34,8 @@ define([
 				yearHistogram: {
 					xFormat: d3.format('d'),
 					yFormat: d3.format(',.1s'),
-					xLabel: 'Year',
-					yLabel: '# of Persons',
+					xLabel: ko.i18n('dataSources.personReport.year', 'Year'),
+					yLabel: ko.i18n('dataSources.personReport.numberOfPersons', '# of Persons'),
 					xValue: 'x',
 					yValue: 'y',
 					getTooltipBuilder: options => d => {

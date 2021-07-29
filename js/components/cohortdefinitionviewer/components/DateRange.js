@@ -1,4 +1,4 @@
-define(['knockout', 'text!./DateRangeTemplate.html'], function (ko, componentTemplate) {
+define(['knockout', 'services/MomentAPI', 'text!./DateRangeTemplate.html'], function (ko, momentAPI, componentTemplate) {
 
 	function DateRangeViewModel(params) {
 		var self = this;
@@ -6,32 +6,35 @@ define(['knockout', 'text!./DateRangeTemplate.html'], function (ko, componentTem
 		
 		self.operationOptions = [{
 			id: 'lt',
-			name: 'before'
+			name: ko.i18n('components.dateRange.before', 'before'),
 		}, {
 			id: 'lte',
-			name: 'on or Before'
+			name: ko.i18n('components.dateRange.onOrBefore', 'on or Before'),
 		}, {
 			id: 'eq',
-			name: 'on'
+			name: ko.i18n('components.dateRange.on', 'on'),
 		}, {
 			id: 'gt',
-			name: 'after'
+			name: ko.i18n('components.dateRange.after', 'after'),
 		}, {
 			id: 'gte',
-			name: 'on or after'
+			name: ko.i18n('components.dateRange.onOrAfter', 'on or after'),
 		}, {
 			id: 'bt',
-			name: 'between'
+			name: ko.i18n('components.dateRange.between', 'between'),
 		}, {
 			id: '!bt',
-			name: 'not between'
+			name: ko.i18n('components.dateRange.notBetween', 'not between'),
 		}];
-		
 		self.rangeOpName = ko.pureComputed(function() {
-			return self.operationOptions.filter(function(item) {
-				return item.id == ko.utils.unwrapObservable(ko.utils.unwrapObservable(self.Range).Op);
-			})[0].name;
+			if (!!ko.utils.unwrapObservable(self.Range)) {
+				return self.operationOptions.filter(function(item) {
+					return item.id == ko.utils.unwrapObservable(ko.utils.unwrapObservable(self.Range).Op);
+				})[0].name;
+			}
 		});
+		self.prettyValue = ko.pureComputed(() => momentAPI.formatDateToString((ko.toJS(self.Range) || {}).Value) || '');
+		self.prettyExtent = ko.pureComputed(() => momentAPI.formatDateToString((ko.toJS(self.Range) || {}).Extent) || '');
 	};
 
 	// return compoonent definition

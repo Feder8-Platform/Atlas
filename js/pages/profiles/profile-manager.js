@@ -1,6 +1,8 @@
 "use strict";
 define([
 		'knockout',
+		'const',
+		'services/PluginRegistry',
 		'text!./profile-manager.html',
 		'd3',
 		'appConfig',
@@ -9,9 +11,12 @@ define([
 		'atlas-state',
 		'components/cohortbuilder/CohortDefinition',
 		'services/CohortDefinition',
+		'services/Vocabulary',
 		'pages/Page',
 		'utils/AutoBind',
 		'utils/CommonUtils',
+		'pages/Router',
+		'moment',
 		'./const',
 		'lodash',
 		'crossfilter',
@@ -26,6 +31,8 @@ define([
 	],
 	function (
 		ko,
+		globalConstants,
+		pluginRegistry,
 		view,
 		d3,
 		config,
@@ -34,9 +41,12 @@ define([
 		sharedState,
 		CohortDefinition,
 		cohortDefinitionService,
+		vocabularyService,
 		Page,
 		AutoBind,
 		commonUtils,
+		router,
+		moment,
 		constants,
 		_,
 		crossfilter,
@@ -53,34 +63,33 @@ define([
 		class ProfileManager extends AutoBind(Page) {
 			constructor(params) {
 				super(params);
-				this.model = params.model;
 				this.sharedState = sharedState;
 				this.aspectRatio = ko.observable();
 				this.config = config;
 				this.filterHighlightsText = ko.observable();
-				this.loadingStatus = ko.observable('loading');
+				this.loadingStatus = ko.i18n('common.loading', 'Loading');
 
-				this.sourceKey = ko.observable(params.routerParams().sourceKey);
-				this.personId = ko.observable(params.routerParams().personId);
+				this.sourceKey = ko.observable(router.routerParams().sourceKey);
+				this.personId = ko.observable(router.routerParams().personId);
 				this.personRecords = ko.observableArray();
 
-				this.cohortDefinitionId = ko.observable(params.routerParams().cohortDefinitionId);
+				this.cohortDefinitionId = ko.observable(router.routerParams().cohortDefinitionId);
 				this.currentCohortDefinition = ko.observable(null);
+				this.cohortDefinition = sharedState.CohortDefinition.current;
 				// if a cohort definition id has been specified, see if it is
 				// already loaded into the page model. If not, load it from the
 				// server
 				if (this.cohortDefinitionId() &&
 					(
-						this.model.currentCohortDefinition() &&
-						this.model.currentCohortDefinition().id() === this.cohortDefinitionId
+						this.cohortDefinition() &&
+						this.cohortDefinition().id() === this.cohortDefinitionId
 					)
 				) {
 					// The cohort definition requested is already loaded into the page model - just reference it
-					this.currentCohortDefinition(this.model.currentCohortDefinition())
+					this.currentCohortDefinition(this.cohortDefinition())
 				} else if (this.cohortDefinitionId()) {
 					cohortDefinitionService.getCohortDefinition(this.cohortDefinitionId())
 						.then((cohortDefinition) => {
-							cohortDefinition.expression = JSON.parse(cohortDefinition.expression);
 							this.currentCohortDefinition(new CohortDefinition(cohortDefinition));
 						});
 				}
@@ -112,12 +121,10 @@ define([
 				this.loadConceptSets = (o) => {
 					if (!o.cohortDef)
 						return;
-					var conceptSets = ko.toJS(o.cohortDef.expression()
-						.ConceptSets());
+					var conceptSets = ko.toJS(o.cohortDef.expression().ConceptSets());
 					conceptSets.forEach((conceptSet) => {
-						this.model.resolveConceptSetExpressionSimple(
-							ko.toJS(conceptSet.expression),
-							_.bind(this.loadedConceptSet, this, conceptSet))
+						vocabularyService.resolveConceptSetExpression(conceptSet.expression)
+							.then(resolvedIds => this.loadedConceptSet(conceptSet, resolvedIds));
 					});
 				};
 				this.conceptSets = ko.observable({});
@@ -129,7 +136,7 @@ define([
 				this.loadConceptSets(this.cohortDefSource());
 
 				this.sourceKeyCaption = ko.computed(() => {
-					return this.sourceKey() || "Select a Data Source";
+					return this.sourceKey() || ko.i18n('profiles.selectADataSource', 'Select a Data Source')();
 				});
 				this.personRequests = {};
 				this.personRequest;
@@ -154,6 +161,26 @@ define([
 						}
 					}
 				});
+				this.dateRange = ko.computed(() => {
+					if (this.canViewProfileDates() && this.xfObservable && this.xfObservable() && this.xfObservable().isElementFiltered()) {
+						const filtered = this.xfObservable().allFiltered();
+						return filtered.map(v => ({
+							startDate: moment(v.startDate).add(v.startDays, 'days').valueOf(),
+							endDate: moment(v.endDate).subtract(v.endDays, 'days').valueOf(),
+						}))
+							.reduce((a, v) => ({
+								startDate: a.startDate < v.startDate ? a.startDate : v.startDate,
+								endDate: a.endDate > v.endDate ? a.endDate : v.endDate,
+							}));
+					}
+					return {
+						startDate: null, endDate: null,
+					};
+				});
+				this.startDate = ko.computed(() => this.dateRange().startDate);
+				this.endDate = ko.computed(() => this.dateRange().endDate);
+				this.tableOptions = commonUtils.getTableOptions('L');
+				this.highilightTableOptions = commonUtils.getTableOptions('M');
 				this.dimensions = {
 					'Domain': {
 						caption: 'Domain',
@@ -215,8 +242,8 @@ define([
 								}
 							}
 							return d.value.length && stopWords.indexOf(d.key) === -1 && filtered;
-						})
-						.map(d => {
+						});
+						words = words.map(d => {
 							return {
 								caption: d.key,
 								domain: d.value[0].domain,
@@ -226,8 +253,11 @@ define([
 								highlight: ko.observable(this.defaultColor)
 							}
 						});
-					words = _.sortBy(words, d => -d.recs.length)
-					this.highlightData(words);
+						words = _.sortBy(words, d => -d.recs.length)
+					// profile chart will render all data in case when no data is captured by filter
+					if (words.length !== 0) {
+						this.highlightData(words);
+					}
 				});
 				this.searchHighlight.subscribe(func => {
 					if (func)
@@ -236,7 +266,7 @@ define([
 					else
 						this.highlight([]);
 				});
-				this.cohortDefinitionButtonText = ko.observable('Click Here to Select a Cohort');
+				this.cohortDefinitionButtonText = ko.i18n('profiles.clickHereToSelectACohort', 'Click Here to Select a Cohort');
 
 				this.showSection = {
 					profileChart: ko.observable(true),
@@ -248,34 +278,34 @@ define([
 					data: 'highlight()',
 					sortable: false
 				}, {
-					title: 'Concept Name',
+					title: ko.i18n('columns.conceptName', 'Concept Name'),
 					data: 'caption'
 				}, {
-					title: 'Domain',
+					title: ko.i18n('columns.domain', 'Domain'),
 					data: 'domain'
 				}, {
-					title: 'Total Records',
+					title: ko.i18n('columns.totalRecords', 'Total Records'),
 					data: 'count'
 				}];
 
 				this.columns = [{
-						title: 'Concept Id',
+						title: ko.i18n('columns.conceptId', 'Concept Id'),
 						data: 'conceptId'
 					},
 					{
-						title: 'Concept Name',
+						title: ko.i18n('columns.conceptName', 'Concept Name'),
 						data: 'conceptName'
 					},
 					{
-						title: 'Domain',
+						title: ko.i18n('columns.domain', 'Domain'),
 						data: 'domain'
 					},
 					{
-						title: 'Start Day',
+						title: ko.i18n('columns.startDay', 'Start Day'),
 						data: 'startDay'
 					},
 					{
-						title: 'End Day',
+						title: ko.i18n('columns.endDay', 'End Day'),
 						data: 'endDay'
 					}
 				];
@@ -297,7 +327,7 @@ define([
 				this.highlightOptions = {};
 				this.options = {
 					Facets: [{
-						'caption': 'Domain',
+						'caption': ko.i18n('facets.caption.domain', 'Domain'),
 						'binding': d => d.domain,
 					}]
 				};
@@ -307,21 +337,24 @@ define([
 				if (this.personId()) {
 					this.loadPerson();
 				}
+
+				this.plugins = pluginRegistry.findByType(globalConstants.pluginTypes.PROFILE_WIDGET);
 			}
 
 			loadPerson() {
 				this.cantFindPerson(false);
 				this.loadingPerson(true);
+				this.xfDimensions = [];
 
 				let url = constants.paths.person(this.sourceKey(), this.personId());
 
-				this.loadingStatus('loading profile data from database');
+				this.loadingStatus = ko.i18n('profiles.loadingProfile', 'loading profile data from database');
 				this.personRequest = this.personRequests[url] = profileService.getProfile(this.sourceKey(), this.personId(), this.cohortDefinitionId())
 					.then((person) => {
 						if (this.personRequest !== this.personRequests[url]) {
 							return;
 						}
-						this.loadingStatus('processing profile data');
+						this.loadingStatus = ko.i18n('profiles.processingProfile', 'processing profile data');
 						person.personId = this.personId();
 						this.loadingPerson(false);
 						let cohort;
@@ -413,15 +446,17 @@ define([
 			}
 
 			setHighlights(colorIndex) {
-				var selectedData = $('#highlight-table table').DataTable().rows('.selected').data();
-				for (var i = 0; i < selectedData.length; i++) {
+				const dt = $('#highlight-table table').DataTable();
+				const rows = dt.rows('.selected');
+				const selectedData = rows.data();
+				for (let i = 0; i < selectedData.length; i++) {
 					selectedData[i].highlight(this.getHighlightBackground(colorIndex)); // set the swatch color
 					selectedData[i].recs.forEach(r => {
 						r.highlight = this.getHighlightBackground(colorIndex);
 						r.stroke = this.getHighlightColor(colorIndex);
 					}); // set the record colors
 				}
-
+				rows && rows[0] && rows[0].forEach(r => dt.row(r).invalidate());
 				this.highlightRecs.valueHasMutated();
 			};
 
@@ -434,7 +469,9 @@ define([
 			}
 
 			clearHighlights() {
-				const selectedData = $('#highlight-table table').DataTable().data();
+				const dt = $('#highlight-table table').DataTable();
+				const rows = dt.rows('.selected');
+				const selectedData = rows.data();
 				for (let i = 0; i < selectedData.length; i++) {
 					selectedData[i].highlight(this.defaultColor); // set the swatch color
 					selectedData[i].recs.forEach(r => {
@@ -442,13 +479,17 @@ define([
 						r.stroke = this.defaultColor; // set the record colors
 					})
 				}
-
+				rows && rows[0] && rows[0].forEach(r => dt.row(r).invalidate());
 				this.highlightRecs.valueHasMutated();
 			}
 
 			highlightRowClick(data, evt, row) {
 				evt.stopPropagation();
 				$(row).toggleClass('selected');
+			}
+
+			canViewProfileDates() {
+				return config.viewProfileDates && (!config.userAuthenticationEnabled || (config.userAuthenticationEnabled && authApi.isPermittedViewProfileDates()));
 			}
 		}
 

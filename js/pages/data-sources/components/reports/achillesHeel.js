@@ -20,20 +20,20 @@ define([
 			super(params);
 			this.columns = [
 				{
-					title: 'Message Type',
+					title: ko.i18n('dataSources.achillesHeelReport.messageType', 'Message Type'),
 					data: 'type',
 					visible: true,
 					width: 200,
 				},
 				{
-					title: 'Message',
+					title: ko.i18n('dataSources.achillesHeelReport.message', 'Message'),
 					data: 'content',
 					visible: true,
 				},
 			];
 			this.data = ko.observableArray();
 			this.template = '<<"row vertical-align"<"col-xs-6"<"dt-btn"B>l><"col-xs-6 search"f>><"row vertical-align"<"col-xs-3"i><"col-xs-9"p>><t><"row vertical-align"<"col-xs-3"i><"col-xs-9"p>>>';
-		
+			this.tableOptions = commonUtils.getTableOptions('L');
 			this.loadData();
 		}
 

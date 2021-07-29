@@ -1,427 +1,303 @@
 define([
 	'knockout',
 	'appConfig',
+	'utils/Renderers'
 	],
 	(
 		ko,
-    	config,
-	) => {
+		config,
+		renderers) => {
 
+	  const maxEntityNameLength = 100;
 		const minChartHeight = 300;
 		const treemapGradient = ["#c7eaff", "#6E92A8", "#1F425A"];
 		const defaultDeciles = ["0-9", "10-19", "20-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-89", "90-99"];
 		const timeAtRiskCohortDate = [{
-			name: "cohort start date",
+			name: ko.i18n('ple.spec.options.cohortStartDate', 'cohort start date'),
 			id: false,
 		  }, {
-			name: "cohort end date",
+			name: ko.i18n('ple.spec.options.cohortEndDate', 'cohort end date'),
 			id: true
 		}];
-		const relatedConceptsOptions = {
-			Facets: [{
-				'caption': 'Vocabulary',
-				'binding': function (o) {
-					return o.VOCABULARY_ID;
-				}
-			}, {
-				'caption': 'Standard Concept',
-				'binding': function (o) {
-					return o.STANDARD_CONCEPT_CAPTION;
-				}
-			}, {
-				'caption': 'Invalid Reason',
-				'binding': function (o) {
-					return o.INVALID_REASON_CAPTION;
-				}
-			}, {
-				'caption': 'Class',
-				'binding': function (o) {
-					return o.CONCEPT_CLASS_ID;
-				}
-			}, {
-				'caption': 'Domain',
-				'binding': function (o) {
-					return o.DOMAIN_ID;
-				}
-			}, {
-				'caption': 'Relationship',
-				'binding': function (o) {
-					return o.RELATIONSHIPS.map((val) => val.RELATIONSHIP_NAME);
-				},
-				isArray: true,
-			}, {
-				'caption': 'Has Records',
-				'binding': function (o) {
-					return parseInt(o.RECORD_COUNT.toString()
-						.replace(',', '')) > 0;
-				}
-			}, {
-				'caption': 'Has Descendant Records',
-				'binding': function (o) {
-					return parseInt(o.DESCENDANT_RECORD_COUNT.toString()
-						.replace(',', '')) > 0;
-				}
-			}, {
-				'caption': 'Distance',
-				'binding': function (o) {
-					return Math.max.apply(Math, o.RELATIONSHIPS.map(function (d) {
-						return d.RELATIONSHIP_DISTANCE;
-					}))
-				},
-			}]
-		};
 
-		const getRelatedConceptsColumns = (sharedState) => [{
-			title: '<i class="fa fa-shopping-cart"></i>',
-			render: function (s, p, d) {
-				var css = '';
-				var icon = 'fa-shopping-cart';
-				if (sharedState.selectedConceptsIndex[d.CONCEPT_ID] == 1) {
-					css = ' selected';
-				}
-				return '<i class="fa ' + icon + ' ' + css + '"></i>';
-			},
-			orderable: false,
-			searchable: false
-		}, {
-			title: 'Id',
-			data: 'CONCEPT_ID'
-		}, {
-			title: 'Code',
-			data: 'CONCEPT_CODE'
-		}, {
-			title: 'Name',
-			data: 'CONCEPT_NAME',
-			render: function (s, p, d) {
-				var valid = d.INVALID_REASON_CAPTION == 'Invalid' ? 'invalid' : '';
-				return '<a class="' + valid + '" href=\"#/concept/' + d.CONCEPT_ID + '\">' + d.CONCEPT_NAME + '</a>';
-			}
-		}, {
-			title: 'Class',
-			data: 'CONCEPT_CLASS_ID'
-		}, {
-			title: 'Standard Concept Caption',
-			data: 'STANDARD_CONCEPT_CAPTION',
-			visible: false
-		}, {
-			title: 'RC',
-			data: 'RECORD_COUNT',
-			className: 'numeric'
-		}, {
-			title: 'DRC',
-			data: 'DESCENDANT_RECORD_COUNT',
-			className: 'numeric'
-		}, {
-			title: 'Domain',
-			data: 'DOMAIN_ID'
-		}, {
-			title: 'Vocabulary',
-			data: 'VOCABULARY_ID'
-		}, {
-			title: 'Ancestor',
-			data: 'ANCESTORS'
-		}];
 		const relatedSourcecodesOptions = {
 			Facets: [{
-				'caption': 'Vocabulary',
+				'caption': ko.i18n('facets.caption.vocabulary', 'Vocabulary'),
 				'binding': function (o) {
 					return o.VOCABULARY_ID;
 				}
 			}, {
-				'caption': 'Invalid Reason',
+				'caption': ko.i18n('facets.caption.invalidReason', 'Invalid Reason'),
 				'binding': function (o) {
 					return o.INVALID_REASON_CAPTION;
 				}
 			}, {
-				'caption': 'Class',
+				'caption': ko.i18n('facets.caption.class', 'Class'),
 				'binding': function (o) {
 					return o.CONCEPT_CLASS_ID;
 				}
 			}, {
-				'caption': 'Domain',
+				'caption': ko.i18n('facets.caption.domain', 'Domain'),
 				'binding': function (o) {
 					return o.DOMAIN_ID;
 				}
 			}]
 		};
 
-		const metatrix = {
-			'ATC.ATC 4th': {
-				childRelationships: [{
-					name: 'Has descendant of',
-					range: [0, 1]
-				}],
-				parentRelationships: [{
-					name: 'Has ancestor of',
-					range: [0, 5]
-				}]
-			},
-			'ICD9CM.5-dig billing code': {
-				childRelationships: [{
-					name: 'Subsumes',
-					range: [0, 1]
-				}],
-				parentRelationships: [{
-					name: 'Is a',
-					range: [0, 1]
-				}]
-			},
-			'ICD9CM.4-dig nonbill code': {
-				childRelationships: [{
-					name: 'Subsumes',
-					range: [0, 1]
-				}],
-				parentRelationships: [{
-					name: 'Is a',
-					range: [0, 1]
-				}, {
-					name: 'Non-standard to Standard map (OMOP)',
-					range: [0, 1]
-				}]
-			},
-			'ICD9CM.3-dig nonbill code': {
-				childRelationships: [{
-					name: 'Subsumes',
-					range: [0, 1]
-				}],
-				parentRelationships: [{
-					name: 'Non-standard to Standard map (OMOP)',
-					range: [0, 999]
-				}]
-			},
-			'RxNorm.Ingredient': {
-				childRelationships: [{
-					name: 'Ingredient of (RxNorm)',
-					range: [0, 999]
-				}],
-				parentRelationships: [{
-					name: 'Has ancestor of',
-					vocabulary: ['ATC', 'ETC'],
-					range: [0, 1]
-				}]
-			},
-			'RxNorm.Brand Name': {
-				childRelationships: [{
-					name: 'Ingredient of (RxNorm)',
-					range: [0, 999]
-				}],
-				parentRelationships: [{
-					name: 'Tradename of (RxNorm)',
-					range: [0, 999]
-				}]
-			},
-			'RxNorm.Branded Drug': {
-				childRelationships: [{
-					name: 'Consists of (RxNorm)',
-					range: [0, 999]
-				}],
-				parentRelationships: [{
-					name: 'Has ingredient (RxNorm)',
-					range: [0, 999]
-				}, {
-					name: 'RxNorm to ATC (RxNorm)',
-					range: [0, 999]
-				}, {
-					name: 'RxNorm to ETC (FDB)',
-					range: [0, 999]
-				}]
-			},
-			'RxNorm.Clinical Drug Comp': {
-				childRelationships: [],
-				parentRelationships: [{
-					name: 'Has precise ingredient (RxNorm)',
-					range: [0, 999]
-				}, {
-					name: 'Has ingredient (RxNorm)',
-					range: [0, 999]
-				}]
-			},
-			'CPT4.CPT4': {
-				childRelationships: [{
-					name: 'Has descendant of',
-					range: [0, 1]
-				}],
-				parentRelationships: [{
-					name: 'Has ancestor of',
-					range: [0, 1]
-				}]
-			},
-			'CPT4.CPT4 Hierarchy': {
-				childRelationships: [{
-					name: 'Has descendant of',
-					range: [0, 1]
-				}],
-				parentRelationships: [{
-					name: 'Has ancestor of',
-					range: [0, 1]
-				}]
-			},
-			'ETC.ETC': {
-				childRelationships: [{
-					name: 'Has descendant of',
-					range: [0, 1]
-				}],
-				parentRelationships: [{
-					name: 'Has ancestor of',
-					range: [0, 1]
-				}]
-			},
-			'MedDRA.LLT': {
-				childRelationships: [{
-					name: 'Has descendant of',
-					range: [0, 1]
-				}],
-				parentRelationships: [{
-					name: 'Has ancestor of',
-					range: [0, 1]
-				}]
-			},
-			'MedDRA.PT': {
-				childRelationships: [{
-					name: 'Has descendant of',
-					range: [0, 1]
-				}],
-				parentRelationships: [{
-					name: 'Has ancestor of',
-					range: [0, 1]
-				}]
-			},
-			'MedDRA.HLT': {
-				childRelationships: [{
-					name: 'Has descendant of',
-					range: [0, 1]
-				}],
-				parentRelationships: [{
-					name: 'Has ancestor of',
-					range: [0, 1]
-				}]
-			},
-			'MedDRA.SOC': {
-				childRelationships: [{
-					name: 'Has descendant of',
-					range: [0, 1]
-				}],
-				parentRelationships: [{
-					name: 'Has ancestor of',
-					range: [0, 1]
-				}]
-			},
-			'MedDRA.HLGT': {
-				childRelationships: [{
-					name: 'Has descendant of',
-					range: [0, 1]
-				}],
-				parentRelationships: [{
-					name: 'Has ancestor of',
-					range: [0, 1]
-				}]
-			},
-			'SNOMED.Clinical Finding': {
-				childRelationships: [{
-					name: 'Has descendant of',
-					range: [0, 1]
-				}],
-				parentRelationships: [{
-					name: 'Has ancestor of',
-					range: [0, 1]
-				}]
-			},
-			'SNOMED.Procedure': {
-				childRelationships: [{
-					name: 'Has descendant of',
-					range: [0, 1]
-				}],
-				parentRelationships: [{
-					name: 'Has ancestor of',
-					range: [0, 1]
-				}]
-			}
+		const getLinkedFeAParametersColumns = (context) => {
+			return [
+				{
+					title: ko.i18n('columns.name', 'Name'),
+					data: 'name',
+					className: context.classes('col-param-name'),
+				},
+				{
+					title: ko.i18n('columns.value', 'Value'),
+					data: 'value',
+					className: context.classes('col-param-value'),
+				},
+				... context.isEditPermitted() ? [{
+					title: ko.i18n('columns.actions', 'Actions'),
+					render: context.getRemoveCell('removeParam', 'name'),
+					className: context.classes('col-param-remove'),
+				}] : []
+			];
+		};
+		
+		const getLinkedFeatureAnalysisColumns = (context) => {
+			return [
+				{
+					title: ko.i18n('columns.id', 'ID'),
+					data: 'id',
+					className: context.classes('col-feature-id'),
+				},
+				{
+					title: ko.i18n('columns.name', 'Name'),
+					data: 'name',
+					className: context.classes('col-feature-name'),
+				},
+				{
+					title: ko.i18n('columns.description', 'Description'),
+					data: 'description',
+					className: context.classes('col-feature-descr'),
+				},
+				... context.isEditPermitted() ? [{
+					title: ko.i18n('columns.actions', 'Actions'),
+					render: context.getRemoveCell('removeFeature'),
+					className: context.classes('col-feature-remove'),
+				}] : []
+			];
 		};
 
-		const getRelatedSourcecodesColumns = (sharedState, context) => [{
-			title: '',
-			render: (s, p, d) => {
-				var css = '';
-				var icon = 'fa-shopping-cart';
-				var tag = 'i'
-				if (sharedState.selectedConceptsIndex[d.CONCEPT_ID] == 1) {
-					css = ' selected';
-				}
-				if (!context.canEditCurrentConceptSet()) {
-					css += ' readonly';
-					tag = 'span';
-				}
-				return '<' + tag + ' class="fa ' + icon + ' ' + css + '"></' + tag + '>';
+		const getLinkedCohortColumns = (context, nameCol) => {
+			return [
+				{
+					title: ko.i18n('columns.id', 'ID'),
+					data: 'id',
+					className: context.classes('col-cohort-id'),
+				},
+				nameCol,
+				... context.isEditPermitted() ? [{
+					title: '',
+					render: context.getEditCell('editCohort'),
+					className: context.classes('col-cohort-edit'),
+				},
+					{
+						title: '',
+						render: context.getRemoveCell('removeCohort'),
+						className: context.classes('col-cohort-remove'),
+					}] : []
+			];
+		};
+
+		const getRelatedSourcecodesColumns = (sharedState, context) => [
+			{
+				title: '',
+				orderable: false,
+				searchable: false,
+				className: 'text-center',
+				render: () => renderers.renderCheckbox('isSelected', context.canEditCurrentConceptSet()),
 			},
-			orderable: false,
-			searchable: false
-		}, {
-			title: 'Id',
-			data: 'CONCEPT_ID'
-		}, {
-			title: 'Code',
-			data: 'CONCEPT_CODE'
-		}, {
-			title: 'Name',
-			data: 'CONCEPT_NAME',
-			render: function (s, p, d) {
-				var valid = d.INVALID_REASON_CAPTION == 'Invalid' ? 'invalid' : '';
-				return '<a class="' + valid + '" href=\"#/concept/' + d.CONCEPT_ID + '\">' + d.CONCEPT_NAME + '</a>';
-			}
-		}, {
-			title: 'Class',
-			data: 'CONCEPT_CLASS_ID'
-		}, {
-			title: 'Standard Concept Caption',
-			data: 'STANDARD_CONCEPT_CAPTION',
-			visible: false
-		}, {
-			title: 'Domain',
-			data: 'DOMAIN_ID'
-		}, {
-			title: 'Vocabulary',
-			data: 'VOCABULARY_ID'
-		}];
+			{
+				title: ko.i18n('columns.id', 'Id'),
+				data: 'CONCEPT_ID'
+			},
+			{
+				title: ko.i18n('columns.code', 'Code'),
+				data: 'CONCEPT_CODE'
+			},
+			{
+				title: ko.i18n('columns.name', 'Name'),
+				data: 'CONCEPT_NAME',
+				render: function (s, p, d) {
+					var valid = d.INVALID_REASON_CAPTION == 'Invalid' ? 'invalid' : '';
+					return '<a class="' + valid + '" href=\"#/concept/' + d.CONCEPT_ID + '\">' + d.CONCEPT_NAME + '</a>';
+				}
+			},
+			{
+				title: ko.i18n('columns.class', 'Class'),
+				data: 'CONCEPT_CLASS_ID'
+			},
+			{
+				title: ko.i18n('columns.standardConceptCaption', 'Standard Concept Caption'),
+				data: 'STANDARD_CONCEPT_CAPTION',
+				visible: false
+			},
+			{
+				title: ko.i18n('columns.domain', 'Domain'),
+				data: 'DOMAIN_ID'
+			},
+			{
+				title: ko.i18n('columns.vocabulary', 'Vocabulary'),
+				data: 'VOCABULARY_ID'
+			},
+		];
 
 		const apiPaths = {
 			role: (id = '') => `${config.api.url}role/${id}`,
-      roleUsers: roleId => `${config.api.url}role/${roleId}/users`,
-      permissions: () => `${config.api.url}permission`,
-      rolePermissions: roleId => `${config.api.url}role/${roleId}/permissions`,
-      relations: (roleId, relation, ids = []) => `${config.api.url}role/${roleId}/${relation}/${ids.join('+')}`,
+			roleUsers: roleId => `${config.api.url}role/${roleId}/users`,
+			permissions: () => `${config.api.url}permission`,
+			rolePermissions: roleId => `${config.api.url}role/${roleId}/permissions`,
+			relations: (roleId, relation, ids = []) => `${config.api.url}role/${roleId}/${relation}/${ids.join('+')}`,
 			jobs: () => `${config.api.url}job/execution?comprehensivePage=true`,
 			job: (id) => `${config.api.url}job/${id}`,
 			jobByName: (name,  type) => `${config.api.url}job/type/${type}/name/${name}`,
 		};
 
-     const applicationStatuses = {
-		  initializing: 'initializing',
-		  running: 'running',
-		  noSourcesAvailable: 'no-sources-available',
-		  failed: 'failed',
-	  };
+		const applicationStatuses = {
+			initializing: 'initializing',
+			running: 'running',
+			noSourcesAvailable: 'no-sources-available',
+			failed: 'failed',
+		};
 
 		const generationStatuses = {
 			STARTED: 'STARTED',
+			STARTING: 'STARTING',
 			RUNNING: 'RUNNING',
 			COMPLETED: 'COMPLETED',
 			FAILED: 'FAILED',
 			PENDING: 'PENDING',
 		};
 
+		const executionStatuses = {
+			STARTED: 'STARTED',
+			COMPLETED: 'COMPLETED',
+			PENDING: 'STARTING',
+			FAILED: 'FAILED',
+			CANCELED: 'STOPPED',
+			STOPPING: 'STOPPING',
+			RUNNING: 'RUNNING',
+		};
+
+		const executionResultModes = {
+			DOWNLOAD: 'DOWNLOAD',
+			VIEW: 'VIEW',
+		}
+
+		const newEntityNames = {
+			characterization: ko.i18n('const.newEntityNames.characterization', 'New Characterization'),
+			featureAnalysis: ko.i18n('const.newEntityNames.featureAnalysis', 'New Feature Analysis'),
+			cohortDefinition: ko.i18n('const.newEntityNames.cohortDefinition', 'New Cohort Definition'),
+			incidenceRate: ko.i18n('const.newEntityNames.incidenceRate', 'New Incidence Rate Analysis'),
+			pathway: ko.i18n('const.newEntityNames.pathway', 'New Cohort Pathway'),
+			ple: ko.i18n('const.newEntityNames.ple', 'New Population Level Estimation Analysis'),
+			conceptSet: ko.i18n('const.newEntityNames.conceptSet', 'New Concept Set'),
+			plp: ko.i18n('const.newEntityNames.plp', 'New Patient Level Prediction Analysis'),
+		};
+
+		const pluginTypes = {
+			COHORT_REPORT: 'atlas-cohort-report',
+			PROFILE_WIDGET: 'atlas-profile-widget',
+		};
+
+		const sqlDialects = {
+			MSSQL: {
+				title: "MSSQL Server",
+				dialect: "sql server",
+			},
+			MSAPS: {
+				title: "MS APS",
+				dialect: "pdw",
+			},
+			ORACLE: {
+				title: "Oracle",
+				dialect: "oracle",
+			},
+			POSTGRESQL: {
+				title: "PostgreSQL",
+				dialect: "postgresql",
+			},
+			REDSHIFT: {
+				title: "Amazon Red Shift",
+				dialect: "redshift",
+			},
+			IMPALA: {
+				title: "Impala",
+				dialect: "impala",
+			},
+			NETEZZA: {
+				title: "Netezza",
+				dialect: "netezza",
+			},
+			BIGQUERY: {
+				title: "Big Query",
+				dialect: "bigquery",
+			},
+			HIVE: {
+				title: "Apache Hive",
+				dialect: "hive",
+			},
+		};
+
+		const eventTypes = {
+			conceptSetChanged: 'conceptSetChanged',
+		};
+
+
+		const jobTypes = {
+			USER_JOB: {
+				title: 'userJob',
+				ownerType: 'USER_JOB',
+			},
+			ALL_JOB: {
+				title: 'allJob',
+				ownerType: 'ALL_JOB',
+			},
+		};
+
+		const disabledReasons = {
+			DIRTY: ko.i18n('const.disabledReason.dirty', 'Save changes before generate'),
+			ACCESS_DENIED: ko.i18n('const.disabledReason.accessDenied', 'Access denied'),
+			INVALID_TAR: ko.i18n('const.disabledReason.invalidTar', 'Invalid TAR'),
+			INVALID_DESIGN: ko.i18n('const.disabledReason.invalidDesign', 'Design is not valid'),
+			ENGINE_NOT_AVAILABLE: ko.i18n('const.disabledReason.engineNotAvalable', 'Execution engine is not available'),
+			EMPTY_COHORTS: ko.i18n('const.disabledReason.emptyCohorts', 'No cohorts found'),
+			EMPTY_INITIAL_EVENT: ko.i18n('const.disabledReason.emptyInitionEvent', 'Initial event is not set')
+		};
+
 		return {
+			maxEntityNameLength,
 			minChartHeight,
 			treemapGradient,
 			defaultDeciles,
-			relatedConceptsOptions,
-			getRelatedConceptsColumns,
 			relatedSourcecodesOptions,
-			metatrix,
+			getLinkedFeAParametersColumns,
+			getLinkedFeatureAnalysisColumns,
+			getLinkedCohortColumns,
 			getRelatedSourcecodesColumns,
 			apiPaths,
 			applicationStatuses,
 			generationStatuses,
 			timeAtRiskCohortDate,
+			newEntityNames,
+			pluginTypes,
+			executionStatuses,
+			executionResultModes,
+			sqlDialects,
+			eventTypes,
+			disabledReasons,
+			jobTypes,
     };
   }
 );

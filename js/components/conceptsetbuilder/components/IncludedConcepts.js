@@ -4,13 +4,16 @@ define([
 	'text!./IncludedConcepts.html',
 	'services/VocabularyProvider',
 	'utils/CommonUtils',
+	'utils/Renderers',
 	'faceted-datatable'
 ], function (
 		$,
 		ko,
 		template,
 		VocabularyAPI,
-		commonUtils) {
+		commonUtils,
+		renderers,
+	) {
 
 	function IncludedConcepts(params) {
 
@@ -19,18 +22,12 @@ define([
 		self.conceptSet = ko.pureComputed(function () {
 			return ko.toJS(params.conceptSet().expression);
 		});
+		self.canEdit = params.canEdit;
 
 		self.isLoading = ko.observable(true);
 
 		self.selectedConcepts = ko.observableArray();
 
-		self.selectedConceptsIndex = ko.pureComputed(function () {
-			var index = {};
-			self.selectedConcepts().forEach(function (item) {
-				index[item.CONCEPT_ID] = 1;
-			});
-			return index;
-		});
 
 		self.includedConcepts = ko.observableArray();
 		if (params.widget)
@@ -39,65 +36,57 @@ define([
 		self.facetOptions = {
 			Facets: [
 				{
-					'caption': 'Vocabulary',
+					'caption': ko.i18n('facets.caption.vocabulary', 'Vocabulary'),
 					'binding': function (o) {
 						return o.VOCABULARY_ID;
 					}
 				},
 				{
-					'caption': 'Class',
+					'caption': ko.i18n('facets.caption.class', 'Class'),
 					'binding': function (o) {
 						return o.CONCEPT_CLASS_ID;
 					}
 				},
 				{
-					'caption': 'Domain',
+					'caption': ko.i18n('facets.caption.domain', 'Domain'),
 					'binding': function (o) {
 						return o.DOMAIN_ID;
 					}
 				},
 				{
-					'caption': 'Standard Concept',
+					'caption': ko.i18n('facets.caption.standardConcept', 'Standard Concept'),
 					'binding': function (o) {
 						return o.STANDARD_CONCEPT_CAPTION;
 					}
 				},
 				{
-					'caption': 'Invalid Reason',
+					'caption': ko.i18n('facets.caption.invalidReason', 'Invalid Reason'),
 					'binding': function (o) {
 						return o.INVALID_REASON_CAPTION;
 					}
 				},
 				{
-					'caption': 'Has Records',
+					'caption': ko.i18n('facets.caption.hasRecords', 'Has Records'),
 					'binding': function (o) {
-						return parseInt(o.RECORD_COUNT.toString().replace(',', '')) > 0;
+						return parseInt(o.RECORD_COUNT) > 0;
 					}
 				},
 				{
-					'caption': 'Has Descendant Records',
+					'caption': ko.i18n('facets.caption.hasDescendantRecords', 'Has Descendant Records'),
 					'binding': function (o) {
-						return parseInt(o.DESCENDANT_RECORD_COUNT.toString().replace(',', '')) > 0;
+						return parseInt(o.DESCENDANT_RECORD_COUNT) > 0;
+					}
+				},
+				{
+					'caption': ko.i18n('facets.caption.hasPersonRecords', 'Has Person Records'),
+					'binding': function (o) {
+						return parseInt(o.PERSON_RECORD_COUNT) > 0;
 					}
 				}
 			]
 		};
 
 		self.tableColumns = [
-			{
-				title: '<i class="fa fa-shopping-cart"></i>',
-				render: function (s, p, d) {
-					var css = '';
-					var icon = 'fa-shopping-cart';
-
-					if (self.selectedConceptsIndex[d.CONCEPT_ID] == 1) {
-						css = ' selected';
-					}
-					return '<i class="fa ' + icon + ' ' + css + '"></i>';
-				},
-				orderable: false,
-				searchable: false
-			},
 			{
 				title: 'Id',
 				data: 'CONCEPT_ID'
@@ -121,23 +110,34 @@ define([
 				visible: false
 			},
 			{
-				title: 'RC',
-				data: 'RECORD_COUNT',
-				className: 'numeric'
-			},
-			{
-				title: 'DRC',
-				data: 'DESCENDANT_RECORD_COUNT',
-				className: 'numeric'
-			},
-			{
 				title: 'Domain',
 				data: 'DOMAIN_ID'
 			},
 			{
 				title: 'Vocabulary',
 				data: 'VOCABULARY_ID'
-			}
+			},
+			{
+				title: 'Excluded',
+				render: () => renderers.renderCheckbox('isExcluded', context.canEditCurrentConceptSet()),
+				orderable: false,
+				searchable: false,
+				className: 'text-center',
+			},
+			{
+				title: 'Descendants',
+				render: () => renderers.renderCheckbox('includeDescendants', context.canEditCurrentConceptSet()),
+				orderable: false,
+				searchable: false,
+				className: 'text-center',
+			},
+			{
+				title: 'Mapped',
+				render: () => renderers.renderCheckbox('includeMapped', context.canEditCurrentConceptSet()),
+				orderable: false,
+				searchable: false,
+				className: 'text-center',
+			},
 		];
 
 		self.contextSensitiveLinkColor = function (row, data) {
@@ -166,10 +166,6 @@ define([
 			self.selectedConcepts([]);
 			VocabularyAPI.resolveConceptSetExpression(self.conceptSet()).then(function (identifiers) {
 				VocabularyAPI.getConceptsById(identifiers).then(({ data: concepts }) => {
-					concepts.forEach(function (concept) {
-						concept.RECORD_COUNT = 'timeout';
-						concept.DESCENDANT_RECORD_COUNT = 'timeout';
-					});
 					self.includedConcepts(concepts);
 				})
 				.catch(function (err) {

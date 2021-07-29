@@ -9,6 +9,7 @@ define(function (require, exports) {
 		const getConceptId = (concept) => isCamelCaseProps ? concept.conceptId : concept.CONCEPT_ID;
 		const setRecordCount = (concept, val) => isCamelCaseProps ? (concept.recordCount = val) : (concept.RECORD_COUNT = val);
 		const setDescendantRecordCount = (concept, val) => isCamelCaseProps ? (concept.descendantRecordCount = val) : (concept.DESCENDANT_RECORD_COUNT = val);
+		const setPersonRecordCount = (concept, val) => isCamelCaseProps ? (concept.personRecordCount = val) : (concept.PERSON_RECORD_COUNT = val);
 
 		var densityPromise = $.Deferred();
 		var densityIndex = {};
@@ -16,6 +17,7 @@ define(function (require, exports) {
 		for (c = 0; c < results.length; c++) {
 			setRecordCount(results[c], 'loading');
 			setDescendantRecordCount(results[c], 'loading');
+			setPersonRecordCount(results[c], 'loading');
 		}
 
 		$.ajax({
@@ -35,9 +37,11 @@ define(function (require, exports) {
 					if (densityIndex[getConceptId(concept)] != undefined) {
 						setRecordCount(concept, formatComma(densityIndex[getConceptId(concept)][0]));
 						setDescendantRecordCount(concept, formatComma(densityIndex[getConceptId(concept)][1]));
+						setPersonRecordCount(concept, formatComma(densityIndex[getConceptId(concept)][2]));
 					} else {
 						setRecordCount(concept, 0);
 						setDescendantRecordCount(concept, 0);
+						setPersonRecordCount(concept, 0);
 					}
 				}
 
@@ -48,6 +52,7 @@ define(function (require, exports) {
 					var concept = results[c];
 					setRecordCount(concept, 'timeout');
 					setDescendantRecordCount(concept, 'timeout');
+					setPersonRecordCount(concept, 'timeout');
 				}
 
 				densityPromise.resolve();

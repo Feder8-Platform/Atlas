@@ -38,10 +38,9 @@ define([
 				params.ref(this); // assign refrence to this to ref's param
 				this.rawConceptSets = params.$raw.conceptSets;
 
-				this.conceptSets = params.conceptSets.extend({sorted: conceptSetSorter});;
+				this.conceptSets = params.conceptSets.extend({sorted: conceptSetSorter});
 				this.selectedConceptSet = ko.observable();
 				this.tabWidget = ko.observable();		
-				this.nameHasFocus = ko.observable();
 				this.isImportEnabled = ko.observable(false);
 				this.isModalOpened = ko.observable(false);
 				this.isExportEnabled = ko.observable(false);
@@ -49,6 +48,7 @@ define([
 				this.importValues = ko.observable();
 				this.dtApi = ko.observable(); // store reference to datatable
 				this.includedConceptsComponent = ko.observable();
+				this.isEditable = params.isEditable;
 				this.mappedConceptsComponent = ko.observable();			
 			}		
 		
@@ -57,7 +57,6 @@ define([
 				newConceptSet.id = this.conceptSets().length > 0 ? Math.max(this.conceptSets().map(d => d.id)) + 1 : 0;
 				this.rawConceptSets().push(newConceptSet);
 				this.selectedConceptSet(newConceptSet);
-				this.nameHasFocus(true);
 				return newConceptSet;
 			}
 			

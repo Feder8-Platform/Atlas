@@ -5,7 +5,7 @@ define(function (require, exports) {
 	var config = require('appConfig');
 	var authApi = require('services/AuthAPI');
 	const httpService = require('services/http');
-	
+
 	function pruneJSON(key, value) {
 		if (value === 0 || value) {
 			return value;
@@ -13,7 +13,7 @@ define(function (require, exports) {
 			return
 		}
 	}
-	
+
 	function getCohortDefinitionList() {
 		var promise = $.ajax({
 			url: config.webAPIRoot + 'cohortdefinition/',
@@ -21,7 +21,7 @@ define(function (require, exports) {
 		});
 		return promise;
 	}
-	
+
 	function saveCohortDefinition(definition) {
 		var savePromise = $.ajax({
 			url: config.webAPIRoot + 'cohortdefinition/' + (definition.id || ""),
@@ -35,7 +35,7 @@ define(function (require, exports) {
 	    });
 		return savePromise;
 	}
-	
+
 	function copyCohortDefinition(id) {
 		var copyPromise = $.ajax({
 			url: config.webAPIRoot + 'cohortdefinition/' + (id || "") +"/copy",
@@ -47,27 +47,35 @@ define(function (require, exports) {
 			}
 		});
 		return copyPromise;
-	}	
-	
+	}
+
 	function deleteCohortDefinition(id) {
 		var deletePromise = $.ajax({
 			url: config.webAPIRoot + 'cohortdefinition/' + (id || ""),
 			method: 'DELETE'
 		});
 		return deletePromise;
-	}	
-	
+	}
+
 	function getCohortDefinition(id) {
-		var loadPromise = $.ajax({
-			url: config.webAPIRoot + 'cohortdefinition/' + id,
-			error: function (error) {
+		return httpService
+			.doGet(config.webAPIRoot + 'cohortdefinition/' + id)
+			.then(res => {
+				const cohortDef = res.data;
+				cohortDef.expression = JSON.parse(cohortDef.expression);
+				return cohortDef;
+			}).catch(error => {
 				console.log("Error: " + error);
 				authApi.handleAccessDenied(error);
-			}
-		});
-		return loadPromise;	
+			});
 	}
-	
+
+	function exists(name, id) {
+		return httpService
+			.doGet(`${config.webAPIRoot}cohortdefinition/${id}/exists?name=${name}`)
+			.then(res => res.data);
+	}
+
 	function getSql(expression, options) {
 		var getSqlPromise = $.ajax({
 			url: config.webAPIRoot + 'cohortdefinition/sql',
@@ -81,7 +89,7 @@ define(function (require, exports) {
 				console.log("Error: " + error);
 				authApi.handleAccessDenied(error);
 			}
-		});	
+		});
 		return getSqlPromise;
 	}
 
@@ -94,12 +102,8 @@ define(function (require, exports) {
 	}
 
 
-	function generate(cohortDefinitionId, sourceKey, includeFeatures) {
-		var route = config.webAPIRoot + 'cohortdefinition/' + cohortDefinitionId + '/generate/' + sourceKey;
-		if (includeFeatures) {
-			route = `${route}?includeFeatures`;
-		}
-		return httpService.doGet(route);
+	function generate(cohortDefinitionId, sourceKey) {
+		return httpService.doGet(`${config.webAPIRoot}cohortdefinition/${cohortDefinitionId}/generate/${sourceKey}`);
 	}
 
 
@@ -120,7 +124,7 @@ define(function (require, exports) {
 		});
 		return infoPromise;
 	}
-	
+
 	function getReport(cohortDefinitionId, sourceKey, modeId) {
 		var reportPromise = $.ajax({
 			url: `${config.webAPIRoot}cohortdefinition/${(cohortDefinitionId || '-1')}/report/${sourceKey}?mode=${modeId || 0}`,
@@ -132,21 +136,9 @@ define(function (require, exports) {
 		return reportPromise;
 	}
 
-	function getWarnings(cohortDefinitionId) {
-		return $.ajax({
-			url: config.webAPIRoot + 'cohortdefinition/' + (cohortDefinitionId || '-1') + '/check',
-			error: authApi.handleAccessDenied,
-		});
-	}
-
-	function runDiagnostics(id, expression) {
-		return $.ajax({
-			url: config.webAPIRoot + 'cohortdefinition/' + (id || '-1') + '/check',
-			contentType: 'application/json',
-			method: 'POST',
-			data: expression,
-			error: authApi.handleAccessDenied,
-		});
+	function runDiagnostics(expression) {
+		return httpService.doPost(config.webAPIRoot + 'cohortdefinition/check', expression)
+			.then(res => res.data);
 	}
 
 	function getCohortCount(sourceKey, cohortDefinitionId) {
@@ -158,51 +150,28 @@ define(function (require, exports) {
 		return httpService.doPost(config.api.url + 'cohortanalysis', cohortJob);
 	}
 
-
-    function getOrganizations(cohortDefinitionId) {
-        var organizationPromise = $.ajax({
-            url: config.webAPIRoot + 'cohortdefinition/'+cohortDefinitionId+'/organizations',
-            error: function (error) {
-                console.log("Error: " + error);
-                authApi.handleAccessDenied(error);
-            }
-        });
-        return organizationPromise;
-    }
-
-    function saveOrganizations(organizations, cohortDefinitionId) {
-        var organizationPromise = $.ajax({
-            url: config.webAPIRoot + 'cohortdefinition/'+cohortDefinitionId+'/organizations',
-            method: 'POST',
-            data: JSON.stringify(organizations),
-            contentType: 'application/json',
-            error: function (error) {
-                console.log("Error: " + error);
-                authApi.handleAccessDenied(error);
-            }
-        });
-        return organizationPromise;
-    }
+	function getCohortPrintFriendly(cohortExpression) {
+		return httpService.plainTextService.doPost(config.webAPIRoot + 'cohortdefinition/printfriendly/cohort?format=html', cohortExpression);
+	}
 
 	var api = {
-		getCohortDefinitionList: getCohortDefinitionList,
-		saveCohortDefinition: saveCohortDefinition,
-		copyCohortDefinition: copyCohortDefinition,
-		deleteCohortDefinition: deleteCohortDefinition,
-		getCohortDefinition: getCohortDefinition,
-		getSql: getSql,
-		translateSql: translateSql,
-		generate: generate,
-		getInfo: getInfo,
-		getReport: getReport,
-		getWarnings: getWarnings,
-		runDiagnostics: runDiagnostics,
+		getCohortDefinitionList,
+		saveCohortDefinition,
+		copyCohortDefinition,
+		deleteCohortDefinition,
+		getCohortDefinition,
+		getSql,
+		translateSql,
+		generate,
+		getInfo,
+		getReport,
+		runDiagnostics,
 		cancelGenerate,
 		getCohortCount,
-		getCohortAnalyses: getCohortAnalyses,
-        getOrganizations: getOrganizations,
-        saveOrganizations: saveOrganizations
-	}
+		getCohortAnalyses,
+		exists: exists,
+		getCohortPrintFriendly,
+	};
 
 	return api;
 });

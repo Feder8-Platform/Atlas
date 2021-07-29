@@ -1,52 +1,77 @@
 <table class="conceptSetTable stripe compact hover" cellspacing="0" width="100%" data-bind="dataTable:{
-            data: conceptSets(),
+            data: conceptSetItems(),
             options: {
 							dom: 'Clfiprt',
 							colVis: {
-								buttonText: 'Change Columns',
+								buttonText: ko.i18n('datatable.language.buttons.changeColumns', 'Change Columns'),
 								align: 'right',
 								overlayFade: 0,
-								showAll: 'Show All Columns',
-								restore: 'Reset Columns'
+								showAll: ko.i18n('datatable.language.buttons.showAllColumns', 'Show All Columns'),
+								restore: ko.i18n('datatable.language.buttons.resetColumns', 'Reset Columns')
 							},
-							rowCallback: $root.contextSensitiveLinkColor,
-							lengthMenu: [[25, 50, 100, -1], [25, 50, 100,'All']],
+							rowCallback: $component.commonUtils.contextSensitiveLinkColor,
+							lengthMenu: $component.tableOptions.lengthMenu,
+							pageLength: $component.tableOptions.pageLength,
 							orderClasses: false,
 							deferRender: true,
 							autoWidth: false,
 							order: [[3, 'desc']],
-              columns: [
-									{ title: '<li class=\'fa fa-shopping-cart\'></li>', render: $root.renderConceptSetItemSelector, orderable:false, searchable:false},
-									{ title: 'Concept Id', data: 'concept.CONCEPT_ID'},
-									{ title: 'Concept Code', data: 'concept.CONCEPT_CODE'},
-                  { title: 'Concept Name', render: $root.renderBoundLink},
-                  { title: 'Domain', data: 'concept.DOMAIN_ID' },
-									{ title: 'Standard Concept Code', data: 'concept.STANDARD_CONCEPT', visible:false },
-									{ title: 'Standard Concept Caption', data: 'concept.STANDARD_CONCEPT_CAPTION' },
-									{ title: 'Exclude', class:'text-center', orderable:false,render: function() { return $root.renderCheckbox('isExcluded');} },
-									{ title: 'Descendants', class:'text-center', orderable:false,render: function() { return $root.renderCheckbox('includeDescendants');} },
-									{ title: 'Mapped', class:'text-center', orderable:false,render: function() { return $root.renderCheckbox('includeMapped');} }
-              ]
+							language: ko.i18n('datatable.language'),
+							columns: columns,
            }
-        }">
+				}">
+	<thead>
+		<th>
+			<!-- ko if: canEditCurrentConceptSet -->
+				<span data-bind="
+					css: classes({
+							element: 'checkmark',
+							extra: `fa fa-check ${areAllItemsCheckedForRemoval() ? 'selected' : ''}`
+					}),
+					click: toggleSelectedItemsForRemoval
+				"></span>
+			<!-- /ko -->
+	</th>
+		<th>Concept Id</th>
+		<th>Concept Code</th>
+		<th>Concept Name</th>
+		<th>Domain</th>
+		<th>Standard Concept Code</th>
+		<th>Standard Concept Caption</th>
+		<th>
+			<!-- ko if: canEditCurrentConceptSet -->
+				<span data-bind="
+					css: classes({
+							element: 'checkmark',
+							extra: `fa fa-check ${allExcludedChecked() ? 'selected' : ''}`
+					}),
+					click: toggleExcluded
+				"></span>
+			<!-- /ko --> Exclude
+		</th>
+		<th>
+			<!-- ko if: canEditCurrentConceptSet -->
+			<span data-bind="
+				css: classes({
+						element: 'checkmark',
+						extra: `fa fa-check ${allDescendantsChecked() ? 'selected' : ''}`
+				}),
+				click: toggleDescendants
+			"></span>
+			<!-- /ko --> Descendants
+		</th>
+		<th>
+				<!-- ko if: canEditCurrentConceptSet -->
+					<span data-bind="
+						css: classes({
+								element: 'checkmark',
+								extra: `fa fa-check ${allMappedChecked() ? 'selected' : ''}`
+						}),
+						click: toggleMapped
+					"></span>
+				<!-- /ko --> Mapped
+		</th>
+	</thead>
 </table>
-
-<div class="linkLegend">
-    <div class="linkLegendItem">
-        <div class="swatch standard">
-        </div>
-        <div class="linkLegendTitle">Standard</div>
-    </div>
-    <div class="linkLegendItem">
-        <div class="swatch nonStandard">
-        </div>
-        <div class="linkLegendTitle">Non-Standard</div>
-    </div>
-    <div class="linkLegendItem">
-        <div class="swatch classification">
-        </div>
-        <div class="linkLegendTitle">Classification</div>
-    </div>
-</div>
-
+<concept-legend></concept-legend>
 <div class="clear"></div>

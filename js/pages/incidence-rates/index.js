@@ -13,14 +13,14 @@ define((require, exports) => {
 	const navUrl = ko.pureComputed(function () {
 		let url = "#/iranalysis";
 		if (appState.IRAnalysis.current()) {
-			url = url + `/${(appState.IRAnalysis.current().id() || 'new')}`;
+			url = url + `/${(appState.IRAnalysis.current().id() || 0)}`;
 		}
 		return url;
 	});
 
 
 	return {
-		title: 'Incidence Rates',
+		title: ko.i18n('navigation.incidencerate', 'Incidence Rates'),
 		buildRoutes,
 		icon: 'bolt',
 		statusCss,

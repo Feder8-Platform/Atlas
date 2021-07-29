@@ -35,21 +35,52 @@ define([
 	class ReportManager extends Component {
 		constructor(params) {
 			super(params);
-			this.model = params.model;
 			this.config = config;
 			this.refresh = ko.observable(true);
-			this.cohortCaption = ko.observable('Click Here to Choose a Cohort');
+			this.cohortCaption = ko.observable(
+				ko.unwrap(ko.i18n('cohortDefinitions.costUtilization.reportManager.reportManagerText_71', 'Click Here to Choose a Cohort')));
 			this.showSelectionArea = params.showSelectionArea == undefined ? true : params.showSelectionArea;
 			this.reference = ko.observableArray();
 			this.dataCompleteReference = ko.observableArray();
 			this.dom = '<<"row vertical-align"<"col-xs-6"<"dt-btn"B>l><"col-xs-6 search"f>><"row vertical-align"<"col-xs-3"i><"col-xs-9"p>><t><"row vertical-align"<"col-xs-3"i><"col-xs-9"p>>>';
-			this.lengthMenu = params.lengthMenu || [
-				[15, 30, 45, 100, -1],
-				[15, 30, 45, 100, 'All']
-			];
+			this.tableOptions = params.tableOptions || commonUtils.getTableOptions('M');
 			this.visualizationPacks = cohortReportingService.visualizationPacks;
 			this.costUtilConst = costUtilConst;
+			this.activeReportDrilldown = ko.observable(false);
+			this._loadingReportDrilldown = ko.observable(false);
+			this.reportSourceKey = params.reportSourceKey;
+			this.reportReportName = params.reportReportName;
+			this.currentReport = ko.observable();
 
+			// Setting 'ko.options.deferUpdates = true' in PR #2084 breaks rendering of reports and charts
+			// we need explicitly call for 'ko.tasks.runEarly' method
+			// TODO: Needs to be refactored in 2.8.1
+			this.loadingReport = ko.pureComputed({
+				read: () => params.loadingReport(),
+				write: isLoading => {
+					params.loadingReport(isLoading);
+					ko.tasks.runEarly();
+				}
+			});
+			this.loadingReportDrilldown = ko.pureComputed({
+				read: () => this._loadingReportDrilldown(),
+				write: isLoading => {
+					this._loadingReportDrilldown(isLoading);
+					ko.tasks.runEarly();
+				}
+			});
+			
+			this.reportTriggerRun = params.reportTriggerRun;
+			this.reportCohortDefinitionId = params.reportCohortDefinitionId;
+			this.reportValid = ko.computed(() => {
+				return (
+					this.reportReportName() != undefined
+					&& this.reportSourceKey() != undefined
+					&& this.reportCohortDefinitionId() != undefined
+					&& !this.loadingReport()
+					&& !this.loadingReportDrilldown()
+				);
+			});
 			const size4 = {
 					width: 400,
 					height: 140
@@ -98,7 +129,7 @@ define([
 			this.buttons = ['colvis', 'copyHtml5', 'excelHtml5', 'csvHtml5', 'pdfHtml5'];
 			this.heelOptions = {
 				Facets: [{
-					'caption': 'Error Msg',
+					'caption': ko.i18n('facets.caption.errorMsg', 'Error Msg'),
 					'binding': d => {
 						if (d.attributeName < 10) {
 							return 'Person'
@@ -202,15 +233,9 @@ define([
 
 			this.currentAgeGroup = ko.observable();
 
-			this.reportTriggerRunSuscription = this.model.reportTriggerRun.subscribe((newValue) => {
-				if (newValue) {
-					this.runReport();
-				}
-			});
-
-			this.model.reportCohortDefinitionId.subscribe((d) => {
+			this.reportCohortDefinitionId.subscribe((d) => {
 				if (this.showSelectionArea) {
-					this.cohortCaption(this.model.cohortDefinitions()
+					this.cohortCaption(sharedState.cohortDefinitions()
 						.filter(function (value) {
 							return value.id == d;
 						})[0].name);
@@ -384,46 +409,46 @@ define([
 				this.tornadoProfiles(profiles);
 			}
 			this.buildProfileLink = (p) => {
-				return '#/profiles/' + this.model.reportSourceKey() + '/' + p.personId + '/' + this.model.reportCohortDefinitionId();
+				return '#/profiles/' + this.reportSourceKey() + '/' + p.personId + '/' + this.reportCohortDefinitionId();
 			}
 			this.runReport = () => {
-				this.model.loadingReport(true);
-				this.model.activeReportDrilldown(false);
-				this.model.reportTriggerRun(false);
+				this.loadingReport(true);
+				this.activeReportDrilldown(false);
+				this.reportTriggerRun(false);
 
 				let width = 1000;
 				let height = 250;
 				let minimum_area = 50;
 				let threshold = minimum_area / (width * height);
 
-				switch (this.model.reportReportName()) {
+				switch (this.reportReportName()) {
 					case 'Template':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/cohortspecific?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/cohortspecific?refresh=' + this.refresh(),
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 							}
 						});
 						break;
 					case 'Tornado':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/tornado?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/tornado?refresh=' + this.refresh(),
 							success: (data) => {
 								this.tornadoRecords = data.tornadoRecords;
 								this.tornadoSamples = data.profileSamples;
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 								this.tornadoChart("#tornadoPlot svg", this.tornadoRecords, this.tornadoSamples, this.profilesSelected);
 							}
 						});
 						break;
 					case 'Death':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/death?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/death?refresh=' + this.refresh(),
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 
 								// render trellis
 								let trellisData = ChartUtils.normalizeArray(data.prevalenceByGenderAgeYear, true);
@@ -563,30 +588,30 @@ define([
 						// not yet implemented
 					case 'Care Site':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/caresite?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/caresite?refresh=' + this.refresh(),
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 							}
 						});
 						break;
 					case 'Measurement':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/measurement?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/measurement?refresh=' + this.refresh(),
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 							}
 						});
 						break;
 					case 'Procedure':
 						$.ajax({
 							type: "GET",
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/procedure?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/procedure?refresh=' + this.refresh(),
 							contentType: "application/json; charset=utf-8",
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 
 								let normalizedData = ChartUtils.normalizeArray(data);
 								if (!normalizedData.empty) {
@@ -606,10 +631,13 @@ define([
 
 									let datatable = $('#procedure_table')
 										.DataTable({
+											language: {
+												searchPlaceholder: 'Search...',
+											},
 											order: [5, 'desc'],
 											dom: this.dom,
 											buttons: this.buttons,
-											lengthMenu: this.lengthMenu,
+											...this.tableOptions,
 											autoWidth: false,
 											data: table_data,
 											"createdRow": function (row, data, dataIndex) {
@@ -693,11 +721,11 @@ define([
 					case 'Drug Exposure':
 						$.ajax({
 							type: "GET",
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/drug?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/drug?refresh=' + this.refresh(),
 							contentType: "application/json; charset=utf-8",
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 								let normalizedData = atlascharts.chart.normalizeDataframe(ChartUtils.normalizeArray(data, true));
 								if (!normalizedData.empty) {
 									let table_data = normalizedData.conceptPath.map((d, i) => {
@@ -717,10 +745,13 @@ define([
 
 									let datatable = $('#drug_table')
 										.DataTable({
+											language: {
+												searchPlaceholder: 'Search...',
+											},
 											order: [6, 'desc'],
 											dom: this.dom,
 											buttons: this.buttons,
-											lengthMenu: this.lengthMenu,
+											...this.tableOptions,
 											autoWidth: false,
 											data: table_data,
 											"createdRow": function (row, data, dataIndex) {
@@ -808,10 +839,10 @@ define([
 					case 'Drug Eras':
 
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/drugera?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/drugera?refresh=' + this.refresh(),
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 
 								let normalizedData = atlascharts.chart.normalizeDataframe(ChartUtils.normalizeArray(data, true));
 								if (!normalizedData.empty) {
@@ -831,10 +862,13 @@ define([
 
 									let datatable = $('#drugera_table')
 										.DataTable({
+											language: {
+												searchPlaceholder: 'Search...',
+											},
 											order: [5, 'desc'],
 											dom: this.dom,
 											buttons: this.buttons,
-											lengthMenu: this.lengthMenu,
+											...this.tableOptions,
 											autoWidth: false,
 											data: table_data,
 											"createdRow": function (row, data, dataIndex) {
@@ -917,10 +951,10 @@ define([
 						break;
 					case 'Condition':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/condition?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/condition?refresh=' + this.refresh(),
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 								let normalizedData = atlascharts.chart.normalizeDataframe(ChartUtils.normalizeArray(data, true));
 								if (!normalizedData.empty) {
 									let table_data = normalizedData.conceptPath.map((d, i) => {
@@ -940,9 +974,12 @@ define([
 
 									let datatable = $('#condition_table')
 										.DataTable({
+											language: {
+												searchPlaceholder: 'Search...',
+											},
 											dom: this.dom,
 											buttons: this.buttons,
-											lengthMenu: this.lengthMenu,
+											...this.tableOptions,
 											autoWidth: false,
 											order: [6, 'desc'],
 											data: table_data,
@@ -1030,10 +1067,10 @@ define([
 						break;
 					case 'Observation Periods':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/observationperiod?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/observationperiod?refresh=' + this.refresh(),
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 								// age by gender
 								let ageByGenderData = ChartUtils.normalizeArray(data.ageByGender);
 								if (!ageByGenderData.empty) {
@@ -1305,10 +1342,10 @@ define([
 						break;
 					case 'Condition Eras':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/conditionera?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/conditionera?refresh=' + this.refresh(),
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 								let normalizedData = atlascharts.chart.normalizeDataframe(ChartUtils.normalizeArray(data, true));
 								if (!normalizedData.empty) {
 									let table_data = normalizedData.conceptPath.map((d, i) => {
@@ -1328,10 +1365,13 @@ define([
 
 									let datatable = $('#conditionera_table')
 										.DataTable({
+											language: {
+												searchPlaceholder: 'Search...',
+											},
 											order: [6, 'desc'],
 											dom: this.dom,
 											buttons: this.buttons,
-											lengthMenu: this.lengthMenu,
+											...this.tableOptions,
 											autoWidth: false,
 											data: table_data,
 											"createdRow": function (row, data, dataIndex) {
@@ -1418,10 +1458,10 @@ define([
 						break;
 					case 'Drugs by Index':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/cohortspecifictreemap?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/cohortspecifictreemap?refresh=' + this.refresh(),
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 
 								let table_data, datatable, tree, treemap;
 								if (data.drugEraPrevalence) {
@@ -1448,10 +1488,13 @@ define([
 
 										let datatable = $('#drugs-by-index-table')
 											.DataTable({
+												language: {
+													searchPlaceholder: 'Search...',
+												},
 												order: [5, 'desc'],
 												dom: this.dom,
 												buttons: this.buttons,
-												lengthMenu: this.lengthMenu,
+												...this.tableOptions,
 												autoWidth: false,
 												data: table_data,
 												columns: [{
@@ -1539,10 +1582,10 @@ define([
 						break;
 					case 'Conditions by Index':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/cohortspecifictreemap?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/cohortspecifictreemap?refresh=' + this.refresh(),
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 
 								let table_data, datatable, tree, treemap;
 								// condition prevalence
@@ -1571,10 +1614,13 @@ define([
 
 										let datatable = $('#condition_table')
 											.DataTable({
+												language: {
+													searchPlaceholder: 'Search...',
+												},
 												order: [6, 'desc'],
 												dom: this.dom,
 												buttons: this.buttons,
-												lengthMenu: this.lengthMenu,
+												...this.tableOptions,
 												data: table_data,
 												autoWidth: false,
 												columns: [{
@@ -1667,10 +1713,10 @@ define([
 						break;
 					case 'Procedures by Index':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/cohortspecifictreemap?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/cohortspecifictreemap?refresh=' + this.refresh(),
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 
 								let table_data, datatable, tree, treemap;
 								if (data.procedureOccurrencePrevalence) {
@@ -1696,10 +1742,13 @@ define([
 
 										let datatable = $('#procedure_table')
 											.DataTable({
+												language: {
+													searchPlaceholder: 'Search...',
+												},
 												order: [6, 'desc'],
 												dom: this.dom,
 												buttons: this.buttons,
-												lengthMenu: this.lengthMenu,
+												...this.tableOptions,
 												autoWidth: false,
 												data: table_data,
 												columns: [{
@@ -1787,10 +1836,10 @@ define([
 						break;
 					case 'Cohort Specific':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/cohortspecific?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/cohortspecific?refresh=' + this.refresh(),
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 
 								// Persons By Duration From Start To End
 								let result = ChartUtils.normalizeArray(data.personsByDurationFromStartToEnd, false);
@@ -1999,16 +2048,16 @@ define([
 
 									});
 								}
-								this.model.loadingReport(false);
+								this.loadingReport(false);
 							}
 						});
 						break;
 					case 'Person':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/person?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/person?refresh=' + this.refresh(),
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 
 								if (data.yearOfBirth.length > 0 && data.yearOfBirthStats.length > 0) {
 									let yearHistogram = new atlascharts.histogram();
@@ -2031,16 +2080,16 @@ define([
 								genderDonut.render(this.mapConceptData(data.gender), "#gender", size4.width, size4.height);
 								raceDonut.render(this.mapConceptData(data.race), "#race", size4.width, size4.height);
 								ethnicityDonut.render(this.mapConceptData(data.ethnicity), "#ethnicity", size4.width, size4.height);
-								this.model.loadingReport(false);
+								this.loadingReport(false);
 							}
 						});
 						break; // person report
 					case 'Heracles Heel':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/heraclesheel?refresh=' + this.refresh(),
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/heraclesheel?refresh=' + this.refresh(),
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 
 								this.reference(data);
 							}
@@ -2048,10 +2097,10 @@ define([
 						break; // Heracles Heel report
 					case 'Data Completeness':
 						$.ajax({
-							url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/datacompleteness',
+							url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/datacompleteness',
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 
 								this.dataCompleteReference(data);
 
@@ -2066,10 +2115,10 @@ define([
 						break; // Data Completeness report
 					case 'Entropy':
 						$.ajax({
-							url: config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/allentropy',
+							url: config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/allentropy',
 							success: (data) => {
-								this.model.currentReport(this.model.reportReportName());
-								this.model.loadingReport(false);
+								this.currentReport(this.reportReportName());
+								this.loadingReport(false);
 
 								let all_map_data = data.map(function (d) {
 									return d.insitution;
@@ -2087,10 +2136,13 @@ define([
 								});
 
 								this.careSiteDatatable = $('#care_site_table').DataTable({
+									language: {
+										searchPlaceholder: 'Search...',
+									},
 									order: [],
 									dom: this.dom,
 									buttons: this.buttons,
-									lengthMenu: this.lengthMenu,
+									...this.tableOptions,
 									data: care_site_data,
 									columns: [{
 										data: 'institution'
@@ -2136,18 +2188,18 @@ define([
 						});
 						break; // Entropy report
 
-					case this.visualizationPacks.healthcareUtilPersonAndExposureBaseline.name:
-					case this.visualizationPacks.healthcareUtilPersonAndExposureCohort.name:
-					case this.visualizationPacks.healthcareUtilVisitRecordsBaseline.name:
-					case this.visualizationPacks.healthcareUtilVisitDatesBaseline.name:
-					case this.visualizationPacks.healthcareUtilCareSiteDatesBaseline.name:
-					case this.visualizationPacks.healthcareUtilVisitRecordsCohort.name:
-					case this.visualizationPacks.healthcareUtilVisitDatesCohort.name:
-					case this.visualizationPacks.healthcareUtilCareSiteDatesCohort.name:
-					case this.visualizationPacks.healthcareUtilDrugBaseline.name:
-					case this.visualizationPacks.healthcareUtilDrugCohort.name:
-						this.model.loadingReport(false);
-						this.model.currentReport(this.model.reportReportName());
+					case ko.unwrap(this.visualizationPacks.healthcareUtilPersonAndExposureBaseline.name):
+					case ko.unwrap(this.visualizationPacks.healthcareUtilPersonAndExposureCohort.name):
+					case ko.unwrap(this.visualizationPacks.healthcareUtilVisitRecordsBaseline.name):
+					case ko.unwrap(this.visualizationPacks.healthcareUtilVisitDatesBaseline.name):
+					case ko.unwrap(this.visualizationPacks.healthcareUtilCareSiteDatesBaseline.name):
+					case ko.unwrap(this.visualizationPacks.healthcareUtilVisitRecordsCohort.name):
+					case ko.unwrap(this.visualizationPacks.healthcareUtilVisitDatesCohort.name):
+					case ko.unwrap(this.visualizationPacks.healthcareUtilCareSiteDatesCohort.name):
+					case ko.unwrap(this.visualizationPacks.healthcareUtilDrugBaseline.name):
+					case ko.unwrap(this.visualizationPacks.healthcareUtilDrugCohort.name):
+						this.currentReport(this.reportReportName());
+						this.loadingReport(false);
 						break;
 				}
 			}
@@ -2247,15 +2299,15 @@ define([
 
 			// drilldown functions
 			this.conditionDrilldown = (concept_id, concept_name) => {
-				this.model.loadingReportDrilldown(true);
-				this.model.activeReportDrilldown(false);
+				this.activeReportDrilldown(false);
+				this.loadingReportDrilldown(true);
 
 				$.ajax({
 					type: "GET",
-					url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/condition/' + concept_id + "?refresh=true",
+					url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/condition/' + concept_id + "?refresh=true",
 					success: (data) => {
-						this.model.loadingReportDrilldown(false);
-						this.model.activeReportDrilldown(true);
+						this.activeReportDrilldown(true);
+						this.loadingReportDrilldown(false);
 						$('#conditionDrilldown')
 							.html(concept_name + ' Drilldown Report');
 
@@ -2412,17 +2464,18 @@ define([
 			};
 
 			this.drugExposureDrilldown = (concept_id, concept_name) => {
-				this.model.loadingReportDrilldown(true);
-				this.model.activeReportDrilldown(false);
+				this.loadingReportDrilldown(true);
+				this.activeReportDrilldown(false);
 
 				$.ajax({
 					type: "GET",
-					url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/drug/' + concept_id + '?refresh=' + this.refresh(),
+					url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/drug/' + concept_id + '?refresh=' + this.refresh(),
 					success: (data) => {
 						$('#drugExposureDrilldown')
 							.text(concept_name);
-						this.model.loadingReportDrilldown(false);
-						this.model.activeReportDrilldown(true);
+						this.activeReportDrilldown(true);
+						this.loadingReportDrilldown(false);
+
 
 						this.boxplotHelper(data.ageAtFirstExposure, '#ageAtFirstExposure', this.boxplotWidth, this.boxplotHeight, 'Gender', 'Age at First Exposure');
 						this.boxplotHelper(data.daysSupplyDistribution, '#daysSupplyDistribution', this.boxplotWidth, this.boxplotHeight, 'Days Supply', 'Days');
@@ -2544,15 +2597,15 @@ define([
 			};
 
 			this.conditionEraDrilldown = (concept_id, concept_name) => {
-				this.model.loadingReportDrilldown(true);
-				this.model.activeReportDrilldown(false);
+				this.loadingReportDrilldown(true);
+				this.activeReportDrilldown(false);
 
 				$.ajax({
 					type: "GET",
-					url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/conditionera/' + concept_id + '?refresh=' + this.refresh(),
+					url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/conditionera/' + concept_id + '?refresh=' + this.refresh(),
 					success: (data) => {
-						this.model.loadingReportDrilldown(false);
-						this.model.activeReportDrilldown(true);
+						this.activeReportDrilldown(true);
+						this.loadingReportDrilldown(false);
 
 						$('#conditionEraDrilldown')
 							.html(concept_name + ' Drilldown Report');
@@ -2642,7 +2695,7 @@ define([
 
 							// create svg with range bands based on the trellis names
 							let chart = new atlascharts.trellisline();
-							const size = this.breakpoints.guessFromNode("#conditoinera_trellisLinePlot");
+							const size = this.breakpoints.guessFromNode("#conditionera_trellisLinePlot");
 							chart.render(dataByDecile, "#conditionera_trellisLinePlot", size.width, this.breakpoints.wide.height, {
 								trellisSet: allDeciles,
 								trellisLabel: "Age Decile",
@@ -2661,15 +2714,15 @@ define([
 			}
 
 			this.drugeraDrilldown = (concept_id, concept_name) => {
-				this.model.loadingReportDrilldown(true);
-				this.model.activeReportDrilldown(false);
+				this.activeReportDrilldown(false);
+				this.loadingReportDrilldown(true);
 
 				$.ajax({
 					type: "GET",
-					url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/drugera/' + concept_id + '?refresh=' + this.refresh(),
+					url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/drugera/' + concept_id + '?refresh=' + this.refresh(),
 					success: (data) => {
-						this.model.loadingReportDrilldown(false);
-						this.model.activeReportDrilldown(true);
+						this.activeReportDrilldown(true);
+						this.loadingReportDrilldown(false);
 
 						$('#drugeraDrilldown')
 							.html(concept_name + ' Drilldown Report');
@@ -2762,7 +2815,7 @@ define([
 							// create svg with range bands based on the trellis names
 							let chart = new atlascharts.trellisline();
 							const size = this.breakpoints.guessFromNode("#drugera_trellisLinePlot");
-							chart.render(dataByDecile, "#drugera_trellisLinePlot", size.width, size.breakpoints.wide.height, {
+							chart.render(dataByDecile, "#drugera_trellisLinePlot", size.width, this.breakpoints.wide.height, {
 								trellisSet: allDeciles,
 								trellisLabel: "Age Decile",
 								seriesLabel: "Year of Observation",
@@ -2780,15 +2833,15 @@ define([
 			}
 
 			this.procedureDrilldown = (concept_id, concept_name) => {
-				this.model.loadingReportDrilldown(true);
-				this.model.activeReportDrilldown(false);
+				this.activeReportDrilldown(false);
+				this.loadingReportDrilldown(true);
 
 				$.ajax({
 					type: "GET",
-					url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/procedure/' + concept_id + '?refresh=' + this.refresh(),
+					url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/procedure/' + concept_id + '?refresh=' + this.refresh(),
 					success: (data) => {
-						this.model.loadingReportDrilldown(false);
-						this.model.activeReportDrilldown(true);
+						this.activeReportDrilldown(true);
+						this.loadingReportDrilldown(false);
 						$('#procedureDrilldown')
 							.text(concept_name + ' Drilldown Report');
 
@@ -2939,16 +2992,17 @@ define([
 			}
 
 			this.drilldown = (id, name, type) => {
-				this.model.loadingReportDrilldown(true);
-				this.model.activeReportDrilldown(false);
+				this.activeReportDrilldown(false);
+				this.loadingReportDrilldown(true);
 
 				$.ajax({
 						type: "GET",
-						url: this.config.api.url + 'cohortresults/' + this.model.reportSourceKey() + '/' + this.model.reportCohortDefinitionId() + '/cohortspecific' + type + "/" + id + '?refresh=' + this.refresh(),
+						url: this.config.api.url + 'cohortresults/' + this.reportSourceKey() + '/' + this.reportCohortDefinitionId() + '/cohortspecific' + type + "/" + id + '?refresh=' + this.refresh(),
 						contentType: "application/json; charset=utf-8"
 					})
 					.done((result) => {
-						this.model.loadingReportDrilldown(false);
+						this.activeReportDrilldown(true);
+						this.loadingReportDrilldown(false);
 						if (result && result.length > 0) {
 							$("#" + type + "DrilldownScatterplot")
 								.empty();
@@ -2968,7 +3022,6 @@ define([
 								});
 
 							let scatter = new atlascharts.scatterplot();
-							this.model.activeReportDrilldown(true);
 							$('#' + type + 'DrilldownScatterplotHeading').html(name);
 
 							scatter.render(totalRecordsData, "#" + type + "DrilldownScatterplot", 460, 150, {
@@ -3350,10 +3403,6 @@ define([
 				}
 			}
 
-			this.dispose = function () {
-				this.reportTriggerRunSuscription.dispose();
-			}
-
 			this.handleDrugTableClick = (data, context, event) => {
 				let dataTable = $("#drug_table")
 					.DataTable();
@@ -3403,6 +3452,18 @@ define([
 
 				this.conditionEraDrilldown(rowData.concept_id, rowData.snomed);
 			}
+
+			this.subscriptions.push(
+				this.reportTriggerRun.subscribe((newValue) => {
+					if (newValue) {
+						this.runReport();
+					}
+				}),
+			);
+		}
+
+		dispose() {
+			super.dispose();
 		}
 	}
 

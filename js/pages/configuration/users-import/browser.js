@@ -36,10 +36,10 @@ define([
 				this.canCreate = ko.pureComputed(() => permissionService.isPermittedCreate());
 				this.loading = ko.observable();
 				this.data = ko.observableArray();
-
+				this.tableOptions = commonUtils.getTableOptions('L');
 				this.gridColumns = [
 					{
-						title: 'Provider',
+						title: ko.i18n('columns.provider', 'Provider'),
 						data: 'providerType',
 						className: this.classes('tbl-col', 'provider'),
 						render: datatableUtils.getLinkFormatter(d => ({
@@ -48,49 +48,46 @@ define([
 						})),
 					},
 					{
-						title: 'Enabled',
+						title: ko.i18n('columns.enabled', 'Enabled'),
 						data: 'enabled',
 						className: this.classes('tbl-col', 'enabled'),
 						render: data => data ? 'Yes' : 'No',
 					},
 					{
-						title: 'Start date',
+						title: ko.i18n('columns.startDate', 'Start date'),
 						className: this.classes('tbl-col', 'start-date'),
-						type: 'datetime-formatted',
 						render: datatableUtils.getDateFieldFormatter('startDate'),
 					},
 					{
-						title: 'Execute',
+						title: ko.i18n('columns.execute', 'Execute'),
 						data: 'frequency',
 						className: this.classes('tbl-col', 'frequency'),
 						render: Utils.ExecuteRender,
 					},
 					{
-						title: 'Ends',
+						title: ko.i18n('columns.ends', 'Ends'),
 						className: this.classes('tbl-col', 'ends'),
 						render: Utils.EndsRender,
 					},
 					{
-						title: 'Last executed',
+						title: ko.i18n('columns.lastExecuted', 'Last executed'),
 						className: this.classes('tbl-col', 'last-executed'),
-						type: 'datetime-formatted',
 						render: datatableUtils.getDateFieldFormatter('lastExecuted', '-'),
 					},
 					{
-						title: 'Next execution',
+						title: ko.i18n('columns.nextExecution', 'Next execution'),
 						className: this.classes('tbl0col', 'next-execution'),
-						type: 'datetime-formatted',
 						render: datatableUtils.getDateFieldFormatter('nextExecution', '-'),
 					},
 				];
 				this.gridOptions = {
 					Facets: [
 						{
-							caption: 'Provider',
+							'caption': ko.i18n('facets.caption.provider', 'Provider'),
 							'binding': (o) => o.providerType,
 						},
 						{
-							'caption': 'Start date',
+							'caption': ko.i18n('facets.caption.startDate', 'Start date'),
 							'binding': (o) => datatableUtils.getFacetForDate(o.startDate)
 						},
 					]

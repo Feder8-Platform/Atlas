@@ -1,167 +1,201 @@
-define(['knockout', '../options', '../InputTypes/Range', '../InputTypes/Text', '../CriteriaGroup', 'text!./TreatmentLineTemplate.html'], function (ko, options, Range, Text, CriteriaGroup, template) {
+define([
+  "knockout",
+  "../options",
+  "../utils",
+  "../InputTypes/Range",
+  "../InputTypes/Text",
+  "../CriteriaGroup",
+  "text!./TreatmentLineTemplate.html",
+  "../const",
+], function (
+  ko,
+  options,
+  utils,
+  Range,
+  Text,
+  CriteriaGroup,
+  template,
+  constants
+) {
+  function TreatmentLineViewModel(params) {
+    var self = this;
+    self.formatOption = function (d) {
+      return (
+        '<div class="optionText">' +
+        d.text +
+        "</div>" +
+        '<div class="optionDescription">' +
+        d.description +
+        "</div>"
+      );
+    };
 
-	function TreatmentLineViewModel(params) {
-		var self = this;
-		self.formatOption = function (d) {
-			return '<div class="optionText">' + d.text + '</div>' +
-				'<div class="optionDescription">' + d.description + '</div>';
-		};
+    self.addActions = [
+      {
+        ...constants.treatmentlineAttributes.addFirstDiagnosis,
+        selected: false,
+        action: function () {
+          if (self.Criteria.First() == null) self.Criteria.First(true);
+        },
+      },
+      {
+        ...constants.treatmentlineAttributes.addAge,
+        selected: false,
+        action: function () {
+          if (self.Criteria.Age() == null) self.Criteria.Age(new Range());
+        },
+      },
+      {
+        ...constants.treatmentlineAttributes.addGender,
+        selected: false,
+        action: function () {
+          if (self.Criteria.Gender() == null)
+            self.Criteria.Gender(ko.observableArray());
+        },
+      },
+      {
+        ...constants.treatmentlineAttributes.addStartDate,
+        selected: false,
+        action: function () {
+          if (self.Criteria.TreatmentLineStartDate() == null)
+            self.Criteria.TreatmentLineStartDate(
+              new Range({
+                Op: "lt",
+              })
+            );
+        },
+      },
+      {
+        ...constants.treatmentlineAttributes.addEndDate,
+        selected: false,
+        action: function () {
+          if (self.Criteria.TreatmentLineEndDate() == null)
+            self.Criteria.TreatmentLineEndDate(
+              new Range({
+                Op: "lt",
+              })
+            );
+        },
+      },
+      {
+        ...constants.treatmentlineAttributes.addDrugEraStartDate,
+        selected: false,
+        action: function () {
+          if (self.Criteria.TreatmentLineDrugEraStartDate() == null)
+            self.Criteria.TreatmentLineDrugEraStartDate(
+              new Range({
+                Op: "lt",
+              })
+            );
+        },
+      },
+      {
+        ...constants.treatmentlineAttributes.addDrugEraEndDate,
+        selected: false,
+        action: function () {
+          if (self.Criteria.TreatmentLineDrugEraEndDate() == null)
+            self.Criteria.TreatmentLineDrugEraEndDate(
+              new Range({
+                Op: "lt",
+              })
+            );
+        },
+      },
+      {
+        ...constants.treatmentlineAttributes.addLineNumber,
+        selected: false,
+        action: function () {
+          if (self.Criteria.TreatmentLineNumber() == null)
+            self.Criteria.TreatmentLineNumber(
+              new Range({
+                Op: "lt",
+              })
+            );
+        },
+      },
+      {
+        ...constants.treatmentlineAttributes.addNumberOfCycles,
+        selected: false,
+        action: function () {
+          if (self.Criteria.TotalCycleNumber() == null)
+            self.Criteria.TotalCycleNumber(
+              new Range({
+                Op: "lt",
+              })
+            );
+        },
+      },
+      {
+        ...constants.treatmentlineAttributes.addNumberOfDrugExposures,
+        selected: false,
+        action: function () {
+          if (self.Criteria.DrugExposureCount() == null)
+            self.Criteria.DrugExposureCount(
+              new Range({
+                Op: "lt",
+              })
+            );
+        },
+      },
+      {
+        ...constants.treatmentlineAttributes.addType,
+        selected: false,
+        action: function () {
+          if (self.Criteria.TreatmentLineType() == null)
+            self.Criteria.TreatmentLineType(ko.observableArray());
+        },
+      },
+      {
+        ...constants.treatmentlineAttributes.addVisit,
+        selected: false,
+        action: function () {
+          if (self.Criteria.VisitType() == null)
+            self.Criteria.VisitType(ko.observableArray());
+        },
+      },
+      {
+        ...constants.treatmentlineAttributes.addProviderSpecialty,
+        selected: false,
+        action: function () {
+          if (self.Criteria.ProviderSpecialty() == null)
+            self.Criteria.ProviderSpecialty(ko.observableArray());
+        },
+      },
+      {
+        ...constants.treatmentlineAttributes.addNested,
+        selected: false,
+        action: function () {
+          if (self.Criteria.CorrelatedCriteria() == null)
+            self.Criteria.CorrelatedCriteria(
+              new CriteriaGroup(null, self.expression.ConceptSets)
+            );
+        },
+      },
+    ];
 
-		self.addActions = [{
-			text: "Add First Exposure Criteria",
-			value: 5,
-			selected: false,
-			description: "Limit Treatment Lines to the first exposure in history."
-		},
-		{
-			text: "Add Age at Occurrence Criteria",
-			value: 6,
-			selected: false,
-			description: "Filter Drug Exposures by age at occurrence."
-		},
-		{
-			text: "Add Gender Criteria",
-			value: 7,
-			selected: false,
-			description: "Filter Treatment Lines based on Gender."
-		},
-		{
-			text: "Add Start Date Criteria",
-			value: 0,
-			selected: false,
-			description: "Filter Treatment Lines by the Treatment Line Start Date."
-		},
-		{
-			text: "Add End Date Criteria",
-			value: 1,
-			selected: false,
-			description: "Filter Treatment Lines by the Treatment Line End Date"
-		},
-		{
-			text: "Add Drug Era Start Date Criteria",
-			value: 21,
-			selected: false,
-			description: "Filter Treatment Lines by the Drug Era Start Date."
-		},
-		{
-			text: "Add Drug Era End Date Criteria",
-			value: 22,
-			selected: false,
-			description: "Filter Treatment Lines by the Drug Era End Date"
-		},
-		{
-			text: "Add Treatment Line Number Criteria",
-			value: 20,
-			selected: false,
-			description: "Filter Treatment Lines by Treatment Line Numbers."
-		},
-		{
-			text: "Add Total Number of Cycles Criteria",
-			value: 23,
-			selected: false,
-			description: "Filter Treatment Lines by Total number of cycles."
-		},
-		{
-			text: "Add Total Number of Drug Exposures",
-			value: 24,
-			selected: false,
-			description: "Filter Treatment Lines by Total number of drug exposures."
-		},
-		{
-			text: "Add type id of Treatment Line",
-			value: 25,
-			selected: false,
-			description: "Filter Treatment Lines by its type id."
-		},
-		{
-			text: "Add Nested Criteria...",
-			value: 19,
-			selected: false,
-			description: "Apply criteria using the condition occurrence as the index date",
-		}
-		];
+    self.expression = ko.utils.unwrapObservable(params.expression);
+    self.Criteria = params.criteria.TreatmentLine;
+    self.options = options;
 
-		self.actionHandler = function (data) {
-			var criteriaType = data.value;
-			switch (criteriaType) {
-				case 0:
-					if (self.Criteria.TreatmentLineStartDate() == null)
-						self.Criteria.TreatmentLineStartDate(new Range({
-							Op: "lt"
-						}));
-					break;
-				case 1:
-					if (self.Criteria.TreatmentLineEndDate() == null)
-						self.Criteria.TreatmentLineEndDate(new Range({
-							Op: "lt"
-						}));
-					break;
-				case 5:
-					if (self.Criteria.First() == null)
-						self.Criteria.First(true);
-					break;
-				case 6:
-					if (self.Criteria.Age() == null)
-						self.Criteria.Age(new Range());
-					break;
-				case 7:
-					if (self.Criteria.Gender() == null)
-						self.Criteria.Gender(ko.observableArray());
-					break;
-				case 19:
-					if (self.Criteria.CorrelatedCriteria() == null)
-						self.Criteria.CorrelatedCriteria(new CriteriaGroup(null, self.expression.ConceptSets));
-					break;
-				case 20:
-					if (self.Criteria.TreatmentLineNumber() == null)
-						self.Criteria.TreatmentLineNumber(new Range({
-							Op: "lt"
-						}));
-					break;
-				case 21:
-					if (self.Criteria.TreatmentLineDrugEraStartDate() == null)
-						self.Criteria.TreatmentLineDrugEraStartDate(new Range({
-							Op: "lt"
-						}));
-					break;
-				case 22:
-					if (self.Criteria.TreatmentLineDrugEraEndDate() == null)
-						self.Criteria.TreatmentLineDrugEraEndDate(new Range({
-							Op: "lt"
-						}));
-					break;
-				case 23:
-					if (self.Criteria.TotalCycleNumber() == null)
-						self.Criteria.TotalCycleNumber(new Range({
-							Op: "lt"
-						}));
-					break;
-				case 24:
-					if (self.Criteria.DrugExposureCount() == null)
-						self.Criteria.DrugExposureCount(new Range({
-							Op: "lt"
-						}));
-					break;
-				case 25:
-					if (self.Criteria.TreatmentLineType() == null)
-						self.Criteria.TreatmentLineType(ko.observableArray());
-					break;
-			}
-		}
+    self.removeCriterion = function (propertyName) {
+      self.Criteria[propertyName](null);
+    };
+    self.indexMessage = ko.i18nformat(
+      'components.conditionTreatmentLine.indexDataText',
+      'The index date refers to the treatment line of <%= conceptSetName %>.',
+      {
+        conceptSetName: utils.getConceptSetName(
+          self.Criteria.CodesetId,
+          self.expression.ConceptSets,
+          ko.i18n('components.conditionTreatmentLine.anyTreatment', 'Any Treatment')
+        ),
+      }
+    );
+  }
 
-		self.expression = ko.utils.unwrapObservable(params.expression);
-		self.Criteria = params.criteria.TreatmentLine;
-		self.options = options;
-
-		self.removeCriterion = function (propertyName) {
-			self.Criteria[propertyName](null);
-		}
-
-	}
-
-	// return compoonent definition
-	return {
-		viewModel: TreatmentLineViewModel,
-		template: template
-	};
+  // return compoonent definition
+  return {
+    viewModel: TreatmentLineViewModel,
+    template: template,
+  };
 });

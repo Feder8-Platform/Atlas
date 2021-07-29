@@ -3,6 +3,8 @@ define([
 	'text!./manager.html',
 	'../PathwayService',
 	'../PermissionService',
+	'services/Permission',
+	'components/security/access/const',
 	'../PathwayAnalysis',
 	'atlas-state',
 	'appConfig',
@@ -11,18 +13,27 @@ define([
 	'utils/AutoBind',
 	'utils/CommonUtils',
 	'assets/ohdsi.util',
+	'const',
+	'lodash',
 	'less!./manager.less',
 	'components/tabs',
 	'./tabs/pathway-design',
 	'./tabs/pathway-exec-wrapper',
 	'./tabs/pathway-results',
 	'./tabs/pathway-utils',
-	'faceted-datatable'
+	'faceted-datatable',
+	'components/security/access/configure-access-modal',
+	'components/checks/warnings',
+	'components/heading',
+	'components/authorship',
+	'components/name-validation',
 ], function (
 	ko,
 	view,
 	PathwayService,
 	PermissionService,
+	GlobalPermissionService,
+	{ entityType },
 	PathwayAnalysis,
 	sharedState,
 	config,
@@ -30,7 +41,9 @@ define([
 	Page,
 	AutoBind,
 	commonUtils,
-	ohdsiUtil
+	ohdsiUtil,
+	constants,
+	lodash
 ) {
 	class PathwaysManager extends AutoBind(Page) {
 		constructor(params) {
@@ -38,14 +51,33 @@ define([
 
 			this.design = sharedState.CohortPathways.current;
 			this.dirtyFlag = sharedState.CohortPathways.dirtyFlag;
+			this.executionId = ko.observable(params.router.routerParams().executionId);
+			this.selectedSourceId = ko.observable(params.router.routerParams().sourceId);
 			this.analysisId = ko.observable();
 			this.executionId = ko.observable();
 			this.loading = ko.observable(false);
+			this.isAuthenticated = ko.pureComputed(() => {
+				return authApi.isAuthenticated();
+			});
+			this.defaultName = ko.unwrap(constants.newEntityNames.pathway);
 
+			this.isNameFilled = ko.computed(() => {
+				return this.design() && this.design().name() && this.design().name().trim();
+			});
+			this.isNameCharactersValid = ko.computed(() => {
+				return this.isNameFilled() && commonUtils.isNameCharactersValid(this.design().name());
+			});
+			this.isNameLengthValid = ko.computed(() => {
+				return this.isNameFilled() && commonUtils.isNameLengthValid(this.design().name());
+			});
+			this.isDefaultName = ko.computed(() => {
+				return this.isNameFilled() && this.design().name().trim() === this.defaultName;
+			});
 			this.isNameCorrect = ko.computed(() => {
-				return this.design() && this.design().name();
+				return this.isNameFilled() && !this.isDefaultName() && this.isNameCharactersValid() && this.isNameLengthValid();
 			});
 
+			this.isViewPermitted = this.isViewPermittedResolver();
 			this.canEdit = this.isEditPermittedResolver();
 			this.canSave = this.isSavePermittedResolver();
 			this.canDelete = this.isDeletePermittedResolver();
@@ -53,16 +85,34 @@ define([
 			this.canCopy = this.canCopyResolver();
 
 			this.selectedTabKey = ko.observable("design");
-			this.componentParams = {
+			this.criticalCount = ko.observable(0);
+			this.isDiagnosticsRunning = ko.observable(false);
+
+			this.componentParams = ko.observable({
 				design: this.design,
 				analysisId: this.analysisId,
 				executionId: this.executionId,
-			};
+				dirtyFlag: this.dirtyFlag,
+				criticalCount: this.criticalCount,
+				isEditPermitted: this.canEdit,
+        selectedSourceId: this.selectedSourceId,
+				afterImportSuccess: this.afterImportSuccess.bind(this),
+			});
+			this.warningParams = ko.observable({
+				current: sharedState.CohortPathways.current,
+				warningsTotal: ko.observable(0),
+				warningCount: ko.observable(0),
+				infoCount: ko.observable(0),
+				criticalCount: this.criticalCount,
+				changeFlag: ko.pureComputed(() => this.dirtyFlag().isChanged()),
+				isDiagnosticsRunning: this.isDiagnosticsRunning,
+				onDiagnoseCallback: this.diagnose.bind(this),
+			});
 			this.pathwayCaption = ko.computed(() => {
 				if (this.design() && this.design().id !== undefined && this.design().id !== 0) {
-					return 'Cohort Pathway #' + this.design().id;
+					return ko.i18nformat('pathways.manager.caption', 'Cohort Pathway #<%=id%>', {id: this.design().id})();
 				}
-				return 'New Cohort Pathway';
+				return this.defaultName;
 			});
 			this.isSaving = ko.observable(false);
 			this.isCopying = ko.observable(false);
@@ -70,19 +120,40 @@ define([
 			this.isProcessing = ko.computed(() => {
 				return this.isSaving() || this.isCopying() || this.isDeleting();
 			});
+
+			GlobalPermissionService.decorateComponent(this, {
+				entityTypeGetter: () => entityType.PATHWAY_ANALYSIS,
+				entityIdGetter: () => this.analysisId(),
+				createdByUsernameGetter: () => this.design() && lodash.get(this.design(), 'createdBy.login')
+			});
 		}
 
-		onRouterParamsChanged({analysisId, section, subId}) {
+		onRouterParamsChanged({analysisId, section,  executionId, sourceId}) {
 			if (analysisId !== undefined) {
 				this.analysisId(parseInt(analysisId));
 				this.load(this.analysisId() || 0);
 			}
-			this.setupSection(section);
-			this.executionId(subId);
+
+            if (section !== undefined) {
+                this.setupSection(section);
+            }
+
+			if (executionId !== undefined) {
+				this.executionId(executionId);
+			}
+			if (sourceId !== undefined) {
+				this.selectedSourceId(sourceId);
+			}
 		}
 
 		selectTab(index, { key }) {
-			commonUtils.routeTo(commonUtils.getPathwaysUrl(this.componentParams.analysisId(), key));
+			commonUtils.routeTo(commonUtils.getPathwaysUrl(this.componentParams().analysisId(), key));
+		}
+
+		diagnose() {
+			if (this.design()) {
+				return PathwayService.runDiagnostics(this.design());
+			}
 		}
 
 		setupDesign(design) {
@@ -95,6 +166,12 @@ define([
 				this.selectedTabKey(tabKey || 'design');
 		}
 
+		isViewPermittedResolver() {
+			return ko.computed(
+				() => PermissionService.isPermittedLoad(this.analysisId())
+			);
+		}
+
 		isEditPermittedResolver() {
 				return ko.computed(
 						() => (this.analysisId() ? PermissionService.isPermittedUpdate(this.analysisId()) : PermissionService.isPermittedCreate())
@@ -102,7 +179,7 @@ define([
 		}
 
 		isSavePermittedResolver() {
-				return ko.computed(() => this.canEdit() && this.dirtyFlag().isDirty() && this.isNameCorrect())
+				return ko.computed(() => this.canEdit() && this.dirtyFlag().isDirty() && this.isNameCorrect());
 		}
 
 		isDeletePermittedResolver() {
@@ -120,9 +197,9 @@ define([
 		}
 
 		async load(id) {
-			if (this.design() && (this.design().id === id || 0 == id)) return; // this design is already loaded.
+			if (this.design() && (this.design().id === id || 0 === id)) return; // this design is already loaded.
 
-			if(this.dirtyFlag().isDirty() && !confirm("Your changes are not saved. Would you like to continue?"))
+			if(this.dirtyFlag().isDirty() && !confirm(ko.unwrap(ko.i18n('pathways.manager.messages.beforeClose', 'Your changes are not saved. Would you like to continue?'))))
 				return;
 
 			if (id < 1) {
@@ -136,14 +213,29 @@ define([
 
 		async save() {
 			this.isSaving(true);
-			if (!this.design().id) {
-				const newAnalysis = await PathwayService.create(this.design());
-				this.dirtyFlag().reset();
-				this.isSaving(false);
-				commonUtils.routeTo(commonUtils.getPathwaysUrl(newAnalysis.id, 'design'));
-			} else {
-				const updatedAnalysis = await PathwayService.save(this.design().id, this.design());
-				this.setupDesign(new PathwayAnalysis(updatedAnalysis));
+
+			let pathwayName = this.design().name();
+			this.design().name(pathwayName.trim());
+
+			// Next check to see that a cohort pathway with this name does not already exist
+			// in the database. Also pass the id so we can make sure that the current cohort pathway is excluded in this check.
+			try {
+				const results = await PathwayService.exists(this.design().name(), this.design().id === undefined ? 0 : this.design().id);
+				if (results > 0) {
+					alert(ko.unwrap(ko.i18n('pathways.manager.messages.alreadyExists', 'A cohort pathway with this name already exists. Please choose a different name.')));
+				} else {
+					if (!this.design().id) {
+						const newAnalysis = await PathwayService.create(this.design());
+						this.dirtyFlag().reset();
+						commonUtils.routeTo(commonUtils.getPathwaysUrl(newAnalysis.id, 'design'));
+					} else {
+						const updatedAnalysis = await PathwayService.save(this.design().id, this.design());
+						this.setupDesign(new PathwayAnalysis(updatedAnalysis));
+					}
+				}
+			} catch (e) {
+				alert(ko.unwrap(ko.i18n('pathways.manager.messages.saveFailed', 'An error occurred while attempting to save a cohort pathway.')));
+			} finally {
 				this.isSaving(false);
 				this.loading(false);
 			}
@@ -158,7 +250,7 @@ define([
 		}
 
 		async del() {
-			if (confirm('Are you sure?')) {
+			if (confirm(ko.unwrap(ko.i18n('pathways.manager.messages.deleteConfirmation', 'Are you sure?')))) {
 				this.isDeleting(true);
 				this.loading(true);
 				await PathwayService.del(this.design().id);
@@ -169,13 +261,31 @@ define([
 		}
 
 		close() {
-			if (this.dirtyFlag().isDirty() && !confirm("Your changes are not saved. Would you like to continue?")) {
+			if (this.dirtyFlag().isDirty() && !confirm(ko.unwrap(ko.i18n('pathways.manager.messages.beforeClose', 'Your changes are not saved. Would you like to continue?')))) {
 				return;
 			}
 			this.design(null);
 			this.dirtyFlag().reset();
 
 			commonUtils.routeTo('/pathways');
+		}
+
+		async afterImportSuccess(res) {
+			this.warningParams().checkOnInit = false;
+			this.design(null);
+			this.dirtyFlag().reset();
+			commonUtils.routeTo('/pathways/' + res.id);
+		};
+
+		getAuthorship() {
+			const createdDate = commonUtils.formatDateForAuthorship(this.design().createdDate);
+			const modifiedDate = commonUtils.formatDateForAuthorship(this.design().modifiedDate);
+			return {
+					createdBy: lodash.get(this.design(), 'createdBy.name'),
+					createdDate,
+					modifiedBy: lodash.get(this.design(), 'modifiedBy.name'),
+					modifiedDate,
+			}
 		}
 
 	}

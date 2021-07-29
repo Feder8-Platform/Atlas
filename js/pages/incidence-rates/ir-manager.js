@@ -13,17 +13,32 @@ define([
 	'services/job/jobDetail',
 	'services/AuthAPI',
 	'services/file',
-	'services/Poll',
+	'services/JobPollService',
+	'./PermissionService',
+	'services/Permission',
+	'components/security/access/const',
 	'pages/Page',
 	'utils/AutoBind',
 	'utils/CommonUtils',
 	'utils/ExceptionUtils',
+	'components/conceptset/ConceptSetStore',
+	'components/conceptset/utils',
 	'./const',
+	'const',
+	'components/checks/warnings',
+	'components/checks/warnings-badge',
 	'./components/iranalysis/main',
+	'./components/iranalysis/components/ir-conceptset',
 	'databindings',
-	'conceptsetbuilder/components',
 	'circe',
 	'components/heading',
+	'utilities/import',
+	'utilities/export',
+	'utilities/sql',
+	'components/security/access/configure-access-modal',
+	'components/name-validation',
+	'less!./ir-manager.less',
+	'components/authorship',
 ], function (
 	ko,
 	view,
@@ -39,31 +54,49 @@ define([
 	jobDetail,
 	authAPI,
 	FileService,
-	PollService,
+	JobPollService,
+	{ isPermittedExportSQL },
+	GlobalPermissionService,
+	{ entityType },
 	Page,
 	AutoBind,
 	commonUtils,
 	exceptionUtils,
-	constants
+	ConceptSetStore,
+	conceptSetUtils,
+	constants,
+	globalConstants,
 ) {
 	class IRAnalysisManager extends AutoBind(Page) {
 		constructor(params) {
 			super(params);
 			// polling support
 			this.pollId = null;
-			this.model = params.model;
 			this.loading = ko.observable(false);
 			this.loadingInfo = ko.observable();
 			this.loadingSummary = ko.observableArray();
+			this.constants = constants;
+			this.tabs = constants.tabs;
 			this.selectedAnalysis = sharedState.IRAnalysis.current;
 			this.selectedAnalysisId = sharedState.IRAnalysis.selectedId;
 			this.dirtyFlag = sharedState.IRAnalysis.dirtyFlag;
 			this.exporting = ko.observable();
+			this.isAuthenticated = ko.pureComputed(() => {
+				return authAPI.isAuthenticated();
+			});
+			this.defaultName = ko.unwrap(globalConstants.newEntityNames.incidenceRate);
+			this.conceptSetStore = ConceptSetStore.getStore(ConceptSetStore.sourceKeys().incidenceRates);
+			this.isViewPermitted = ko.pureComputed(() => {
+				return !config.userAuthenticationEnabled
+					|| (
+						config.userAuthenticationEnabled
+						&& authAPI.isPermittedReadIRs()
+					)
+			});
 			this.canCreate = ko.pureComputed(() => {
 				return !config.userAuthenticationEnabled
 				|| (
 					config.userAuthenticationEnabled
-					&& authAPI.isAuthenticated
 					&& authAPI.isPermittedCreateIR()
 				)
 			});
@@ -71,16 +104,14 @@ define([
 				return !config.userAuthenticationEnabled
 					|| (
 						config.userAuthenticationEnabled
-						&& authAPI.isAuthenticated
 						&& authAPI.isPermittedDeleteIR(this.selectedAnalysisId())
 					)
 			});
 			this.isEditable = ko.pureComputed(() => {
-				return this.selectedAnalysisId() === null
+				return this.selectedAnalysisId() === null || this.selectedAnalysisId() === 0
 					|| !config.userAuthenticationEnabled
 					|| (
 						config.userAuthenticationEnabled
-						&& authAPI.isAuthenticated
 						&& authAPI.isPermittedEditIR(this.selectedAnalysisId())
 					)
 			});
@@ -88,18 +119,19 @@ define([
 				return !config.userAuthenticationEnabled
 					|| (
 						config.userAuthenticationEnabled
-						&& authAPI.isAuthenticated
 						&& authAPI.isPermittedCopyIR(this.selectedAnalysisId())
 						&& !this.dirtyFlag().isDirty()
 					)
 			});
+			this.isPermittedExportSQL = isPermittedExportSQL;
 			this.selectedAnalysisId.subscribe((id) => {
-				authAPI.loadUserInfo();
+				if (config.userAuthenticationEnabled && authAPI.isAuthenticated) {
+					authAPI.loadUserInfo();
+				}
 			});
 
 			this.isRunning = ko.observable(false);
-			this.activeTab = ko.observable(params.activeTab || 'definition');
-			this.conceptSetEditor = ko.observable(); // stores a reference to the concept set editor
+			this.activeTab = ko.observable(params.activeTab || this.tabs.DEFINITION);
 			this.sources = ko.observableArray();
 			this.stoppingSources = ko.observable({});
 
@@ -117,7 +149,6 @@ define([
 				}
 				return analysisCohorts;
 			});
-
 			this.showConceptSetBrowser = ko.observable(false);
 			this.criteriaContext = ko.observable();
 			this.generateActionsSettings = {
@@ -130,34 +161,40 @@ define([
 			};
 			this.incidenceRateCaption = ko.computed(() => {
 				if (this.selectedAnalysis() && this.selectedAnalysisId() !== null && this.selectedAnalysisId() !== 0) {
-					return 'Incidence Rate Analysis #' + this.selectedAnalysisId();
+					return ko.i18nformat('ir.caption', 'Incidence Rate Analysis #<%=id%>', {id: this.selectedAnalysisId()})();
 				}
-				return 'New Incidence Rate Analysis';
+				return this.defaultName;
 			});
 
-			this.modifiedJSON = "";
-			this.importJSON = ko.observable();
-			this.expressionJSON = ko.pureComputed({
-				read: () => {
-					return ko.toJSON(this.selectedAnalysis().expression(), function (key, value) {
-						if (value === 0 || value) {
-							return value;
-						} else {
-							return
-						}
-					}, 2);
-				},
-				write: (value) => {
-					this.modifiedJSON = value;
-				}
-			});
 			this.expressionMode = ko.observable('import');
 
-			this.isNameCorrect = ko.computed(() => {
-				return this.selectedAnalysis() && this.selectedAnalysis().name();
+			this.isNameFilled = ko.pureComputed(() => {
+				return this.selectedAnalysis() && this.selectedAnalysis().name() && this.selectedAnalysis().name().trim();
 			});
-			this.canSave = ko.computed(() => {
-				return this.isEditable() && this.isNameCorrect() && this.dirtyFlag().isDirty() && !this.isRunning();
+			this.isNameCharactersValid = ko.computed(() => {
+				return this.isNameFilled() && commonUtils.isNameCharactersValid(this.selectedAnalysis().name());
+			});
+			this.isNameLengthValid = ko.computed(() => {
+				return this.isNameFilled() && commonUtils.isNameLengthValid(this.selectedAnalysis().name());
+			});
+			this.isDefaultName = ko.computed(() => {
+				return this.isNameFilled() && this.selectedAnalysis().name().trim() === this.defaultName;
+			});
+
+			this.isNameCorrect = ko.pureComputed(() => {
+				return this.isNameFilled() && !this.isDefaultName() && this.isNameCharactersValid() && this.isNameLengthValid();
+			});
+
+			this.isTarValid = ko.pureComputed(() => {
+				const analysis = this.selectedAnalysis() && this.selectedAnalysis().expression();
+				if (analysis == null) return;
+				return !(analysis.timeAtRisk.start.DateField() == analysis.timeAtRisk.end.DateField() && analysis.timeAtRisk.end.Offset() <= analysis.timeAtRisk.start.Offset());			});
+
+			this.canSave = ko.pureComputed(() => {
+				return this.isEditable()
+					&& this.isNameCorrect()
+					&& this.dirtyFlag().isDirty()
+					&& !this.isRunning();
 			});
 			this.error = ko.observable();
 			this.isSaving = ko.observable(false);
@@ -167,8 +204,49 @@ define([
 				return this.isSaving() || this.isCopying() || this.isDeleting();
 			});
 
+			this.exportService = IRAnalysisService.exportAnalysis;
+			this.importService = IRAnalysisService.importAnalysis;
+			this.exportSqlService = this.exportSql;
+			this.criticalCount = ko.observable(0);
+			this.isDiagnosticsRunning = ko.observable(false);
+
+			this.warningParams = ko.observable({
+				current: this.selectedAnalysis,
+				warningsTotal: ko.observable(0),
+				warningCount: ko.observable(0),
+				infoCount: ko.observable(0),
+				criticalCount: this.criticalCount,
+				changeFlag: ko.pureComputed(() => this.dirtyFlag().isChanged()),
+				isDiagnosticsRunning: this.isDiagnosticsRunning,
+				onDiagnoseCallback: this.diagnose.bind(this),
+				checkOnInit: true,
+			});
+
+			this.isDesignCorrect = ko.pureComputed(() => this.criticalCount() === 0);
+
+			GlobalPermissionService.decorateComponent(this, {
+				entityTypeGetter: () => entityType.INCIDENCE_RATE,
+				entityIdGetter: () => this.selectedAnalysisId(),
+				createdByUsernameGetter: () => this.selectedAnalysis() && this.selectedAnalysis().createdBy()
+					&& this.selectedAnalysis().createdBy().login
+			});
+
 			// startup actions
 			this.init();
+		}
+
+		isPermittedImport() {
+			return authAPI.isPermitted(`ir:design:post`);
+		}
+
+		isPermittedExport(id) {
+			return authAPI.isPermitted(`ir:${id}:design:get`);
+		}
+
+		diagnose() {
+			if (this.selectedAnalysis()) {
+				return IRAnalysisService.runDiagnostics(this.selectedAnalysis());
+			}
 		}
 
 		getExecutionInfo(info) {
@@ -273,17 +351,26 @@ define([
 			});
 		}
 
+		selectTab(tab) {
+			commonUtils.routeTo(`${this.constants.apiPaths.analysis(this.selectedAnalysisId())}/${tab}`);
+		}
+
 		onRouterParamsChanged(params = {}) {
-			const { analysisId } = params;
+			const { analysisId, activeTab } = params;
+			if (activeTab) {
+				if (Object.values(this.constants.tabs).includes(activeTab)) {
+					this.activeTab(activeTab);
+				}
+			}
 			if (analysisId && parseInt(analysisId) !== (this.selectedAnalysis() && this.selectedAnalysis().id())) {
 				this.onAnalysisSelected();
-			} else if (this.selectedAnalysis() && this.selectedAnalysis().id()) {
+			} else if (this.selectedAnalysis() && this.selectedAnalysis().id() && !this.pollId) {
 				this.startPolling();
 			}
 		}
 
 		startPolling() {
-			this.pollId = PollService.add({
+			this.pollId = JobPollService.add({
 				callback: silently => this.pollForInfo({ silently }),
 				interval: 10000,
 				isSilentAfterFirstCall: true,
@@ -295,14 +382,27 @@ define([
 			this.showConceptSetBrowser(true);
 		}
 
-		onConceptSetSelectAction(result, valueAccessor) {
-			this.showConceptSetBrowser(false);
-
-			if (result.action === 'add') {
-				var newConceptSet = this.conceptSetEditor().createConceptSet();
-				this.criteriaContext() && this.criteriaContext().conceptSetId(newConceptSet.id);
-				this.activeTab('conceptsets');
+		handleEditConceptSet(item, context) {
+			if (item.conceptSetId() == null) {
+				return;
 			}
+			this.loadConceptSet(item.conceptSetId());
+		}
+
+		loadConceptSet(conceptSetId) {
+			this.conceptSetStore.current(this.selectedAnalysis().expression().ConceptSets().find(item => item.id == conceptSetId));
+			this.conceptSetStore.isEditable(this.isEditable());
+			commonUtils.routeTo(`/iranalysis/${this.selectedAnalysisId()}/conceptsets`);
+		}
+
+		onConceptSetSelectAction(result) {
+			this.showConceptSetBrowser(false);
+			if (result.action === 'add') {
+				const conceptSets = this.selectedAnalysis().expression().ConceptSets;
+				const newId = conceptSetUtils.newConceptSetHandler(conceptSets, this.criteriaContext());
+				this.loadConceptSet(newId)
+			}
+
 			this.criteriaContext(null);
 		}
 
@@ -311,8 +411,9 @@ define([
 			this.loading(true);
 			const analysis = await IRAnalysisService.copyAnalysis(this.selectedAnalysisId());
 			this.selectedAnalysis(new IRAnalysisDefinition(analysis));
-			this.selectedAnalysisId(analysis.id)
+			this.selectedAnalysisId(analysis.id);
 			this.dirtyFlag(new ohdsiUtil.dirtyFlag(this.selectedAnalysis()));
+			this.clearResults();
 			this.isCopying(false);
 			this.loading(false);
 			commonUtils.routeTo(constants.apiPaths.analysis(analysis.id));
@@ -322,34 +423,50 @@ define([
 			this.selectedAnalysis(null);
 			this.selectedAnalysisId(null);
 			this.dirtyFlag(new ohdsiUtil.dirtyFlag(this.selectedAnalysis()));
+			this.conceptSetStore.clear();
+
 			this.sources().forEach(function (source) {
 				source.info(null);
 			});
 		}
 
 		closeAndShowList() {
-
-			if (this.dirtyFlag().isDirty() && !confirm("Incidence Rate Analysis changes are not saved. Would you like to continue?")) {
+			if (this.dirtyFlag().isDirty() && !confirm(ko.i18n('ir.notSavedMessage', 'Incidence Rate Analysis changes are not saved. Would you like to continue?')())) {
 				return;
 			}
-			this.close()
+			this.close();
 			commonUtils.routeTo(constants.apiPaths.analysis());
 		}
 
-		save() {
+		async save() {
 			this.isSaving(true);
 			this.loading(true);
-			IRAnalysisService.saveAnalysis(this.selectedAnalysis()).then((analysis) => {
-				this.selectedAnalysis(new IRAnalysisDefinition(analysis));
-				this.dirtyFlag(new ohdsiUtil.dirtyFlag(this.selectedAnalysis()));
-				commonUtils.routeTo(constants.apiPaths.analysis(analysis.id));
+
+			let irName = this.selectedAnalysis().name();
+			this.selectedAnalysis().name(irName.trim());
+
+			// Next check to see that an incidence rate with this name does not already exist
+			// in the database. Also pass the id so we can make sure that the current incidence rate is excluded in this check.
+			try{
+				const results = await IRAnalysisService.exists(this.selectedAnalysis().name(), this.selectedAnalysisId() == undefined ? 0 : this.selectedAnalysisId());
+				if (results > 0) {
+					alert(ko.i18n('ir.nameConflict', 'An incidence rate with this name already exists. Please choose a different name.')());
+				} else {
+					const savedIR = await IRAnalysisService.saveAnalysis(this.selectedAnalysis());
+					this.selectedAnalysis(new IRAnalysisDefinition(savedIR));
+					this.dirtyFlag(new ohdsiUtil.dirtyFlag(this.selectedAnalysis()));
+					commonUtils.routeTo(constants.apiPaths.analysis(savedIR.id));
+				}
+			} catch (e) {
+				alert(ko.i18n('ir.savingError', 'An error occurred while attempting to save an incidence rate.')());
+			} finally {
 				this.isSaving(false);
 				this.loading(false);
-			});
+			}
 		}
 
 		delete() {
-			if (!confirm("Delete incidence rate analysis? Warning: deletion can not be undone!"))
+			if (!confirm(ko.i18n('ir.deleteConfirmation', 'Delete incidence rate analysis? Warning: deletion can not be undone!')()))
 				return;
 
 			this.isDeleting(true);
@@ -361,7 +478,7 @@ define([
 		}
 
 		removeResult(analysisResult) {
-			if (confirm(`Do you really want to remove result of ${analysisResult.source.sourceName} ?`)) {
+			if (confirm(ko.i18nformat('ir.deleteResultConfirmation', 'Do you really want to remove result of <%=name%>?', {name:analysisResult.source.sourceName})())) {
 				IRAnalysisService.deleteInfo(this.selectedAnalysisId(), analysisResult.source.sourceKey).then(() => {
 					const source = this.sources().find(s => s.source.sourceId === analysisResult.source.sourceId);
 					source.info(null);
@@ -410,12 +527,20 @@ define([
 				.cancelExecution(this.selectedAnalysisId(), sourceItem.source.sourceKey);
 		}
 
-		import() {
-			if (this.importJSON() && this.importJSON().length > 0) {
-				var updatedExpression = JSON.parse(this.importJSON());
-				this.selectedAnalysis().expression(new IRAnalysisExpression(updatedExpression));
-				this.importJSON("");
-				this.activeTab('definition');
+		async afterImportSuccess(res) {
+			this.isSaving(true);
+			this.loading(true);
+			try {
+				this.refreshDefs();
+				this.activeTab(this.tabs.DEFINITION);
+				this.close();
+				this.warningParams().checkOnInit = false;
+				commonUtils.routeTo(constants.apiPaths.analysis(res.id));
+			} catch (e) {
+				alert('An error occurred while attempting to import an incidence rate.');
+			} finally {
+				this.isSaving(false);
+				this.loading(false);
 			}
 		};
 
@@ -431,9 +556,9 @@ define([
 			}
 		}
 
-		async init() {
+		init() {
 			this.refreshDefs();
-			const sources = await sourceAPI.getSources();
+			const sources = sharedState.sources();
 			const sourceList = [];
 			sources.forEach(source => {
 				if (source.daimons.filter(function (daimon) {
@@ -452,11 +577,30 @@ define([
 			!this.selectedAnalysis() && this.newAnalysis();
 		}
 
+		async exportSql({ analysisId = 0, expression = {} } = {}) {
+			const sql = await IRAnalysisService.exportSql({
+				analysisId,
+				expression,
+			});
+			return sql;
+		}
+
+		getAuthorship() {
+			const createdDate = commonUtils.formatDateForAuthorship(this.selectedAnalysis().createdDate);
+			const modifiedDate = commonUtils.formatDateForAuthorship(this.selectedAnalysis().modifiedDate);
+			return {
+                createdBy: this.selectedAnalysis().createdBy() ? this.selectedAnalysis().createdBy().name : '',
+                createdDate: createdDate,
+                modifiedBy: this.selectedAnalysis().modifiedBy() ? this.selectedAnalysis().modifiedBy().name : '',
+                modifiedDate: modifiedDate,
+			};
+		}
+
 		// cleanup
 		dispose() {
 			super.dispose();
 			this.incidenceRateCaption && this.incidenceRateCaption.dispose();
-			PollService.stop(this.pollId);
+			JobPollService.stop(this.pollId);
 		}
 	}
 

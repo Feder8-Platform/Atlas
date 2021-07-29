@@ -2,34 +2,48 @@ define(
 	(require, factory) => {
     const { Route } = require('pages/Route');
     const authApi = require('services/AuthAPI');
-    
-    function routes(appModel, router) {
+
+    function routes(router) {
       return {
         '/': new Route(() => {
-          appModel.activePage(this.title);
           document.location = "#/home";
         }),
         '/home': new Route(() => {
-          appModel.activePage(this.title);
           require(['./home'], function () {
             router.setCurrentView('home');
           });
         }),
-        '/welcome/:token': new Route((token) => {
-          appModel.activePage(this.title);
+        '/welcome/:authClient/reloginRequired': new Route((authClient) => {
           require(['welcome'], function () {
-            authApi.token(token);
-            document.location = "#/welcome";
+            setAuth(null, authClient, true, "/welcome");
           });
         }),
-          '/hss-service-user': new Route((token) => {
-              appModel.activePage(this.title);
-              require(['components/hss-service-user/hss-service-user'], function () {
-                  router.setCurrentView('hss-service-user');
-              });
-          }),
+        '/welcome/:authClient/:token': new Route((authClient, token) => {
+          require(['welcome'], function () {
+            setAuth(token, authClient, false, "/welcome");
+          });
+        }),
+        '/welcome/:authClient/:token/:url': new Route((authClient, token, url) => {
+          require([], function () {
+            setAuth(token, authClient, false, decodeURIComponent(url));
+          });
+        }),
       };
     }
+
+    function setAuth(token, authClient, reloginRequired, url) {
+      authApi.token(token);
+      authApi.reloginRequired(reloginRequired);
+      authApi.authClient(authClient);
+      if (!reloginRequired) {
+        authApi.loadUserInfo().then(() => {
+          document.location = '#' + url;
+        });
+      } else {
+        authApi.signInOpened(true);
+        document.location = '#' + url;
+      }
+    }    
 
     return routes;
   }
