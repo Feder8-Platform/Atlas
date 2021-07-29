@@ -15,7 +15,7 @@ pipeline {
         stage("upload image") {
             steps {
                 dir('Atlas') {
-                    sh './publish.sh'
+                    sh './publish_central.sh'
                 }
             }
         }
