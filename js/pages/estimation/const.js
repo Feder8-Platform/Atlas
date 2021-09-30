@@ -5,20 +5,21 @@ define(
     const config = require('appConfig');
     const _ = require('lodash');
     const consts = require('const');
+    const commonUtils = require('utils/CommonUtils');
 
     const apiPaths = {
       downloadCcaAnalysisPackage: (id, name) => `estimation/${id}/download?packageName=${name}`,
-			downloadResults: id => `estimation/generation/${id}/result`,
+      downloadResults: id => `estimation/generation/${id}/result`,
     };
 
     const paths = {
         root: '/estimation/cca/',
-        ccaAnalysis: id => `#/estimation/cca/${id}`,
+        ccaAnalysis: id => `/estimation/cca/${id}`,
+        ccaAnalysisDash: id => `#${paths.ccaAnalysis(id)}`,
         createCcaAnalysis: () => '#/estimation/cca/0',
         browser: () => '#/estimation',
     };
 
-		const estimationGenerationStatus = consts.generationStatuses;
 
     const conceptSetCrossReference = {
       targetComparatorOutcome: {
@@ -48,166 +49,184 @@ define(
       }
     };
 
+    const isUsingRegularization = (prior) => {
+      return !(prior.priorType() === "none" && prior.useCrossValidation() === false);
+    }
+
+    const setRegularization = (enable, prior) => {
+      if (enable === true) {
+        prior.priorType("laplace");
+        prior.useCrossValidation(true);
+      } else {
+        prior.priorType("none");
+        prior.useCrossValidation(false);
+      }
+    }
+
     const getTimeAtRisk = (createStudyPopArgs) => {
-        return (createStudyPopArgs.riskWindowStart() + "-" + createStudyPopArgs.riskWindowEnd() + "d<br/>(min: " + createStudyPopArgs.minDaysAtRisk() + "d)");
+        return (createStudyPopArgs.riskWindowStart() + "-" + createStudyPopArgs.riskWindowEnd() + ko.i18n('common.daysAbbr', 'd')() +
+          " (" + ko.i18n('common.min', 'min')() + ": " + createStudyPopArgs.minDaysAtRisk() +
+          ko.i18n('common.daysAbbr', 'd')() + ")");
     };
 
     const options = {
       removeButton: `<button type="button" class="btn btn-danger btn-xs btn-remove"><i class="fa fa-times" aria-hidden="true"></i></button>`,
-      copyButton: `<button type="button" class="btn btn-primary btn-xs btn-copy"><i class="fa fa-clone" aria-hidden="true"></i>&nbsp;Copy</button>`,
+      copyButton: `<button type="button" class="btn btn-primary btn-xs btn-copy"><i class="fa fa-clone" aria-hidden="true"></i>&nbsp;<span data-bind="text: ko.i18n('common.copy', 'Copy')"></span></button>`,
       numberOfStrataOptions: _.range(1,11).map(v => '' + v),
       maxRatioOptions: _.range(0,11).map(v => '' + v),
       dayOptions: ['0', '1', '7', '14', '21', '30', '60', '90', '120', '180', '365', '548', '730', '1095'],
       maxCohortSizeOptions: ['0', '1000', '5000', '10000', '50000', '100000'],
       maxCohortSizeForFittingOptions: ['250000', '150000', '100000', '50000', '10000', '5000', '0'],
       yesNoOptions: [{
-        name: "Yes",
+        name: ko.i18n('options.yes', 'Yes'),
         id: true,
       }, {
-        name: "No",
+        name: ko.i18n('options.no', 'No'),
         id: false
       }],
       removeDuplicateSubjectOptions: [{
-        name: "Keep All",
+        name: ko.i18n('ple.spec.options.keepAll', 'Keep All'),
         id: 'keep all',
       }, {
-        name: "Keep First",
+        name: ko.i18n('ple.spec.options.keepFirst', 'Keep First'),
         id: 'keep first'
       }, {
-        name: "Remove All",
+        name: ko.i18n('ple.spec.options.removeAll', 'Remove All'),
         id: 'remove all'
       }],
       trimOptions: [{
-        name: "None",
+        name: ko.i18n('ple.spec.options.none', 'None'),
         id: 'none',
       }, {
-        name: "By Percent",
+        name: ko.i18n('ple.spec.options.byPercent', 'By Percent'),
         id: 'byPercent'
       }, {
-        name: "To Equipoise",
+        name: ko.i18n('ple.spec.options.toEquipoise', 'To Equipoise'),
         id: 'toEquipoise'
       }],
       matchStratifyOptions: [{
-        name: "None",
+        name: ko.i18n('ple.spec.options.none', 'None'),
         id: 'none',
       }, {
-        name: "Match on propensity score",
+        name: ko.i18n('ple.spec.options.matchOnPropensityScore', 'Match on propensity score'),
         id: 'matchOnPs'
       }, {
-        name: "Stratify on propensity score",
+        name: ko.i18n('ple.spec.options.stratifyOnPropensityScore', 'Stratify on propensity score'),
         id: 'stratifyByPs'
       }],
       caliperScaleOptions: [{
-        name: "Standardized Logit",
+        name: ko.i18n('ple.spec.options.standardizedLogit', 'Standardized Logit'),
         id: 'standardized logit',
       }, {
-        name: "Standardized",
+        name: ko.i18n('ple.spec.options.standardized', 'Standardized'),
         id: 'standardized'
       }, {
-        name: "Propensity score",
+        name: ko.i18n('ple.spec.options.propensityScore', 'Propensity score'),
         id: 'propensity score'
       }],
       stratificationBaseSelectionOptions: [{
-        name: "All",
+        name: ko.i18n('ple.spec.options.all', 'All'),
         id: 'all',
       }, {
-        name: "Target",
+        name: ko.i18n('ple.spec.options.target', 'Target'),
         id: 'target'
       }, {
-        name: "Comparator",
+        name: ko.i18n('ple.spec.options.comparator', 'Comparator'),
         id: 'comparator'
       }],
       outcomeModelTypeOptions: [{
-        name: "Logistic regression",
+        name: ko.i18n('ple.spec.options.logisticRegression', 'Logistic regression'),
         id: 'logistic',
       }, {
-        name: "Poisson regression",
+        name: ko.i18n('ple.spec.options.poissonRegression', 'Poisson regression'),
         id: 'poisson'
       }, {
-        name: "Cox proportional hazards",
+        name: ko.i18n('ple.spec.options.coxProportionalHazards', 'Cox proportional hazards'),
         id: 'cox'
       }],
       occurrenceTypeOptions: [{
-        name: "All occurrences",
+        name: ko.i18n('ple.spec.options.allOccurrences', 'All occurrences'),
         id: 'all',
       }, {
-        name: "First occurrence",
+        name: ko.i18n('ple.spec.options.firstOccurrence', 'First occurrence'),
         id: 'first'
       }],
       domains: [{
-        name: "Condition",
+        name: ko.i18n('ple.spec.options.condition', 'Condition'),
         id: 'condition',
       }, {
-        name: "Drug",
+        name: ko.i18n('ple.spec.options.drug', 'Drug'),
         id: 'drug'
       }, {
-        name: "Device",
+        name: ko.i18n('ple.spec.options.device', 'Device'),
         id: 'device'
       }, {
-        name: "Measurement",
+        name: ko.i18n('ple.spec.options.measurement', 'Measurement'),
         id: 'measurement'
       }, {
-        name: "Observation",
+        name: ko.i18n('ple.spec.options.observation', 'Observation'),
         id: 'observation'
       }, {
-        name: "Procedure",
+        name: ko.i18n('ple.spec.options.procedure', 'Procedure'),
         id: 'procedure'
       }, {
-        name: "Visit",
+        name: ko.i18n('ple.spec.options.visit', 'Visit'),
         id: 'visit'
       }],
       positiveControlSynthesisArgs: {
           modelType: [{
-              name: "Poisson",
+              name: ko.i18n('ple.spec.options.poisson', 'Poisson'),
               id: 'poisson',
           }, {
-              name: "Survival",
+              name: ko.i18n('ple.spec.options.survival', 'Survival'),
               id: 'survival'
           }],
           minOutcomeCountForModelOptions: ['100', '75', '50', '25', '10'],
           minOutcomeCountForInjectionOptions: ['100', '75', '50', '25', '10'],
           washoutPeriodOptions: ['0', '1', '7', '14', '21', '30', '60', '90', '120', '180', '183', '365', '548', '730', '1095'],
           dayOptions: ['0', '1', '7', '14', '21', '30', '60', '90', '120', '180', '365', '548', '730', '1095'],
-          maxSubjectsForModelOptions: ['0', '1000', '5000', '10000', '50000', '100000', , '150000', '200000', '250000'],
+          maxSubjectsForModelOptions: ['0', '1000', '5000', '10000', '50000', '100000', '150000', '200000', '250000'],
           yesNoOptions: [{
-              name: "Yes",
+              name: ko.i18n('options.yes', 'Yes'),
               id: true,
           }, {
-              name: "No",
+              name: ko.i18n('options.no', 'No'),
               id: false
           }],
-      },
-      cca: {
+      }
+    };
+      const getCca = (canEdit) => [{
         comparisonTableColumns: [
             {
-                title: 'Remove',
+                title: ko.i18n('columns.remove', 'Remove'),
                 render: (s, p, d) => {
                     return options.removeButton;
                 },
                 orderable: false,
                 searchable: false,
                 className: 'col-remove',
+                visible: canEdit,
             },
                 {
-                title: 'Target Id',
+                title: ko.i18n('columns.targetId', 'Target Id'),
                 data: d => d.target().id,
                 visible: false,
             },
             {
-                title: 'Target',
+                title: ko.i18n('columns.target', 'Target'),
                 data: d => d.target().name,
             },
             {
-                title: 'Comparator Id',
+                title: ko.i18n('columns.comparatorId', 'Comparator Id'),
                 data: d => d.comparator().id,
                 visible: false,
             },
             {
-                title: 'Comparator',
+                title: ko.i18n('columns.comparator', 'Comparator'),
                 data: d => d.comparator().name,
             },
             {
-                title: 'Outcomes',
+                title: ko.i18n('columns.outcomes', 'Outcomes'),
                 render: (s, p, d, a, b, c) => {
                     if (d.outcomes().length > 1) {
                         let tooltipText = "";
@@ -227,95 +246,99 @@ define(
                 }
             },
             {
-                title: 'NC Outcomes',
+                title: ko.i18n('columns.ncOutcomes', 'NC Outcomes'),
                 data: d => d.negativeControlOutcomesConceptSet().name,
             },
             {
-                title: 'Incl Covariates',
+                title: ko.i18n('columns.inclCovariates', 'Incl Covariates'),
                 data: d => d.includedCovariateConceptSet().length,
                 visible: false,
             },
             {
-                title: 'Excl Covariates',
+                title: ko.i18n('columns.exclCovariates', 'Excl Covariates'),
                 data: d => d.excludedCovariateConceptSet().length,
                 visible: false,
             },
             {
-                title: 'Copy',
+                title: ko.i18n('columns.copy', 'Copy'),
                 render: (s, p, d) => {
                     return options.copyButton;
                 },
                 orderable: false,
                 searchable: false,
                 className: 'col-copy',
+                visible: canEdit,
             },
         ],
         comparisonTableOptions: {
-            pageLength: 10,
-            lengthMenu: [
-                [10, 25, 50, 100, -1],
-                ['10', '25', '50', '100', 'All']
-            ],
+            ...commonUtils.getTableOptions('S'),
             dom: '<<"row vertical-align"<"col-xs-6"l><"col-xs-6 search"f>><"row vertical-align"><t><"row vertical-align"<"col-xs-3"i><"col-xs-9"p>>>',
         },
         analysisSettingsTableColumns: [
             {
-                title: 'Remove',
+                title: ko.i18n('columns.remove', 'Remove'),
                 render: (s, p, d) => {
                     return options.removeButton;
                 },
                 orderable: false,
                 searchable: false,
                 className: 'col-remove',
+                visible: canEdit
             },
             {
-                title: 'Description',
+                title: ko.i18n('columns.description', 'Description'),
                 data: d => d.description(),
             },
             {
-                title: 'Time At Risk Start',
+                title: ko.i18n('columns.timeAtRiskStart', 'Time At Risk Start'),
                 render: (s, p, d) => {
                     if (d.createStudyPopArgs != null) {
-                        return d.createStudyPopArgs.riskWindowStart() + "d from<br/>" + consts.timeAtRiskCohortDate.find(f => f.id === d.createStudyPopArgs.addExposureDaysToStart()).name;
+                        return d.createStudyPopArgs.riskWindowStart() +
+                          "<span data-bind=\"text: ko.i18n('common.daysAbbr', 'd')\"></span> " +
+                          "<span data-bind=\"text: ko.i18n('ple.spec.from', 'from')\"></span><br/>" +
+                          ko.unwrap(consts.timeAtRiskCohortDate.find(f => f.id === d.createStudyPopArgs.addExposureDaysToStart()).name);
                     } else {
                         return '';
                     }
                 }
             },
             {
-              title: 'Time At Risk End',
+              title: ko.i18n('columns.timeAtRiskEnd', 'Time At Risk End'),
               render: (s, p, d) => {
                     if (d.createStudyPopArgs != null) {
-                        return d.createStudyPopArgs.riskWindowEnd() + "d from<br/>" + consts.timeAtRiskCohortDate.find(f => f.id === d.createStudyPopArgs.addExposureDaysToEnd()).name;
+                        return d.createStudyPopArgs.riskWindowEnd() +
+                          "<span data-bind=\"text: ko.i18n('common.daysAbbr', 'd')\"></span> " +
+                          "<span data-bind=\"text: ko.i18n('ple.spec.from', 'from')\"></span><br/>" +
+                          ko.unwrap(consts.timeAtRiskCohortDate.find(f => f.id === d.createStudyPopArgs.addExposureDaysToEnd()).name);
                     } else {
                         return '';
                     }
                 }
             },
             {
-              title: 'Minimum<br/>Time At Risk',
+              title: ko.i18n('columns.minimumTimeAtRisk', 'Minimum Time At Risk'),
               render: (s, p, d) => {
                     if (d.createStudyPopArgs != null) {
-                        return d.createStudyPopArgs.minDaysAtRisk() + "d";
+                        return d.createStudyPopArgs.minDaysAtRisk() + "<span data-bind=\"text: ko.i18n('common.daysAbbr', 'd')\"></span>";
                     } else {
                         return '';
                     }
                 }
             },
           {
-                title: 'Adjustment<br/>Strategy',
+                title: ko.i18n('columns.adjustmentStrategy', 'Adjustment Strategy'),
                 render: (s, p, d) => {
                     if (d.matchOnPs()) {
-                        return d.matchOnPsArgs.maxRatio() + ":1 matching";
+                        return ko.i18nformat('ple.spec.options.matching', '<%=ratio%>:1 matching', {ratio: d.matchOnPsArgs.maxRatio()})();
                     } else if (d.stratifyByPs()) {
-                        return "Stratification (stratum: " + d.stratifyByPsArgs.numberOfStrata() + ")";
+                        return ko.i18nformat('ple.spec.options.stratification', 'Stratification (stratum: <%=stratum%>)', {stratum: d.stratifyByPsArgs.numberOfStrata()})();
                     } else {
-                        return 'None';
+                        return ko.i18n('ple.spec.options.none', 'None')();
                     }
                 }
             },
             {
-                title: 'Outcome<br/>Model',
+                title: ko.i18n('columns.outcomeModel', 'Outcome Model'),
                 render: (s, p, d) => {
                     if (d.fitOutcomeModelArgs != null) {
                         return d.fitOutcomeModelArgs.modelType();
@@ -325,105 +348,99 @@ define(
                 }
             },
             {
-                title: 'Copy',
+                title: ko.i18n('columns.copy', 'Copy'),
                 render: (s, p, d) => {
                     return options.copyButton;
                 },
                 orderable: false,
                 searchable: false,
                 className: 'col-copy',
+                visible: canEdit
             },
         ],
         analysisSettingsTableOptions: {
-            pageLength: 10,
-            lengthMenu: [
-                [10, 25, 50, 100, -1],
-                ['10', '25', '50', '100', 'All']
-            ],
+            ...commonUtils.getTableOptions('S'),
             dom: '<<"row vertical-align"<"col-xs-6"l><"col-xs-6 search"f>><"row vertical-align"><t><"row vertical-align"<"col-xs-3"i><"col-xs-9"p>>>',
         },
         fullAnalysisTableColumns: [
             {
-                title: 'Target Id',
+                title: ko.i18n('columns.targetId', 'Target Id'),
                 data: d => d.targetComparatorOutcome.target.id,
                 visible: false,
             },
             {
-                title: 'Target Cohort Name',
+                title: ko.i18n('columns.targetCohortName', 'Target Cohort Name'),
                 data: d => d.targetComparatorOutcome.target.name,
             },
             {
-                title: 'Comparator Id',
+                title: ko.i18n('columns.comparatorId', 'Comparator Id'),
                 data: d => d.targetComparatorOutcome.comparator.id,
                 visible: false,
             },
             {
-                title: 'Comparator Cohort Name',
+                title: ko.i18n('columns.comparatorCohortName', 'Comparator Cohort Name'),
                 data: d => d.targetComparatorOutcome.comparator.name,
             },
             {
-                title: 'Outcomes',
+                title: ko.i18n('columns.outcomes', 'Outcomes'),
                 data: d => d.targetComparatorOutcome.outcome.id,
                 visible: false,
             },
             {
-                title: 'Outcome Cohort Name',
+                title: ko.i18n('columns.outcomeCohortName', 'Outcome Cohort Name'),
                 data: d => d.targetComparatorOutcome.outcome.name,
             },
             {
-                title: 'Analysis Name',
+                title: ko.i18n('columns.analysisName', 'Analysis Name'),
                 data: d => d.cohortMethodAnalysis.description(),
             },
             {
-                title: 'Time At Risk',
+                title: ko.i18n('columns.timeAtRisk', 'Time At Risk'),
                 data: d => {
                     //return (d.cohortMethodAnalysis.createStudyPopArgs.riskWindowStart() + "-" + d.cohortMethodAnalysis.createStudyPopArgs.riskWindowEnd() + "d<br/>(min: " + d.cohortMethodAnalysis.createStudyPopArgs.minDaysAtRisk() + "d)");
                     return getTimeAtRisk(d.cohortMethodAnalysis.createStudyPopArgs);
                 }
             },
             {
-                title: 'Outcome Model',
+                title: ko.i18n('columns.outcomeModel', 'Outcome Model'),
                 data: d => {
                     return d.cohortMethodAnalysis.fitOutcomeModelArgs.modelType();
                 },
             }
         ],
         fullAnalysisTableOptions: {
-            pageLength: 10,
-            lengthMenu: [
-                [10, 25, 50, 100, -1],
-                ['10', '25', '50', '100', 'All']
-            ],
+            ...commonUtils.getTableOptions('S'),
             dom: '<<"row vertical-align"<"col-xs-6"<"dt-btn"B>l><"col-xs-6 search"f>><"row vertical-align"><t><"row vertical-align"<"col-xs-3"i><"col-xs-9"p>>>',
             domNoButtons: '<<"row vertical-align"<"col-xs-6"l><"col-xs-6 search"f>><"row vertical-align"><t><"row vertical-align"<"col-xs-3"i><"col-xs-9"p>>>',
             Facets: [{
-                'caption': 'Target Cohorts',
+                'caption': ko.i18n('facets.caption.targetCohorts', 'Target Cohorts'),
                 'binding': d => d.targetComparatorOutcome.target.name,
             },
             {
-                'caption': 'Comparator Cohorts',
+                'caption': ko.i18n('facets.caption.comparatorCohorts', 'Comparator Cohorts'),
                 'binding': d => d.targetComparatorOutcome.comparator.name,
             },
             {
-                'caption': 'Outcome Cohorts',
+                'caption': ko.i18n('facets.caption.outcomeCohorts', 'Outcome Cohorts'),
                 'binding': d => d.targetComparatorOutcome.outcome.name,
             },
             {
-                'caption': 'Analysis Name',
+                'caption': ko.i18n('facets.caption.analysisName', 'Analysis Name'),
                 'binding': d => d.cohortMethodAnalysis.description(),
             },
             ]
         }
-      }
-    };
+      }];
 
     return {
       pageTitle,
       apiPaths,
-      estimationGenerationStatus,
       paths: paths,
       conceptSetCrossReference,
+      isUsingRegularization,
+      setRegularization,
       options,
+      getCca,
     };
   }
 );

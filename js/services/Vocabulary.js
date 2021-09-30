@@ -48,13 +48,11 @@ define(function (require, exports) {
 		var searchResultIdentifiers = [];
 		var resultsIndex = [];
 		for (c = 0; c < results.length; c++) {
-			// optimization - only lookup standard concepts as non standard concepts will not have records
 			results[c].RECORD_COUNT = 0;
 			results[c].DESCENDANT_RECORD_COUNT = 0;
-			if (results[c].STANDARD_CONCEPT_CAPTION == 'Standard' || results[c].STANDARD_CONCEPT_CAPTION == 'Classification') {
-				searchResultIdentifiers.push(results[c].CONCEPT_ID);
-				resultsIndex.push(c);
-			}
+			results[c].PERSON_RECORD_COUNT = 0;
+			searchResultIdentifiers.push(results[c].CONCEPT_ID);
+			resultsIndex.push(c);
 		}
 		return CDMResultAPI.getConceptRecordCountWithResultsUrl(sharedState.resultsUrl(), searchResultIdentifiers, results, false);
 	}
@@ -187,10 +185,16 @@ define(function (require, exports) {
 			method: 'POST',
 			contentType: 'application/json',
 			error: authAPI.handleAccessDenied,
-	});
+		});
 
 		return getComparedConceptSetPromise;
 	}
+	
+	async function loadAncestors(ancestors, descendants, url, sourceKey) {
+		const vocabUrl = getVocabUrl(url, sourceKey);
+		const data = { ancestors, descendants };
+		return httpService.doPost(vocabUrl + 'lookup/identifiers/ancestors', data);
+	}	
 
 	var api = {
 		search: search,
@@ -205,7 +209,8 @@ define(function (require, exports) {
 		getConceptSetExpressionSQL: getConceptSetExpressionSQL,
 		optimizeConceptSet: optimizeConceptSet,
 		compareConceptSet: compareConceptSet,
-		loadDensity: loadDensity
+		loadDensity: loadDensity,
+		loadAncestors,
 	}
 
 	return api;

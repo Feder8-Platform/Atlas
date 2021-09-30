@@ -16,21 +16,21 @@ define(
 		const feedback = require('./feedback/index');
 
 		// order of nav items in left-nav will appear in the following order:
-        return {
-            home,
-            dataSources,
-            vocabulary,
-            conceptSets,
-            cohortDefinitions,
-            characterizations,
-            pathways,
-            incidenceRates,
-            profiles,
-            estimation,
-            prediction,
-            jobs,
-            configuration,
-            feedback,
-        }
+		return {
+			home,
+			dataSources,
+			vocabulary,
+			conceptSets,
+			cohortDefinitions,
+			characterizations,
+			pathways,
+			incidenceRates,
+			profiles,
+			estimation,
+			prediction,
+			jobs,
+			configuration,
+			feedback,
+		};
 	}
 );

@@ -2,107 +2,95 @@ define([
 	'knockout',
 	'text!./cohort-definition-browser.html',
 	'appConfig',
-	'services/AuthAPI',
-	'services/MomentAPI',
-	'components/Component',
+	'atlas-state',
+	'components/entity-browser',
 	'utils/CommonUtils',
-	'services/http',
+	'services/CohortDefinition',
+	'utils/DatatableUtils',
 	'faceted-datatable',
 ], function (
 	ko,
 	view,
 	config,
-	authApi,
-	momentApi,
-	Component,
+	sharedState,
+	EntityBrowser,
 	commonUtils,
-	httpService
+	CohortDefinitionService,
+	datatableUtils,
 ) {
-	class CohortDefinitionBrowser extends Component {
+
+	class CohortDefinitionBrowser extends EntityBrowser {
 		constructor(params) {
 			super(params);
-			this.reference = ko.observableArray(params.initialized ? params.reference : []);
-			this.selected = params.cohortDefinitionSelected;
-			this.loading = ko.observable(false);
-			this.config = config;
-
-            if(!params.initialized) {
-                this.loading(true);
-
-                httpService.doGet(`${config.api.url}cohortdefinition`)
-                    .then(({data}) => this.reference(data))
-                    .finally(() => {
-                        this.loading(false)
-                    });
-            }
-
+			this.showModal = params.showModal;
+			this.data = ko.observableArray();
+			const { pageLength, lengthMenu } = commonUtils.getTableOptions('M');
+			this.pageLength = params.pageLength || pageLength;
+			this.lengthMenu = params.lengthMenu || lengthMenu;
 
 			this.options = {
-				Facets: [{
-						'caption': 'Last Modified',
-						'binding': function (o) {
-							var createDate = new Date(o.createdDate);
-							var modDate = new Date(o.modifiedDate);
-							var dateForCompare = (createDate > modDate) ? createDate : modDate;
-							var daysSinceModification = (new Date()
-								.getTime() - dateForCompare.getTime()) / 1000 / 60 / 60 / 24;
-							if (daysSinceModification < 7) {
-								return 'This Week';
-							} else if (daysSinceModification < 14) {
-								return 'Last Week';
-							} else {
-								return '2+ Weeks Ago';
-							}
-						}
+				Facets: [
+					{
+						'caption': ko.i18n('facets.caption.created', 'Created'),
+						'binding': (o) => datatableUtils.getFacetForDate(o.createdDate)
 					},
 					{
-						'caption': 'Author',
-						'binding': function (o) {
-							return o.createdBy;
-						}
-					}
+						'caption': ko.i18n('facets.caption.updated', 'Updated'),
+						'binding': (o) => datatableUtils.getFacetForDate(o.modifiedDate)
+					},
+					{
+						'caption': ko.i18n('facets.caption.author', 'Author'),
+						'binding': datatableUtils.getFacetForCreatedBy,
+					},
+					{
+						'caption': ko.i18n('facets.caption.designs', 'Designs'),
+						'binding': datatableUtils.getFacetForDesign,
+					},
 				]
 			};
 
-            this.columns = [{
-					title: 'Id',
+			this.columns = [
+				...this.columns,
+				{
+					title: ko.i18n('columns.id', 'Id'),
+					className: 'id-column',
 					data: 'id'
 				},
 				{
-					title: 'Name',
-					render: this.renderCohortDefinitionLink
+					title: ko.i18n('columns.name', 'Name'),
+					render: datatableUtils.getLinkFormatter(d => ({ label: d['name'], linkish: !this.multiChoice })),
 				},
 				{
-					title: 'Created',
-					type: 'datetime-formatted',
-					render: function (s, p, d) {
-						return momentApi.formatDateTimeUTC(d.createdDate);
-					}
+					title: ko.i18n('columns.created', 'Created'),
+					className: 'date-column',
+					render: datatableUtils.getDateFieldFormatter('createdDate'),
 				},
 				{
-					title: 'Updated',
-					type: 'datetime-formatted',
-					render: function (s, p, d) {
-						return momentApi.formatDateTimeUTC(d.modifiedDate);
-					}
+					title: ko.i18n('columns.updated', 'Updated'),
+					className: 'date-column',
+					render: datatableUtils.getDateFieldFormatter('modifiedDate'),
 				},
 				{
-					title: 'Author',
-					data: 'createdBy'
-				}
+					title: ko.i18n('columns.author', 'Author'),
+					className: 'author-column',
+					render: datatableUtils.getCreatedByFormatter(),
+				},
 			];
-
-			this.renderCohortDefinitionLink = this.renderCohortDefinitionLink.bind(this);
-			this.rowClick = this.rowClick.bind(this);
-		}
-		
-		renderCohortDefinitionLink (s, p, d) {
-			return '<span class="linkish">' + d.name + '</span>';
 		}
 
-		rowClick(data) {
-			this.selected(data);
+		async loadData() {
+			try {
+				this.isLoading(true);
+				const data = await CohortDefinitionService.getCohortDefinitionList();
+				datatableUtils.coalesceField(data, 'modifiedDate', 'createdDate')
+				this.data(data.map(item => ({ selected: ko.observable(this.selectedDataIds.includes(item.id)), ...item })));
+			} catch (err) {
+				console.error(err);
+			} finally {
+				this.isLoading(false);
+			}
 		}
+
 	}
 
 	return commonUtils.build('cohort-definition-browser', CohortDefinitionBrowser, view);

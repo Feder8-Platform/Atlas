@@ -4,7 +4,6 @@ define(['knockout','components/cohortbuilder/CriteriaTypes','components/cohortbu
 		var self = this;
 
 		self.expression = params.expression;
-    //if (!params.parentGroup) debugger;
 		self.group = params.group;
 		self.parentGroup = params.parentGroup;
 		self.options = options;
@@ -41,23 +40,25 @@ define(['knockout','components/cohortbuilder/CriteriaTypes','components/cohortbu
 			else if (data.hasOwnProperty("Specimen"))
 				return "specimen-criteria-viewer";
 			else if (data.hasOwnProperty("ObservationPeriod"))
-				return "observation-period-criteria-viewer";			
+				return "observation-period-criteria-viewer";
 			else if (data.hasOwnProperty("Death"))
 				return "death-criteria-viewer";
+			else if (data.hasOwnProperty("LocationRegion"))
+				return "location-region-viewer";
 			else
 				return "unknown-criteria";
 		};
-		
+
 		self.groupType = ko.pureComputed(function() {
-			return self.options.groupTypeOptions.filter(function(item) {
-				return item.id == self.group().Type();
-			})[0].name;
+			return ko.unwrap(self.options.groupTypeOptions.find((item) =>
+			self.group() && item.id == self.group().Type()
+		).name);
 		});
 		
 		self.getOccurrenceType = function(occurenceType) {
-			return self.options.occurrenceTypeOptions.filter(function(item) {
-				return item.id == occurenceType;
-			})[0].name;
+			return ko.unwrap(self.options.occurrenceTypeOptions.find((item) =>
+			item.id == occurenceType
+		).name);
 		};
 		
 		

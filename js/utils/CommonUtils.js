@@ -1,14 +1,20 @@
 define([
 		'knockout',
 		'atlas-state',
+		'appConfig',
 		'pages/Page',
-		'urijs'
+		'services/MomentAPI',
+		'urijs',
+	  'const'
 	],
 	(
 		ko,
 		sharedState,
+		appConfig,
 		Page,
+		momentApi,
 		URI,
+		constants
 	) => {
 
 	const build = function (name, viewModelClass, template) {
@@ -81,6 +87,10 @@ define([
 			.addClass(getConceptLinkClass(data));
 	}
 
+	function highlightRow(row, cssClass) {
+		$(row).addClass(cssClass);
+	}
+
 	function hasCDM(source) {
 		return source.daimons.find(daimon => daimon.daimonType == 'CDM') !== undefined;
 	}
@@ -89,23 +99,12 @@ define([
 		return source.daimons.find(daimon => daimon.daimonType == 'Results') !== undefined;
 	}
 
-	function renderConceptSetItemSelector(s, p, d) {
-		let css = '';
-		let tag = 'i';
-		if (sharedState.selectedConceptsIndex[d.concept.CONCEPT_ID] == 1) {
-			css = ' selected';
-		}
-		if (!this.canEditCurrentConceptSet()) {
-			css += ' readonly';
-			tag = 'span'; // to avoid call to 'click' event handler which is bound to <i> tag
-		}
-		return '<' + tag + ' class="fa fa-shopping-cart' + css + '"></' + tag + '>';
-	}
-
 	function renderLink(s, p, d) {
 		var valid = d.INVALID_REASON_CAPTION == 'Invalid' ? 'invalid' : '';
 		var linkClass = getConceptLinkClass(d);
-		return '<a class="' + valid + ' ' + linkClass + '" href=\"#/concept/' + d.CONCEPT_ID + '\">' + d.CONCEPT_NAME + '</a>';
+		return p === 'display'
+			? '<a class="' + valid + ' ' + linkClass + '" href=\"#/concept/' + d.CONCEPT_ID + '\">' + d.CONCEPT_NAME + '</a>'
+			: d.CONCEPT_NAME;
 	}
 
 	function renderBoundLink(s, p, d) {
@@ -124,15 +123,6 @@ define([
 	const renderHierarchyLink = function (d) {
 		var valid = d.INVALID_REASON_CAPTION == 'Invalid' || d.STANDARD_CONCEPT != 'S' ? 'invalid' : '';
 		return '<a class="' + valid + '" href=\"#/concept/' + d.CONCEPT_ID + '\">' + d.CONCEPT_NAME + '</a>';
-	}
-
-	const createConceptSetItem = function (concept) {
-		var conceptSetItem = {};
-		conceptSetItem.concept = concept;
-		conceptSetItem.isExcluded = ko.observable(false);
-		conceptSetItem.includeDescendants = ko.observable(false);
-		conceptSetItem.includeMapped = ko.observable(false);
-		return conceptSetItem;
 	}
 
 	const syntaxHighlight = function (json) {
@@ -161,10 +151,10 @@ define([
 
 	const getPathwaysUrl = (id, section) => `/pathways/${id}/${section}`;
 
-	async function confirmAndDelete({ loading, remove, redirect }) {
-		if (confirm('Are you sure?')) {
+	async function confirmAndDelete({ loading, remove, redirect, message = 'Are you sure?' } = {}) {
+		if (confirm(message)) {
 			loading(true);
-			await remove()
+			await remove();
 			loading(false);
 			redirect();
 		}
@@ -175,6 +165,74 @@ define([
 	const f = (a, b) => [].concat(...a.map(d => b.map(e => [].concat(d, e))));
 	const cartesian = (a, b, ...c) => (b ? cartesian(f(a, b), ...c) : a);
 
+	const toggleConceptSetCheckbox = function(hasPermissions, selectedConcepts, d, field, successFunction) {
+		if (hasPermissions()) {
+			const concept = selectedConcepts()[d.idx];
+			if (!!concept) {
+				concept[field](!concept[field]());
+				if (successFunction && typeof successFunction === 'function') {
+					successFunction();
+				}
+			}
+		}
+	}
+
+	const selectAllFilteredItems = (data, filteredData, value) => {
+		const fData = (ko.utils.unwrapObservable(filteredData) || []).map(i => i.id);
+		data().forEach(i => {
+			if (fData.length === 0) {
+				i.selected(value);
+			} else {
+				if (fData.includes(i.id)) {
+					i.selected(value);
+				}
+			}
+		});
+	}
+	const escapeTooltip = function(tooltipText) {
+		return tooltipText.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+	}
+
+	const getSelectedConcepts = (conceptList) => {
+		return ko.unwrap(conceptList).filter(concept => concept.isSelected()).map(({ isSelected, ...concept }) => ({
+			...concept
+		}));
+	}
+	
+	const buildConceptSetItems = (concepts, options) => {
+		return concepts.map((concept) => ({
+			concept: concept,
+			...ko.toJS(options)
+		}));
+	}
+
+	const clearConceptsSelectionState = concepts => ko.unwrap(concepts).forEach(concept => concept.isSelected && concept.isSelected(false));
+		
+	const getUniqueIdentifier = () => {
+		return ([1e7]+1e3+4e3+8e3+1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15 >> c/4).toString(16));
+	}
+		
+	const isNameLengthValid = function(name) {
+		return name.length <= constants.maxEntityNameLength;
+	}
+
+	const isNameCharactersValid = function(name) {
+		const forbiddenSymbols = ['\\', '/', ':', '*', '?', '"', '<', '>', '|'];
+		return !forbiddenSymbols.some(symbol => name.includes(symbol));
+	}
+
+	const formatDateForAuthorship = (date, format = momentApi.DESIGN_DATE_TIME_FORMAT) => {
+		const d = ko.unwrap(date);
+		return d ? momentApi.formatDateTimeWithFormat(d, format) : '';
+	}
+
+	const getTableOptions = (variant = 'M') => {
+		const { commonDataTableOptions: opts } = appConfig;
+		return Object.keys(opts).reduce((p, c) => ({
+			...p, 
+			[c]: opts[c][variant],
+		}), {});
+	}
 
 	return {
 		build,
@@ -185,14 +243,23 @@ define([
 		contextSensitiveLinkColor,
 		hasCDM,
 		hasResults,
-		renderConceptSetItemSelector,
 		renderLink,
 		renderBoundLink,
-		renderConceptSelector,
 		renderHierarchyLink,
-		createConceptSetItem,
 		syntaxHighlight,
 		getPathwaysUrl,
-		normalizeUrl
+		normalizeUrl,
+		toggleConceptSetCheckbox,
+		selectAllFilteredItems,
+		escapeTooltip,
+		highlightRow,
+		buildConceptSetItems,
+		getSelectedConcepts,
+		getUniqueIdentifier,
+		clearConceptsSelectionState,
+		formatDateForAuthorship,
+		isNameCharactersValid,
+		isNameLengthValid,
+		getTableOptions,
 	};
 });

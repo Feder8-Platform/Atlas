@@ -32,6 +32,18 @@ table.cohort-generate-sources thead {
   width: calc(100%-1em)
 }
 
+td.date-column {
+	width: 125px;
+}
+
+td.author-column {
+	width: 125px;
+}
+
+td.id-column {
+	width: 45px;
+}
+
 .breadcrumb-container {
   background-color: #333;
   color: #fff;
@@ -100,10 +112,6 @@ body {
 
 #wrapperConfigure {
   padding: 10px;
-}
-
-#textImportConceptSet {
-  font-size: 10px;
 }
 
 .paddedWrapper {
@@ -449,6 +457,10 @@ table.datatable thead th {
   padding: 4px 5px !important;
 }
 
+div.dt-button-collection {
+  width: max-content !important;
+}
+
 .asset-heading .fa-shopping-cart, td .fa-shopping-cart {
   color: #ccc;
   cursor: pointer;
@@ -638,45 +650,6 @@ ul.ColVis_collection li {
   height: 12px;
 }
 
-.linkLegend {
-  padding: 10px 10px 15px 10px;
-  clear: both;
-}
-
-.linkLegend .swatch {
-  width: 15px;
-  height: 15px;
-  float: left;
-  clear: left;
-  border: solid 1px #ccc;
-  margin-left: 10px;
-}
-
-.linkLegend .swatch.classification {
-  background-color: #a335ee;
-}
-
-.linkLegend .swatch.standard {
-  background-color: #0070dd;
-}
-
-.linkLegend .swatch.nonStandard {
-  background-color: #a71a19;
-}
-
-.linkLegend .linkLegendTitle {
-  float: left;
-  padding-left: 3px;
-  line-height: 15px;
-  font-size: 11px;
-}
-
-.linkLegendItem {
-  margin: 0px;
-  height: 20px;
-  float: right;
-}
-
 .clear {
   clear: both;
   height: 2px;
@@ -684,7 +657,6 @@ ul.ColVis_collection li {
 
 #wrapperParents {
   padding-left: 5px;
-  padding-bottom: 10px;
 }
 
 #wrapperSelf {
@@ -694,7 +666,7 @@ ul.ColVis_collection li {
 }
 
 #wrapperChildren {
-  padding-left: 90px;
+  padding-left: 5px;
 }
 
 .configureSourceTable i.fa {
@@ -718,11 +690,7 @@ ul.ColVis_collection li {
 }
 
 #wrapperHierarchyAnchor {
-  margin-left: 30px;
-  padding-bottom: 10px;
-  padding-top: 10px;
-  /* font-size: 14px; */
-  padding-left: 10px;
+  padding-left: 5px;
   margin-bottom: 10px;
 }
 
@@ -1930,18 +1898,6 @@ i.fa.pending {
   color: #f19119;
 }
 
-i.fa.error-icon {
-  color: #ff0000;
-}
-
-.alert-dismissible .close {
-  right: 0;
-}
-
-.alert {
-  margin-bottom: 0;
-}
-
 #jobModal .progress {
   margin-bottom: 0px;
 }
@@ -2012,7 +1968,6 @@ ul.nav-tabs a i.fa.fa-question-circle-o {
 }
 
 .criteriaTable tr {
-  line-height: 32px;
   height: 32px;
   vertical-align: middle;
 }
@@ -2177,7 +2132,7 @@ div#wrapper_ohdsi a {
 	padding-left: 3px;
 	padding-right: 3px;
 	margin-right: 3px;
-	line-height: 17px;
+	line-height: 18px;
 	min-width: 18px;
 	min-height:19px;
 	border: solid 1px;
@@ -2194,4 +2149,29 @@ div#wrapper_ohdsi a {
 	background-image: url(images/arrow_down.png);
 	background-position: center right;
 	background-repeat: no-repeat;
+}
+
+.thresholdLevel {
+	width: 30%
+}
+
+.thresholdLevel div {
+	display: flex
+}
+
+.thresholdLevel div input {
+	margin-right: 10px
+}
+
+.import-modal-footer {
+  display: flex;
+  flex-direction: row-reverse;
+  padding: 1rem 0;
+}
+
+.import-modal_list-container {
+  max-height: calc(80vh - 5rem);
+  overflow-y: auto;
+  padding: 1rem;
+  padding-bottom: 0;
 }

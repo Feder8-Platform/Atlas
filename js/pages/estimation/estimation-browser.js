@@ -31,7 +31,6 @@ define([
   class EstimationBrowser extends Page {
 		constructor(params) {
 			super(params);
-			this.model = params.model;
 			this.reference = ko.observableArray();
 			this.loading = ko.observable(false);
 			this.config = config;
@@ -41,58 +40,56 @@ define([
 
 			this.isAuthenticated = authAPI.isAuthenticated;
 			this.hasAccess = authAPI.isPermittedReadEstimations;
-
+			this.tableOptions = commonUtils.getTableOptions('L');
 			this.options = {
 				Facets: [
                     {
-                        'caption': 'Created',
+                        'caption': ko.i18n('facets.caption.created', 'Created'),
                         'binding': (o) => datatableUtils.getFacetForDate(o.createdDate)
                     },
                     {
-                        'caption': 'Updated',
+                        'caption': ko.i18n('facets.caption.updated', 'Updated'),
                         'binding': (o) => datatableUtils.getFacetForDate(o.modifiedDate)
                     },
                     {
-                        'caption': 'Author',
+                        'caption': ko.i18n('facets.caption.author', 'Author'),
                         'binding': datatableUtils.getFacetForCreatedBy,
+                    },
+                    {
+                        'caption': 'Designs',
+                        'binding': datatableUtils.getFacetForDesign,
                     },
 				]
 			};
-			
+
 			this.columns = [
 				{
-					title: 'Id',
-					data: 'estimationId'
+					title: ko.i18n('columns.id', 'Id'),
+					data: 'id'
 				},
 				{
-					title: 'Type',
+					title: ko.i18n('columns.type', 'Type'),
                     data: d => d.type,
                     visible: false,
 				},
 				{
-					title: 'Name',
+					title: ko.i18n('columns.name', 'Name'),
 					render: datatableUtils.getLinkFormatter(d => ({
-						link: constants.paths.ccaAnalysis(d.estimationId),
+						link: constants.paths.ccaAnalysisDash(d.id),
 						label: d['name']
 					})),
 				},
 				{
-					title: 'Created',
-					type: 'datetime-formatted',
-					render: function (s, p, d) {
-						return momentApi.formatDateTimeUTC(d.createdDate);
-					}
+					title: ko.i18n('columns.created', 'Created'),
+					render: datatableUtils.getDateFieldFormatter('createdDate'),
 				},
 				{
-					title: 'Modified',
-					type: 'datetime-formatted',
-					render: function (s, p, d) {
-						return momentApi.formatDateTimeUTC(d.modifiedDate);
-					}
+					title: ko.i18n('columns.updated', 'Updated'),
+					render: datatableUtils.getDateFieldFormatter('modifiedDate'),
 				},
 				{
-					title: 'Author',
-					data: 'createdBy'
+					title: ko.i18n('columns.author', 'Author'),
+					render: datatableUtils.getCreatedByFormatter(),
 				}
 			];
 		}
@@ -102,6 +99,7 @@ define([
 				this.loading(true);
 				EstimationService.getEstimationList()
 					.then(({data}) => {
+						datatableUtils.coalesceField(data, 'modifiedDate', 'createdDate');
 						this.loading(false);
 						this.reference(data);
 					});

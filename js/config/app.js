@@ -16,6 +16,7 @@ define(function () {
   appConfig.enableCosts = false;
 	appConfig.supportUrl = "https://github.com/ohdsi/atlas/issues";
 	appConfig.supportMail = "atlasadmin@your.org";
+	appConfig.defaultLocale = "en";
 	appConfig.authProviders = [
     {
       "name": "Windows",
@@ -68,24 +69,26 @@ define(function () {
       "isUseCredentialsForm": true
     },
     {
+      "name": "SAML",
+      "url": "user/login/saml",
+      "ajax": false,
+      "icon": "fa fa-openid"
+    },
+    {
       "name": "Active Directory LDAP",
       "url": "user/login/ad",
       "ajax": true,
       "icon": "fa fa-cubes",
       "isUseCredentialsForm": true
-    },
-    {
-      "name": "CAS",
-      "url": "user/login/cas",
-      "ajax": false,
-      "icon": "",
-      "isUseCredentialsForm": false
     }
   ];
+  appConfig.strictXSSOptions = {
+    whiteList: [],
+  };
   appConfig.xssOptions = {
     "whiteList": {
-      "a": ["href", "class", "data-bind"],
-			"button": ["class", "type"],
+      "a": ["href", "class", "data-bind", "data-toggle", "aria-expanded"],
+			"button": ["class", "type", "data-toggle", "aria-expanded"],
       "span": ["class", "data-bind"],
       "i": ["class", "id", "aria-hidden"],
       "div": ["class", "style", "id"],
@@ -94,6 +97,8 @@ define(function () {
       "ui": ["class"],
       "path": ["d", "class"],
       "br": "",
+      "li": ["class", "title"],
+      "ul": ["class"]
     },
     "stripIgnoreTag": true,
     "stripIgnoreTagBody": ['script'],
@@ -110,6 +115,34 @@ define(function () {
   };
   appConfig.enableTermsAndConditions = true;
 	appConfig.webAPIRoot = appConfig.api.url;
-	
+	// todo: move "userAuthenticationEnabled", "plpResultsEnabled", etc into the object
+	appConfig.features = {
+	  locationDistance: false,
+	};
+
+   appConfig.externalLibraries = [];
+
+   appConfig.commonDataTableOptions = {
+     pageLength: {
+       S: 10,
+       M: 25,
+       L: 50,
+     },
+     lengthMenu: {
+       S: [
+        [10, 15, 20, 25, 50, -1],
+        ['10', '15', '20', '25', '50', 'All'],
+       ],
+       M: [
+        [10, 25, 50, 100, -1],
+        ['10', '25', '50', '100', 'All'],
+       ],
+       L: [
+        [25, 50, 75, 100, -1],
+        ['25', '50', '75', '100', 'All'],
+       ],
+     }
+   };
+
 	return appConfig;
 });

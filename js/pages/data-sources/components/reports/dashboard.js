@@ -23,6 +23,9 @@ define([
 	Report,
 	Component
 ) {
+
+	const FORMAT_VALUES_BIGGER_THAN = 99999;
+
 	class Dashboard extends Report {
 		constructor(params) {
 			super(params);
@@ -37,8 +40,8 @@ define([
 				ageAtFirstObservation: {
 					xFormat: d3.format('d'),
 					yFormat: d3.format(',.1s'),
-					xLabel: 'Age',
-					yLabel: 'People'
+					xLabel: ko.i18n('dataSources.dashboardReport.age', 'Age'),
+					yLabel: ko.i18n('dataSources.dashboardReport.people', 'People')
 				},
 				observationLine: {
 					yFormat: d3.format('0.0%'),
@@ -51,15 +54,15 @@ define([
 					},
 					interpolate: (new atlascharts.line()).interpolation.curveStepBefore,
 					xLabel: 'x label',
-					yLabel: 'Percent of Population'
+					yLabel: ko.i18n('dataSources.dashboardReport.percentOfPopulation', 'Percent of Population')
 				},
 				byMonthSeries: {
 					xScale: null,
 					xFormat: d3.timeFormat("%m/%Y"),
 					tickFormat: d3.timeFormat("%m/%Y"),
 					ticks: 10,
-					xLabel: "Date",
-					yLabel: "People"
+					xLabel: ko.i18n('dataSources.dashboardReport.date', 'Date'),
+					yLabel: ko.i18n('dataSources.dashboardReport.people', 'People'),
 				},
 			};
 
@@ -73,7 +76,8 @@ define([
 				var formatter = d3.format(".5s");
 				data.summary.forEach(function (d) {
 					if (!isNaN(d.attributeValue)) {
-						d.attributeValue = formatter(d.attributeValue);
+						d.attributeValue = d.attributeValue > FORMAT_VALUES_BIGGER_THAN
+							? formatter(d.attributeValue) : d.attributeValue;
 					}
 				});
 				this.summary(data.summary);
@@ -105,14 +109,14 @@ define([
 						return item;
 					}, cumObsData);
 
-				this.chartFormats.observationLine.xLabel = 'Days';
+				this.chartFormats.observationLine.xLabel = ko.i18n('dataSources.dashboardReport.days', 'Days');
 				if (cumulativeData.length > 0) {
 					if (cumulativeData.slice(-1)[0].xValue - cumulativeData[0].xValue > 1000) {
 						// convert x data to years
 						cumulativeData.forEach(function (d) {
 							d.xValue = d.xValue / 365.25;
 						});
-						this.chartFormats.observationLine.xLabel = 'Years';
+						this.chartFormats.observationLine.xLabel = ko.i18n('dataSources.dashboardReport.years', 'Years');
 					}
 				}
 

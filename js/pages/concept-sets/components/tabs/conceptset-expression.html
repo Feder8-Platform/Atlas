@@ -1,57 +1,47 @@
 <div class="paddedWrapper">
   <table class="conceptSetTable stripe compact hover" cellspacing="0" width="100%" data-bind="dataTable:{
-        data: selectedConcepts(),
+        xssSafe: true,
+        data: data(),
         options: {
+          language: datatableLanguage,
           dom: 'Clfiprt',
           colVis: {
-            buttonText: 'Change Columns',
+            buttonText: ko.i18n('datatable.language.buttons.changeColumns', 'Change Columns'),
             align: 'right',
             overlayFade: 0,
-            showAll: 'Show All Columns',
-            restore: 'Reset Columns'
+            showAll: ko.i18n('datatable.language.buttons.showAllColumns', 'Show All Columns'),
+            restore: ko.i18n('datatable.language.buttons.resetColumns', 'Reset Columns')
           },
-          rowCallback: $root.contextSensitiveLinkColor,
-          lengthMenu: [[25, 50, 100, -1], [25, 50, 100,'All']],
+          rowCallback: commonUtils.contextSensitiveLinkColor,
+          pageLength: tableOptions.pageLength,
+          lengthMenu: tableOptions.lengthMenu,
           orderClasses: false,
           deferRender: true,
           autoWidth: false,
           order: [[3, 'desc']],
-          columns: [
-            { render: $root.renderConceptSetItemSelector, orderable:false, searchable:false},
-            { data: 'concept.CONCEPT_ID'},
-            { data: 'concept.CONCEPT_CODE'},
-            { render: $root.renderBoundLink},
-            { data: 'concept.DOMAIN_ID' },
-            { data: 'concept.STANDARD_CONCEPT', visible:false },
-            { data: 'concept.STANDARD_CONCEPT_CAPTION' },
-            {
-              class: 'text-center',
-              orderable: false,
-              render: function() { return $root.renderCheckbox('isExcluded');}
-            },
-            {
-              class: 'text-center',
-              orderable: false,
-              render: function() { return $root.renderCheckbox('includeDescendants');}
-            },
-            {
-              class: 'text-center',
-              orderable: false,
-              render: function() { return $root.renderCheckbox('includeMapped');}
-            }
-          ]
+          columns: columns,
         }
       }">
       <thead>
-        <th><li class='fa fa-shopping-cart'></li></th>
-        <th>Concept Id</th>
-        <th>Concept Code</th>
-        <th>Concept Name</th>
-        <th>Domain</th>
-        <th>Standard Concept Code</th>
-        <th>Standard Concept Caption</th>
         <th>
-          <!-- ko if: canEdit -->
+          <!-- ko if: canEditCurrentConceptSet -->
+            <span data-bind="
+              css: classes({
+                  element: 'checkmark',
+                  extra: `fa fa-check ${areAllConceptsCheckedForRemoval() ? 'selected' : ''}`
+              }),
+              click: toggleSelectedConceptsForRemoval
+            "></span>
+          <!-- /ko -->
+        </th>
+        <th data-bind="text: ko.i18n('columns.conceptId', 'Concept Id')"></th>
+        <th data-bind="text: ko.i18n('columns.conceptCode', 'Concept Code')"></th>
+        <th data-bind="text: ko.i18n('columns.conceptName', 'Concept Name')"></th>
+        <th data-bind="text: ko.i18n('columns.domain', 'Domain')"></th>
+        <th data-bind="text: ko.i18n('columns.standardConceptCode', 'Standard Concept Code')"></th>
+        <th data-bind="text: ko.i18n('columns.standardConceptCaption', 'Standard Concept Caption')"></th>
+        <th>
+          <!-- ko if: canEditCurrentConceptSet -->
             <span data-bind="
               css: classes({
                   element: 'checkmark',
@@ -59,10 +49,11 @@
               }),
               click: toggleExcluded
             "></span>
-          <!-- /ko --> Exclude
+          <!-- /ko -->
+          <span data-bind="text: ko.i18n('columns.exclude', 'Exclude')"></span>
         </th>
         <th>
-          <!-- ko if: canEdit -->
+          <!-- ko if: canEditCurrentConceptSet -->
           <span data-bind="
             css: classes({
                 element: 'checkmark',
@@ -70,37 +61,45 @@
             }),
             click: toggleDescendants
           "></span>
-          <!-- /ko --> Descendants
+          <!-- /ko -->
+          <span data-bind="text: ko.i18n('columns.descendants', 'Descendants')"></span>
         </th>
         <th>
-            <!-- ko if: canEdit -->
-              <span data-bind="
-                css: classes({
-                    element: 'checkmark',
-                    extra: `fa fa-check ${allMappedChecked() ? 'selected' : ''}`
-                }),
-                click: toggleMapped
-              "></span>
-            <!-- /ko --> Mapped
+          <!-- ko if: canEditCurrentConceptSet -->
+            <span data-bind="
+              css: classes({
+                  element: 'checkmark',
+                  extra: `fa fa-check ${allMappedChecked() ? 'selected' : ''}`
+              }),
+              click: toggleMapped
+            "></span>
+          <!-- /ko -->
+          <span data-bind="text: ko.i18n('columns.mapped', 'Mapped')"></span>
         </th>
       </thead>
   </table>
 
-  <div class="linkLegend">
-    <div class="linkLegendItem">
-      <div class="swatch standard">
-      </div>
-      <div class="linkLegendTitle">Standard</div>
-    </div>
-    <div class="linkLegendItem">
-      <div class="swatch nonStandard">
-      </div>
-      <div class="linkLegendTitle">Non-Standard</div>
-    </div>
-    <div class="linkLegendItem">
-      <div class="swatch classification">
-      </div>
-      <div class="linkLegendTitle">Classification</div>
-    </div>
+  <concept-legend></concept-legend>
+  <div class="row">
+    <span data-bind="tooltip: buttonTooltip">
+      <button
+        class="btn btn-danger btn-sm"
+        data-bind="
+          click: removeConceptsFromConceptSet,
+          css: { disabled: conceptsForRemovalLength() === 0 || !canEditCurrentConceptSet() },
+          text: ko.i18n('components.conceptSet.removeSelected', 'Remove Selected'),
+        "
+      ></button>
+    </span>
+    <span data-bind="tooltip: buttonTooltip">
+      <button
+      class="btn btn-success btn-sm"
+      data-bind="
+        click: navigateToSearchPage,
+        css: { disabled: !canEditCurrentConceptSet() },
+        text: ko.i18n('components.conceptSet.addConcepts', 'Add concepts')
+      "
+    ></button>
+    </span>
   </div>
 </div>

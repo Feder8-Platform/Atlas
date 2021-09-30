@@ -21,6 +21,7 @@ define([
 	'./components/reports/observation',
 	'./components/reports/death',
 	'./components/reports/achillesHeel',
+	'./components/reports/observation-period',
 	'less!./data-sources.less'
 ], function (
 	ko,
@@ -36,84 +37,88 @@ define([
 			super(params);
 
 			this.reports = [{
-					name: "Dashboard",
+					name: ko.i18n('dataSources.reports.dashboard', 'Dashboard'),
 					path: "dashboard",
 					component: "report-dashboard",
 					summary: ko.observable()
 				},
 				{
-					name: "Data Density",
+					name: ko.i18n('dataSources.reports.dataDensity', 'Data Density'),
 					path: "datadensity",
 					component: "report-datadensity",
 				},
 				{
-					name: "Person",
+					name: ko.i18n('dataSources.reports.person', 'Person'),
 					path: "person",
 					component: "report-person",
 				},
 				{
-					name: "Visit",
+					name: ko.i18n('dataSources.reports.visit', 'Visit'),
 					path: "visit",
 					component: "report-visit",
 				},
 				{
-					name: "Condition Occurrence",
+					name: ko.i18n('dataSources.reports.conditionOccurrence', 'Condition Occurrence'),
 					path: "condition",
 					component: "report-condition",
 				},
 				{
-					name: "Condition Era",
+					name: ko.i18n('dataSources.reports.conditionEra', 'Condition Era'),
 					path: "conditionera",
 					component: "report-condition-era",
 				},
 				{
-					name: "Procedure",
+					name: ko.i18n('dataSources.reports.procedure', 'Procedure'),
 					path: "procedure",
 					component: "report-procedure",
 				},
 				{
-					name: "Drug Exposure",
+					name: ko.i18n('dataSources.reports.drugExposure', 'Drug Exposure'),
 					path: "drug",
 					component: "report-drug",
 				},
 				{
-					name: "Drug Era",
+					name: ko.i18n('dataSources.reports.drugEra', 'Drug Era'),
 					path: "drugera",
 					component: "report-drug-era",
 				},
 				{
-					name: "Measurement",
+					name: ko.i18n('dataSources.reports.measurement', 'Measurement'),
 					path: "measurement",
 					component: "report-measurement",
 				},
 				{
-					name: "Observation",
+					name: ko.i18n('dataSources.reports.observation', 'Observation'),
 					path: "observation",
 					component: "report-observation",
 				},
 				{
-					name: "Death",
+					name: ko.i18n('dataSources.reports.observationPeriod', 'Observation Period'),
+					path: "observationPeriod",
+					component: "report-observation-period"
+				},
+				{
+					name: ko.i18n('dataSources.reports.death', 'Death'),
 					path: "death",
 					component: "report-death",
 				},
 				{
-					name: "Achilles Heel",
+					name: ko.i18n('dataSources.reports.achillesHeel', 'Achilles Heel'),
 					path: "achillesheel",
 					component: "report-achilles-heel",
-				},
+				}
 			];
 
-			this.model = params.model;
-			this.sources = sharedState.sources().filter(function (s) {
-				return s.hasResults && s.hasVocabulary;
-			});
+			this.sources = ko.computed(() => sharedState.sources().filter(function (s) {
+				return s.hasResults && s.hasVocabulary && authApi.isPermittedViewDataSourceReport(s.sourceKey);
+			}));
 
 			this.loadingReport = ko.observable(false);
 			this.hasError = ko.observable(false);
 			this.errorMessage = ko.observable();
-
+			this.loadingReportDrilldown = ko.observable(false);
 			this.isReportLoading = ko.pureComputed(function () {
-				return this.loadingReport() && !this.hasError() && !this.model.loadingReportDrilldown();
+				return this.loadingReport() && !this.hasError() && !this.loadingReportDrilldown();
 			}, this);
 
 			this.isAuthenticated = authApi.isAuthenticated;
@@ -122,27 +127,17 @@ define([
 			});
 
 			this.showSelectionArea = params.showSelectionArea == undefined ? true : params.showSelectionArea;
-			this.currentSource = ko.observable(this.sources[0]);
+			this.currentSource = ko.observable(this.sources()[0]);
 			this.currentReport = ko.observable();
 			this.selectedReport = ko.observable();
 
 			this.currentSource.subscribe((source) => source && this.hasError(false));
 			this.currentReport.subscribe((report) => report && this.hasError(false));
 
-			this.selectedReportSubscription = this.selectedReport.subscribe(r => {
-				this.updateLocation();
-			});
-
-			this.selectedSourceSubscription = this.currentSource.subscribe(r => {
-				this.updateLocation();
-			})
+			this.subscriptions.push(this.selectedReport.subscribe(r => this.updateLocation()));
+			this.subscriptions.push(this.currentSource.subscribe(r => this.updateLocation()));
 
 			this.currentConcept = ko.observable();
-		}
-
-		dispose() {
-			this.selectedReportSubscription.dispose();
-			this.selectedSourceSubscription.dispose();
 		}
 
 		updateLocation() {
@@ -157,12 +152,12 @@ define([
 
 			if (newParams == null) {
 				// initial page load direct from URL
-				this.currentSource(this.sources.find(s => s.sourceKey == changedParams.sourceKey));
+				this.currentSource(this.sources().find(s => s.sourceKey == changedParams.sourceKey));
 				this.currentReport(this.reports.find(r => r.path == changedParams.reportName));
 				this.selectedReport(this.reports.find(r => r.path == changedParams.reportName));
 			} else {
-				if (changedParams.sourceKey) {
-					this.currentSource(this.sources.find(s => s.sourceKey == newParams.sourceKey));
+				if (changedParams.sourceKey && this.currentSource() && changedParams.sourceKey !== this.currentSource().sourceKey) {
+					this.currentSource(this.sources().find(s => s.sourceKey == newParams.sourceKey));
 				}
 				if (changedParams.reportName) {
 					this.currentReport(this.reports.find(r => r.path == newParams.reportName));

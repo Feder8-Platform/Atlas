@@ -16,6 +16,7 @@ define(function (require, exports) {
 	var Death = require("./CriteriaTypes/Death");
 	var DemographicCriteria = require("./CriteriaTypes/DemographicCriteria");
 	var PayerPlanPeriod = require("./CriteriaTypes/PayerPlanPeriod");
+	var LocationRegion = require("./CriteriaTypes/LocationRegion");
 	
 	function GetCriteriaFromObject (data, conceptSets)
 	{
@@ -34,9 +35,9 @@ define(function (require, exports) {
 				DrugExposure: new exports.DrugExposure(data.DrugExposure, conceptSets)
 			};
 		} else if (data.hasOwnProperty("TreatmentLine")) {
-			return {
-				TreatmentLine: new exports.TreatmentLine(data.TreatmentLine, conceptSets)
-			};
+            return {
+                TreatmentLine: new exports.TreatmentLine(data.TreatmentLine, conceptSets)
+            };
 		} else if (data.hasOwnProperty("DrugEra")) {
 			return {
 				DrugEra: new exports.DrugEra(data.DrugEra, conceptSets)
@@ -85,7 +86,11 @@ define(function (require, exports) {
 			return {
 				PayerPlanPeriod: new exports.PayerPlanPeriod(data.PayerPlanPeriod, conceptSets)
 			};
-		};	
+		}	else if (data.hasOwnProperty("LocationRegion")) {
+			return {
+				LocationRegion: new exports.LocationRegion(data.LocationRegion, conceptSets)
+			};
+		};
 	}
 	
 	exports.ConditionOccurrence = ConditionOccurrence;
@@ -104,6 +109,7 @@ define(function (require, exports) {
 	exports.Death = Death;
 	exports.DemographicCriteria = DemographicCriteria;
 	exports.PayerPlanPeriod = PayerPlanPeriod;
+	exports.LocationRegion = LocationRegion;
 	
 	exports.GetCriteriaFromObject = GetCriteriaFromObject;
 

@@ -1,11 +1,13 @@
 define([
     'services/http',
-    'appConfig'
+    'services/file',
+    'appConfig',
 ], function (
     httpService,
+    fileService,
     config
 ) {
-	
+
     function loadFeatureAnalysisList() {
         return httpService.doGet(config.webAPIRoot + 'feature-analysis?size=100000').then(res => res.data);
     }
@@ -30,6 +32,23 @@ define([
         return httpService.doDelete(config.webAPIRoot + `feature-analysis/${id}`).then(res => res.data);
     }
 
+    function exists(name, id) {
+        return httpService.doGet(`${config.webAPIRoot}feature-analysis/${id}/exists?name=${name}`)
+            .then(res => res.data);
+    }
+
+    function exportConceptSets(id) {
+        return fileService.loadZip(`${config.webAPIRoot}feature-analysis/${id}/export/conceptset`);
+    }
+
+    function loadAggregates() {
+        return httpService.doGet(`${config.webAPIRoot}feature-analysis/aggregates`).then(res => res.data);
+    }
+
+    function copyFeatureAnalysis(id) {
+        return httpService.doGet(`${config.webAPIRoot}feature-analysis/${id}/copy`);
+    }
+
     return {
         loadFeatureAnalysisList,
         loadFeatureAnalysis,
@@ -37,5 +56,9 @@ define([
         createFeatureAnalysis,
         updateFeatureAnalysis,
         deleteFeatureAnalysis,
+        exists,
+        exportConceptSets,
+        copyFeatureAnalysis,
+        loadAggregates,
     };
 });

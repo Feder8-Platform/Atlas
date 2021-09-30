@@ -6,9 +6,11 @@ define([
 	'xss',
 	'moment',
 	'services/MomentAPI',
+	'utils/CommonUtils',
 	'datatables.net-buttons',
 	'colvis',
 	'datatables.net-buttons-html5',
+	'datatables.net-select',
 ], function (
 	$,
 	ko,
@@ -16,25 +18,32 @@ define([
 	config,
 	filterXSS,
 	moment,
-	momentApi
+	momentApi,
+	commonUtils,
 	) {
 
 	function renderSelected(s, p, d) {
 		return '<span class="fa fa-check-circle"></span>';
 	}
-	
-	function _getSelectedData(element)
+
+	function _getTableData(element, type = 'selected')
 	{
-		var selectedRows = $(element).DataTable().rows('tr:has(td.select:has(span.selected))', {
+		const selector = type === 'selected' ? 'tr:has(td.select:has(span.selected))' : '';
+		const selectedRows = $(element).DataTable().rows(selector, {
 			'search': 'applied'
 		}).data();
-		
+
 		var selectedData = [];
 		$.each(selectedRows, function(index, value) {
 			selectedData.push(value);
 		});
-		
+
 		return selectedData;
+	}
+
+	function _getRows(element, predicate) {
+
+		return $(element).DataTable().rows(predicate);
 	}
 
   function isUrlAbsolute(url) {
@@ -59,31 +68,44 @@ define([
         return abxX < absY ? -1 : abxX>absY ? 1 : 0;
 	}
 
-	function formatDates(first, second) {
-		if (second.isAfter(first)) {
-			return -1;
-		} else if (first.isAfter(second)) {
-			return 1;
-		}
+	function mapColumns(element, binding, xssOptions) {
 
-		return 0;
-	}
+		const columns = ko.unwrap(binding.options.columns);
 
-	function parseDates(x, y) {		
-		let first = moment(x, momentApi.DATE_TIME_FORMAT);
-		let second = moment(y, momentApi.DATE_TIME_FORMAT);
-		if (!first.isValid()) {
-			first = moment(0);
+		if (columns && columns[0] === 'select') {
+			columns[0] = { width:'20px', orderable: false, class: 'select', render: renderSelected };
+			$(element).on("click","td > span.fa.fa-check-circle", function () {
+				$(this).toggleClass('selected');
+			});
 		}
-		if (!second.isValid()) {
-			second = moment(0);
-		}
+		return columns.map((column) => {
+			const originalRender = column.render;
+			const originalDataAccessor = column.data;
+			const hasOriginalRender = typeof originalRender === 'function';
+			const hasDataAccessor = typeof originalDataAccessor === 'function';
 
-		return { first, second };
+			if (binding.options.xssSafe || column.xssSafe) { // disable XSS filtering if column is marked 'safe'
+				return Object.assign({}, column, {
+					title: ko.unwrap(column.title)
+				});
+			} else {
+				return Object.assign({}, column, {
+					title: ko.unwrap(column.title),
+					data: hasDataAccessor
+						? d => filterAbsoluteUrls(filterXSS(originalDataAccessor(d), xssOptions))
+						: filterAbsoluteUrls(filterXSS(originalDataAccessor, xssOptions)),
+					render: hasOriginalRender
+						? (s, p, d) => filterAbsoluteUrls(filterXSS(originalRender(s, p, d), xssOptions))
+						// https://datatables.net/reference/option/columns.render
+						// "render" property having "string" or "object" data type is not obvious for filtering, so do not pass such things to UI for now
+						: $.fn.dataTable.render.text()
+				});
+			}
+		});
 	}
 
 	ko.bindingHandlers.dataTable = {
-	
+
 		init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
 
             jQuery.fn.dataTableExt.oSort["numberAbs-desc"] = function(x, y) {
@@ -93,24 +115,18 @@ define([
             jQuery.fn.dataTableExt.oSort["numberAbs-asc"] = function(x, y) {
                 return sortAbs(x, y);
 						}
-						
-						jQuery.fn.dataTableExt.oSort["datetime-formatted-asc"] = (x, y) => {
-							const { first, second } = parseDates(x, y);
-							return formatDates(first, second);
-						}
-
-						jQuery.fn.dataTableExt.oSort["datetime-formatted-desc"] = (x, y) => {
-							const { first, second } = parseDates(x, y);
-							return formatDates(second, first);
-						}
 
 			var binding = ko.utils.unwrapObservable(valueAccessor());
 			// If the binding is an object with an options field,
 			// initialise the dataTable with those options.
 			if (binding.options) {
-				
+
+				const defaultTableOptions = commonUtils.getTableOptions('M')
+				binding.options.pageLength = binding.options.pageLength || defaultTableOptions.pageLength;
+				binding.options.lengthMenu = binding.options.lengthMenu || defaultTableOptions.lengthMenu;
+
 				// allow row level binding context
-				const createdRow = binding.options.createdRow;  
+				const createdRow = binding.options.createdRow;
 				binding.options.createdRow = (row, data, index) => {
 					if (createdRow) {
 						createdRow(row, data, index);
@@ -119,33 +135,16 @@ define([
 					ko.applyBindings(bindingContext.createChildContext(data), row);
 				};
 				// test for 'select' column (must be first column in column definition
-				const columns = binding.options.columns;
-				
-				if (columns && columns[0] == 'select') {
-					columns[0] = { width:'20px', orderable: false, class: 'select', render: renderSelected };
-					$(element).on("click","td > span.fa.fa-check-circle", function () {
-						$(this).toggleClass('selected');
-					});
-				}
-				
+
+
 				const xssOptions = config.xssOptions;
 
-				binding.options.columns = columns.map((column) => {
-					const originalRender = column.render;
-					const originalDataAccessor = column.data;
-					const hasOriginalRender = typeof originalRender === 'function';
-					const hasDataAccessor = typeof originalDataAccessor === 'function';
-					
-					return Object.assign({}, column, {
-						data: hasDataAccessor
-							? d => filterAbsoluteUrls(filterXSS(originalDataAccessor(d), xssOptions))
-							: filterAbsoluteUrls(filterXSS(originalDataAccessor, xssOptions)),
-						render: hasOriginalRender
-							? (s, p, d) => filterAbsoluteUrls(filterXSS(originalRender(s, p, d), xssOptions))
-              // https://datatables.net/reference/option/columns.render
-              // "render" property having "string" or "object" data type is not obvious for filtering, so do not pass such things to UI for now
-							: undefined
-					});
+				const oColumns = mapColumns(element, binding, xssOptions);
+
+				const language = binding.options.language;
+				const options = Object.assign({}, binding.options, {
+					columns: oColumns,
+					language: ko.unwrap(language),
 				});
 
 				// For case of complex header which uses data-bindings (https://datatables.net/examples/advanced_init/complex_header.html)
@@ -153,20 +152,55 @@ define([
 					ko.applyBindings(bindingContext, $(element).find('thead')[0]);
 				}
 
-				$(element).DataTable(binding.options);
-				
+				let subscription = null;
+				if (! $.fn.dataTable.isDataTable(element)) {
+					$(element).DataTable(Object.assign({}, options));
+
+					if (ko.isComputed(language)) {
+						subscription = language.subscribe((newLanguage) => {
+							$(element).DataTable().clear().destroy();
+							const opts = Object.assign({}, options, {
+								columns: mapColumns(element, binding, xssOptions),
+								language: newLanguage,
+								destroy: true,
+							});
+							const table = $(element).DataTable(opts);
+							table.rows.add(ko.unwrap(binding.data || binding));
+							table.draw();
+						});
+					}
+				}
+
 				if (binding.api != null)
 				{
 					// expose datatable API to context's api binding.
 					binding.api({
-						getSelectedData: function() { return _getSelectedData(element);}
+						getRows: function (predicate) { return _getRows(element, predicate); },
+						getSelectedData: function() { return _getTableData(element, 'selected');},
+						getFilteredData: function() { return _getTableData(element, 'filtered');},
 					});
 				}
+				// Workaround for bug when datatable header column width is not adjusted to column values when using scrollY datatable option
+				// https://stackoverflow.com/questions/32679625/jquery-datatables-header-is-not-adjusting-to-column-values-initially-but-adjust
+				if (!!binding.options.scrollY) {
+					setTimeout(() => 	$(element).DataTable().columns.adjust().draw('page'), 0);
+				}
+
+				// setup dispose callback:
+				ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
+					// This will be called when the element is removed by Knockout or
+					// if some other part of your code calls ko.removeNode(element)
+					if (subscription) {
+						subscription.dispose();
+					}
+					$(element).DataTable().destroy(true);
+					$(element).empty();
+				});
 			}
-			
+
 			return {
 				controlsDescendantBindings: true
-			};			
+			};
 		},
 		update: function (element, valueAccessor) {
 			var binding = ko.utils.unwrapObservable(valueAccessor());
@@ -174,10 +208,10 @@ define([
 
 			// assign data to either the binding's data or the actual binding.
 			var data = ko.utils.unwrapObservable(binding.data || binding);
-			
+
 			// clear events that .on() attached to previously. Prior to this update, the binding may have specified an 'onRowClick' option, but no longer does.
 			$(element).off("click","tr");
-			
+
 			if (binding.onRowClick != null) // attach a onRowclick handler if the options binding specifies it.
 			{
 				$(element).on("click","tr", function(evt)
@@ -195,8 +229,12 @@ define([
 			// Rebuild table from data source specified in binding
 			if (data.length > 0)
 				table.rows.add(data);
-			
-			table.draw();
+
+			// drawing may access observables, which updating we do not want to trigger a redraw to the table
+			// see: https://knockoutjs.com/documentation/computed-dependency-tracking.html#IgnoringDependencies
+			ko.ignoreDependencies(table.draw);
 		}
+
+
 	};
 });

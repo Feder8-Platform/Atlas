@@ -5,7 +5,12 @@ define([
 	'utils/AutoBind',
 	'utils/CommonUtils',
 	'services/AuthAPI',
+	'services/ConceptSet',
+	'components/conceptset/ConceptSetStore',
+	'atlas-state',
 	'../const',
+  'appConfig',
+  'const',
   'components/tabs',
   'circe'
 ], function (
@@ -15,20 +20,26 @@ define([
 	AutoBind,
 	commonUtils,
 	authApi,
+	conceptSetService,
+	ConceptSetStore,
+	sharedState,
 	constants,
+	config,
+	globalConstants,
 ) {
 	class ConceptsetList extends AutoBind(Component) {
 		constructor(params) {
 			super(params);
-			this.model = params.model;
-	
+			this.conceptSetStore = ConceptSetStore.getStore(ConceptSetStore.sourceKeys().repository);
+			this.currentConceptSet = this.conceptSetStore.current;
 			this.canCreateConceptSet = ko.pureComputed(function () {
-				return authApi.isPermittedCreateConceptset();
+				return ((authApi.isAuthenticated() && authApi.isPermittedCreateConceptset()) || !config.userAuthenticationEnabled);
 			});
-		}		
+			this.tableOptions = commonUtils.getTableOptions('L');
+		}
 
 		onRespositoryConceptSetSelected (conceptSet) {
-			window.location.href = constants.paths.mode(conceptSet.id);
+			commonUtils.routeTo(constants.paths.mode(conceptSet.id));
 		}
 
 		onConceptSetBrowserAction (result) {
@@ -40,9 +51,8 @@ define([
 		}
 
 		newConceptSet() {
-			if (this.model.currentConceptSet() == undefined) {
-				this.model.currentConceptSetSource('repository');
-				document.location = constants.paths.mode();
+			if (this.currentConceptSet() == undefined) {
+				commonUtils.routeTo(constants.paths.mode());
 			}
 		}
 

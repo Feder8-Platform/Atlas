@@ -8,6 +8,7 @@ define([
 	'assets/ohdsi.util',
 	'./services/JobService',
 	'services/User',
+	'services/role',
 	'./services/PermissionService',
 	'./const',
 	'moment',
@@ -26,6 +27,7 @@ define([
 	ohdsiUtil,
 	jobService,
 	userService,
+	roleService,
 	permissionService,
 	Const,
 	moment,
@@ -54,14 +56,13 @@ define([
 		constructor(params) {
 			super(params);
 
-			this.model = params.model;
-			this.updateRoles = params.model.updateRoles;
 			this.roles = sharedState.roles;
 			this.jobId = ko.observable();
 			this.loading = ko.observable();
 			this.job = ko.observable({});
 			this.jobDirtyFlag = ko.observable({ isDirty: () => false });
 			this.providers = ko.observableArray();
+			this.selectedProvider = ko.observable();
 			this.isSavePermitted = ko.computed(() => permissionService.isPermittedEdit(this.jobId()) && this.jobDirtyFlag().isDirty());
 			this.isDeletePermitted = ko.computed(() => permissionService.isPermittedDelete(this.jobId()));
 			this.jobEnds = ko.observable("never");
@@ -78,7 +79,7 @@ define([
 				weekdays: this.weekdays,
 				jobEnds: this.jobEnds,
 				rolesMapping: this.roleGroups,
-				provider: this.job().providerType,
+				provider: this.selectedProvider,
 			};
 		}
 
@@ -98,8 +99,8 @@ define([
 			this.job({
 				...job,
 				enabled: ko.observable(job.enabled),
-				preseveRoles: ko.observable(job.preserveRoles),
-				providerType: ko.observable(job.providerType),
+				preserveRoles: ko.observable(job.preserveRoles),
+				providerType: this.selectedProvider,
 				startDate: ko.observable(toDate(job.startDate)),
 				frequency: ko.observable(job.frequency),
 				recurringUntilDate: ko.observable(toDate(job.recurringUntilDate)),
@@ -108,7 +109,7 @@ define([
 				weekdays: this.weekdays,
 				roleGroups: this.roleGroups,
 			});
-			this.updateRoles()
+			roleService.updateRoles()
 				.then(roles => {
 					const mapping = this.roles().filter(role => !role.defaultImported).map(role => (
 						{
@@ -133,7 +134,7 @@ define([
 			}
 			this.weekdays.removeAll();
 			job.weekDays.forEach(wd => this.weekdays.push(wd));
-			this.jobDirtyFlag(new ohdsiUtil.dirtyFlag(this.job));
+			this.jobDirtyFlag(new ohdsiUtil.dirtyFlag(this.job()));
 			this.jobId.valueHasMutated();
 		}
 
@@ -148,7 +149,10 @@ define([
 			} else {
 				this.loading(true);
 				jobService.getJob(jobId)
-					.then(res => this.setupJob(res))
+					.then(res => {
+						this.selectedProvider(res.providerType);
+						this.setupJob(res);
+					})
 					.finally(() => this.loading(false));
 			}
 		}

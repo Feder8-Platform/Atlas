@@ -8,6 +8,8 @@ define([
   'services/CDMResultsAPI',
   'jquery',
   'atlas-state',
+  'components/conceptset/ConceptSetStore',
+  'conceptsetbuilder/InputTypes/ConceptSet',
   'components/modal',
 ], function (
 	ko,
@@ -19,34 +21,38 @@ define([
   cdmResultsAPI,
   $,
   sharedState,
+  ConceptSetStore,
+  ConceptSet
 ) {
 	class ConceptsetCompare extends AutoBind(Component) {
 		constructor(params) {
 			super(params);
-      this.model = params.model;
       this.isModalShown = ko.observable(false);
       this.saveConceptSetFn = params.saveConceptSetFn;
       this.saveConceptSetShow = params.saveConceptSetShow;
-      this.compareCS1Id = ko.observable(this.model.currentConceptSet().id); // Init to the currently loaded cs
-      this.compareCS1Caption = ko.observable(this.model.currentConceptSet().name());
+      this.currentConceptSet = ConceptSetStore.repository().current;
+      this.selectedConcepts = ko.pureComputed(() => this.currentConceptSet() && this.currentConceptSet().expression.items());
+      this.currentConceptSetDirtyFlag = sharedState.RepositoryConceptSet.dirtyFlag;
+      this.compareCS1Id = ko.observable(this.currentConceptSet().id); // Init to the currently loaded cs
+      this.compareCS1Caption = ko.observable(this.currentConceptSet().name());
       this.compareCS1ConceptSet = ko.observable(sharedState.selectedConcepts());
       this.compareCS1ConceptSetExpression = ko.pureComputed(() => {
-        if (this.compareCS1Id === this.model.currentConceptSet().id) {
-          return ko.toJS(sharedState.selectedConcepts());
+        if (this.currentConceptSet() && this.compareCS1Id() === this.currentConceptSet().id) {
+          return ko.toJS(this.selectedConcepts());
         } else {
-          return ko.toJS(this.compareCS1ConceptSet);
+          return ko.toJS(this.compareCS1ConceptSet());
         }
       });
       this.compareCS2Id = ko.observable(0);
       this.compareCS2Caption = ko.observable();
       this.compareCS2ConceptSet = ko.observable(null);
       this.compareCS2ConceptSetExpression = ko.pureComputed(() => {
-        if (this.compareCS2Id === this.model.currentConceptSet().id) {
-          return ko.toJS(sharedState.selectedConcepts());
+        if (this.currentConceptSet() && this.compareCS2Id() === this.currentConceptSet().id) {
+          return ko.toJS(this.selectedConcepts());
         } else {
-          return ko.toJS(this.compareCS2ConceptSet);
+          return ko.toJS(this.compareCS2ConceptSet());
         }
-      })
+      });
       this.compareResults = ko.observable();
       this.comparisonTargets = ko.observable(null);
       this.compareError = ko.pureComputed(() => {
@@ -67,14 +73,14 @@ define([
         // that is currently open. If so, check to see if it is
         // "dirty" and if so, we are not ready to compare.
         let currentConceptSetClean = true;
-        if (conceptSetsSpecifiedAndDifferent && this.model.currentConceptSet()) {
+        if (conceptSetsSpecifiedAndDifferent && this.currentConceptSet()) {
           // If we passed the check above, then we'll enforce this condition
           // which also ensures that we have 2 valid concept sets specified
-          if (this.compareCS1Id() == this.model.currentConceptSet().id ||
-              this.compareCS2Id() == this.model.currentConceptSet().id) {
+          if (this.compareCS1Id() == this.currentConceptSet().id ||
+              this.compareCS2Id() == this.currentConceptSet().id) {
             // One of the concept sets that is involved in the comparison
             // is the one that is currently loaded; check to see if it is dirty
-            currentConceptSetClean = !this.model.currentConceptSetDirtyFlag().isDirty();
+            currentConceptSetClean = !this.currentConceptSetDirtyFlag().isDirty();
           }
         }
 
@@ -102,16 +108,16 @@ define([
       this.compareLoading = ko.observable(false);
       this.compareLoadingClass = ko.pureComputed(() => {
         return this.compareLoading() ? "fa fa-circle-o-notch fa-spin fa-lg" : "fa fa-question-circle fa-lg"
-      })
-      this.compareNewConceptSetName = ko.observable(this.model.currentConceptSet().name() + " - From Comparison");
+      });
+      this.compareNewConceptSetName = ko.observable(this.currentConceptSet().name() + ko.i18n('cs.browser.compare.saveFromComparisonNameTail', ' - From Comparison')());
       this.compareResultsColumns = [{
         data: d => {
             if (d.conceptIn1Only == 1) {
-              return '1 Only'
+              return ko.i18n('facets.match.only1', '1 Only')();
             } else if (d.conceptIn2Only == 1) {
-              return '2 Only'
+              return ko.i18n('facets.match.only2', '2 Only')();
             } else {
-              return 'Both'
+              return ko.i18n('facets.match.both', 'Both')();
             }
           },
         },
@@ -142,6 +148,9 @@ define([
           data: d => d.descendantRecordCount,
         },
         {
+          data: d => d.personRecordCount,
+        },
+        {
           data: d => d.domainId,
         },
         {
@@ -150,40 +159,37 @@ define([
       ];
 
       this.compareResultsOptions = {
-        lengthMenu: [
-          [10, 25, 50, 100, -1],
-          ['10', '25', '50', '100', 'All']
-        ],
+        ...commonUtils.getTableOptions('L'),
         order: [
           [1, 'asc'],
           [2, 'desc']
         ],
         Facets: [{
-            'caption': 'Match',
+            'caption': ko.i18n('facets.caption.match', 'Match'),
             'binding': d => {
               if (d.conceptIn1Only == 1) {
-                return '1 Only'
+                return ko.i18n('facets.match.only1', '1 Only');
               } else if (d.conceptIn2Only == 1) {
-                return '2 Only'
+                return ko.i18n('facets.match.only2', '2 Only');
               } else {
-                return 'Both'
+                return ko.i18n('facets.match.both', 'Both');
               }
             },
           },
           {
-            'caption': 'Class',
+            'caption': ko.i18n('facets.caption.class', 'Class'),
             'binding': d => d.conceptClassId,
           },
           {
-            'caption': 'Domain',
+            'caption': ko.i18n('facets.caption.domain', 'Domain'),
             'binding': d => d.domainId,
           },
           {
-            'caption': 'Vocabulary',
+            'caption': ko.i18n('facets.caption.vocabulary', 'Vocabulary'),
             'binding': d => d.vocabularyId,
           },
           {
-            'caption': 'Has Records',
+            'caption': ko.i18n('facets.caption.hasRecords', 'Has Records'),
             'binding': d => {
               var val = d.recordCount;
               if (val.replace)
@@ -196,9 +202,22 @@ define([
             },
           },
           {
-            'caption': 'Has Descendant Records',
+            'caption': ko.i18n('facets.caption.hasDescendantRecords', 'Has Descendant Records'),
             'binding': d => {
               var val = d.descendantRecordCount;
+              if (val.replace)
+                val = parseInt(val.replace(/\,/g, '')); // Remove comma formatting and treat as int
+              if (val > 0) {
+                return 'true'
+              } else {
+                return 'false'
+              }
+            },
+          },
+          {
+            'caption': ko.i18n('facets.caption.hasPersonRecords', 'Has Person Records'),
+            'binding': d => {
+              var val = d.personRecordCount;
               if (val.replace)
                 val = parseInt(val.replace(/\,/g, '')); // Remove comma formatting and treat as int
               if (val > 0) {
@@ -228,6 +247,7 @@ define([
       this.recordCountClass = ko.pureComputed(() => {
         return this.recordCountsRefreshing() ? "fa fa-circle-o-notch fa-spin fa-lg" : "fa fa-database fa-lg";
       });
+      this.conceptSetLoading = ko.observable(false);
     }
 
     chooseCS1() {
@@ -287,13 +307,10 @@ define([
     compareCreateNewConceptSet() {
 			const dtItems = $('#compareResults table')
 				.DataTable()
-				.data();
-			const conceptSet = {};
-			conceptSet.id = 0;
-			conceptSet.name = this.compareNewConceptSetName;
-			const selectedConcepts = [];
-			$.each(dtItems, (index, item) => {
-				const concept = {
+				.data()
+				.toArray();
+			const conceptSetItems = dtItems.map(item => ({
+				concept: {
 					CONCEPT_CLASS_ID: item.conceptClassId,
 					CONCEPT_CODE: item.conceptCode,
 					CONCEPT_ID: item.conceptId,
@@ -305,26 +322,30 @@ define([
 					STANDARD_CONCEPT_CAPTION: null,
 					VOCABULARY_ID: null,
 				}
-				const newItem = {
-					concept: concept,
-					isExcluded: ko.observable(false),
-					includeDescendants: ko.observable(false),
-					includeMapped: ko.observable(false),
-				}
-				selectedConcepts.push(newItem);
-			})
-			this.saveConceptSetFn("#txtNewConceptSetName", conceptSet, selectedConcepts);
-			this.saveConceptSetShow(false);
-    }
+			}));
 
-    conceptsetSelected(d) {
+			const conceptSet = new ConceptSet({
+				id: 0,
+				name: this.compareNewConceptSetName(),
+				expression: {
+					items: conceptSetItems
+				}
+			});
+			this.saveConceptSetFn(conceptSet, "#txtNewConceptSetName");
+			this.saveConceptSetShow(false);
+		}
+
+    async conceptsetSelected(d) {
 			this.isModalShown(false);
-			vocabularyProvider.getConceptSetExpression(d.id)
-				.then((csExpression) => {
-					this.targetId(d.id);
-					this.targetCaption(d.name);
-					this.targetExpression(csExpression.items);
-				});
+			this.conceptSetLoading(true);
+			try {
+				const csExpression = await vocabularyProvider.getConceptSetExpression(d.id);
+				this.targetId(d.id);
+				this.targetCaption(d.name);
+				this.targetExpression(csExpression.items);
+			}finally {
+				this.conceptSetLoading(false);
+			}
     }
 
     showSaveNewModal() {

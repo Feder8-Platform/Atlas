@@ -4,15 +4,16 @@ define(function(require, exports) {
     var config = require('appConfig');
     var ko = require('knockout');
     var cookie = require('services/CookieAPI');
-    var state = require('atlas-state');
-    var ErrorNotification = require('errors/ErrorNotification');
-
     var TOKEN_HEADER = 'Bearer';
     var LOCAL_STORAGE_PERMISSIONS_KEY = "permissions";
     const httpService = require('services/http');
 
     const AUTH_PROVIDERS = {
         IAP: 'AtlasGoogleSecurity',
+    };
+
+    const AUTH_CLIENTS = {
+        SAML: 'AUTH_CLIENT_SAML',
     };
 
     const signInOpened = ko.observable(false);
@@ -31,6 +32,16 @@ define(function(require, exports) {
     };
 
     var token = ko.observable(getBearerToken());
+    var authClient = ko.computed({
+        owner: ko.observable(localStorage.getItem("auth-client")),
+        read: function() { 
+            return this(); 
+        },
+        write: function( newValue ) {
+            localStorage.setItem("auth-client", newValue);
+            this( newValue );
+        }
+    });
 
     var getAuthorizationHeader = function () {
         if (!token()) {
@@ -38,48 +49,6 @@ define(function(require, exports) {
         }
         return TOKEN_HEADER + ' ' + token();
     };
-
-    function addErrorNotification(xhr) {
-        if(xhr.status !== 401) {
-            errorJson = xhr.responseJSON || {};
-            errorJson.statusCode = xhr.status;
-            state.errorNotifications.queue(new ErrorNotification(errorJson));
-            addErrorMessageOnTopOfPage()
-        }
-    }
-
-    function addErrorMessageOnTopOfPage() {
-        var modalIsOpen = $('.modal-open').length == 1;
-        var errorMessage = document.createElement("div");
-        errorMessage.setAttribute("id", "general-error-message")
-        $(errorMessage).addClass("alert");
-        $(errorMessage).addClass("alert-danger");
-        $(errorMessage).addClass("alert-dismissible");
-
-        var close = document.createElement("a");
-        close.setAttribute("data-dismiss", "alert");
-        close.setAttribute("aria-label", "close");
-        $(close).addClass("close");
-        close.innerHTML = "&times;"
-
-        errorMessage.innerHTML = "Something went wrong, check <i class=\"fa fa-exclamation-triangle error-icon\"></i> on the top right for more details.";
-        errorMessage.appendChild(close);
-        if (modalIsOpen) {
-            if ($(".modal.in .modal-content #general-error-message").length == 0) {
-                var modal = $('.modal.in .modal-content .modal-header');
-                modal.after(errorMessage);
-                $(".modal.in").on('hide.bs.modal', function () {
-                    $(errorMessage).remove();
-                });
-            }
-        } else {
-            if ($("user-bar #general-error-message").length == 0) {
-                var userBar = $('user-bar');
-                userBar.append(errorMessage);
-            }
-        }
-    }
-
     $.ajaxSetup({
         beforeSend: function(xhr, settings) {
             if (!authProviders[settings.url] && settings.url.startsWith(config.api.url)) {
@@ -88,12 +57,10 @@ define(function(require, exports) {
         }
     });
 
-    $(document).ajaxError(function( event, jqxhr, settings, thrownError ){
-        addErrorNotification(jqxhr);
-    });
-
+    var reloginRequired = ko.observable(false);
     var subject = ko.observable();
     var permissions = ko.observable();
+    var fullName = ko.observable();
     const authProvider = ko.observable();
 
     authProvider.subscribe(provider => {
@@ -113,6 +80,7 @@ define(function(require, exports) {
                 permissions(info.permissions.map(p => p.permission));
                 subject(info.login);
                 authProvider(jqXHR.getResponseHeader('x-auth-provider'));
+                fullName(info.name ? info.name : info.login);
                 resolve();
             },
             error: function (err) {
@@ -285,7 +253,7 @@ define(function(require, exports) {
         if (!isPromisePending(refreshTokenPromise)) {
           refreshTokenPromise = httpService.doGet(getServiceUrl() + "user/refresh");
           refreshTokenPromise.then(({ data, headers }) => {
-            setAuthParams(headers.get(TOKEN_HEADER));
+            setAuthParams(headers.get(TOKEN_HEADER), data.permissions);
           });
           refreshTokenPromise.catch(() => {
             resetAuthParams();
@@ -487,30 +455,34 @@ define(function(require, exports) {
     const isPermittedPostViewedNotifications = function() {
         return isPermitted('notifications:viewed:post');
     };
+    const isPermittedGetExecutionService = function() {
+        return isPermitted('executionservice:*:get');
+    };
+    const isPermittedGetSourceDaimonPriority = function() {
+        return isPermitted('source:daimon:priority:get');
+    };
 
-    const isPermittedImportUsers = function() {
-        return isPermitted('user:import:post') && isPermitted('user:import:*:post');
-    }
+		const isPermittedImportUsers = function() {
+			return isPermitted('user:import:post') && isPermitted('user:import:*:post');
+		}
 
     const hasSourceAccess = function (sourceKey) {
         return isPermitted(`source:${sourceKey}:access`) || /* For 2.5.* and below */ isPermitted(`cohortdefinition:*:generate:${sourceKey}:get`);
-	}
-
-    var isPermittedImportCohortDefinition = function() {
-        return isPermitted("cohortdefinition:hss:list:all:get") && isPermitted("cohortdefinition:hss:select:post");
     }
 
-    var isPermittedExportCohortDefinition = function(definitionId) {
-        return isPermitted("cohortdefinition:"+definitionId+":export:get");
-    }
+    const isPermittedClearServerCache = function (sourceKey) {
+        return isPermitted(`cache:clear:get`);
+    };
 
-    var isPermittedExportCohortDefinitionGenerationResults = function(definitionId, source) {
-        return isPermitted("cohortdefinition:"+definitionId+":export:"+source+":get");
-    }
+    const isPermittedRunAs = () => isPermitted('user:runas:post');
 
-	var setAuthParams = function (tokenHeader) {
-        token(tokenHeader);
-        return loadUserInfo();
+    const isPermittedViewDataSourceReport = sourceKey => isPermitted(`cdmresults:${sourceKey}:*:get`);
+
+    const isPermittedViewDataSourceReportDetails = sourceKey => isPermitted(`cdmresults:${sourceKey}:*:*:get`);
+
+	const setAuthParams = (tokenHeader, permissionsStr = '') => {
+        !!tokenHeader && token(tokenHeader);
+        !!permissionsStr && permissions(permissionsStr.split('|'));
     };
 
     var resetAuthParams = function () {
@@ -519,28 +491,27 @@ define(function(require, exports) {
         permissions(null);
     };
 
-    var resetToken = false;
-
-    var extendToken = function(){
-        resetToken = true;
-        return true;
-    }
-
-    var tokenRefreshInterval = setInterval(function(){
-        if(resetToken){
-            refreshToken();
-            resetToken = false;
-        } else {
-            clearInterval(tokenRefreshInterval)
-            resetAuthParams();
-        }
-    }, 900000);
+    const runAs = function(login, success, error) {
+        return $.ajax({
+					method: 'POST',
+					url: config.webAPIRoot + 'user/runas',
+					data: {
+						login,
+					},
+          success,
+          error,
+        });
+    };
 
     var api = {
         AUTH_PROVIDERS: AUTH_PROVIDERS,
+        AUTH_CLIENTS: AUTH_CLIENTS,
 
         token: token,
+        authClient: authClient,
+        reloginRequired: reloginRequired,
         subject: subject,
+        fullName,
         tokenExpirationDate: tokenExpirationDate,
         tokenExpired: tokenExpired,
         authProvider: authProvider,
@@ -553,7 +524,6 @@ define(function(require, exports) {
         isAuthenticated: isAuthenticated,
 		signInOpened: signInOpened,
         isPermitted: isPermitted,
-        extendToken: extendToken,
 
         isPermittedGetAllNotifications: isPermittedGetAllNotifications,
         isPermittedGetViewedNotifications: isPermittedGetViewedNotifications,
@@ -613,16 +583,20 @@ define(function(require, exports) {
         isPermittedEditSource: isPermittedEditSource,
         isPermittedDeleteSource: isPermittedDeleteSource,
         isPermittedCheckSourceConnection: isPermittedCheckSourceConnection,
+        isPermittedGetSourceDaimonPriority: isPermittedGetSourceDaimonPriority,
 
-        isPermittedImportCohortDefinition: isPermittedImportCohortDefinition,
-        isPermittedExportCohortDefinition: isPermittedExportCohortDefinition,
-        isPermittedExportCohortDefinitionGenerationResults: isPermittedExportCohortDefinitionGenerationResults,
+        isPermittedGetExecutionService: isPermittedGetExecutionService,
 
         isPermittedImportUsers,
         hasSourceAccess,
+        isPermittedRunAs,
+        isPermittedClearServerCache,
+        isPermittedViewDataSourceReport,
+        isPermittedViewDataSourceReportDetails,
 
         loadUserInfo,
         TOKEN_HEADER,
+        runAs,
     };
 
     return api;

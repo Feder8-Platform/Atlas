@@ -3,39 +3,95 @@ define(
 		'knockout',
 		'services/http',
 		'services/AuthAPI',
+		'services/role',
 		'appConfig',
 		'lscache',
 		'atlas-state',
 		'jquery',
 		'services/Execution',
 		'services/SourceAPI',
-		'Model',
+		'services/I18nService',
+		'services/EventBus',
+		'services/ConceptSet',
+		'utils/CommonUtils',
+		'utils/BemHelper',
 		'const',
 		'databindings',
+		'less!app.less',
 	],
 	(
 		ko,
 		httpService,
 		authApi,
+		roleService,
 		config,
 		lscache,
 		sharedState,
 		$, // TODO: get rid of jquery
 		executionService,
 		sourceApi,
-		GlobalModel,
+		i18nService,
+		EventBus,
+		conceptSetService,
+		commonUtils,
+		BemHelper,
 		constants,
 	) => {
 		return class Application {
-			constructor(model, router) {
+			constructor(router) {
 				// establish base priorities for daimons
 				this.evidencePriority = 0;
 				this.vocabularyPriority = 0;
 				this.densityPriority = 0;
-				this.pageModel = model;
 				this.router = router;
+				this.EventBus = EventBus;
+				const bemHelper = new BemHelper('app');
+				this.classes = bemHelper.run.bind(bemHelper);
+				this.hasUnsavedChanges = ko.pureComputed(() => {
+					return (sharedState.RepositoryConceptSet.dirtyFlag().isDirty()
+						|| sharedState.CohortDefinition.dirtyFlag().isDirty()
+						|| sharedState.IRAnalysis.dirtyFlag().isDirty()
+						|| sharedState.CohortPathways.dirtyFlag().isDirty()
+						|| sharedState.estimationAnalysis.dirtyFlag().isDirty()
+						|| sharedState.predictionAnalysis.dirtyFlag().isDirty()
+						|| sharedState.CohortCharacterization.dirtyFlag().isDirty()
+					);
+				});
+				this.initializationComplete = ko.pureComputed(() => {
+					return sharedState.appInitializationStatus() != constants.applicationStatuses.initializing;
+				});
+
+
+				this.appInitializationStatus = sharedState.appInitializationStatus;
+				this.noSourcesAvailable = ko.pureComputed(() => {
+					return this.appInitializationStatus() === constants.applicationStatuses.noSourcesAvailable && this.router.currentView() !== 'ohdsi-configuration';
+				});
+				this.appInitializationErrorMessage =  ko.computed(() => {
+					if (this.noSourcesAvailable()) {
+						return ko.i18n('commonErrors.noSources', 'The current WebAPI has no sources defined.<br/>Please add one or more on <a href="#/configure">configuration</a> page.')();
+					} else if (this.appInitializationStatus() !== constants.applicationStatuses.noSourcesAvailable) {
+						return ko.i18n('commonErrors.webapiConnectError', 'Unable to connect to an instance of the WebAPI.<br/>Please contact your administrator to resolve this issue.')();
+					}
+				});
+				this.pageTitle = ko.pureComputed(() => {
+					let pageTitle = "ATLAS";
+					switch (this.router.currentView()) {
+						case 'loading':
+							pageTitle = `${pageTitle}: ` + ko.i18n('common.loading', 'Loading')();
+							break;
+						default:
+							pageTitle = `${pageTitle}: ${ko.unwrap(this.router.activeRoute().title)}`;
+							break;
+					}
+
+					if (this.hasUnsavedChanges()) {
+						pageTitle = `*${pageTitle} ` + ko.i18n('common.unsaved', '(unsaved)')();
+					}
+
+					return pageTitle;
+				})
 			}
-			
+
 			/**
 			 * Performs initial setup
 			 * @returns Promise
@@ -47,11 +103,17 @@ define(
 					config.api.isExecutionEngineAvailable = ko.observable(false);
 					ko.applyBindings({
 						// provide to a view access to both model and the router via this.router
-						...this.pageModel,
 						...this,
 					}, document.getElementsByTagName('html')[0]);
 					httpService.setUnauthorizedHandler(() => authApi.resetAuthParams());
 					httpService.setUserTokenGetter(() => authApi.getAuthorizationHeader());
+
+					try{
+						await i18nService.getAvailableLocales();
+					} catch (e) {
+						reject(e.message);
+					}
+
 					if (config.userAuthenticationEnabled) {
 						try {
 							await authApi.loadUserInfo();
@@ -61,10 +123,9 @@ define(
 
 					}
 					authApi.isAuthenticated.subscribe(executionService.checkExecutionEngineStatus);
-					this.router.setCurrentViewHandler(this.pageModel.handleViewChange);
-					this.router.setModelGetter(() => this.pageModel);
 					this.attachGlobalEventListeners();
 					await executionService.checkExecutionEngineStatus(authApi.isAuthenticated());
+
 
 					resolve();
 				});
@@ -79,7 +140,7 @@ define(
 			synchronize() {
 				const promise = Promise.all([
 					this.initServiceInformation(),
-					this.pageModel.updateRoles(),
+					roleService.updateRoles(),
 				]);
 				promise.then(() => {
 					this.router.run();
@@ -91,113 +152,9 @@ define(
 
 			attachGlobalEventListeners() {
 				const self = this;
-				// handle select all
-					$(document)
-					.on('click', 'th i.fa.fa-shopping-cart', function () {
-						if (self.pageModel.currentConceptSet() == undefined) {
-							var newConceptSet = {
-								name: ko.observable("New Concept Set"),
-								id: 0
-							}
-							self.pageModel.currentConceptSet(newConceptSet);
-						}
-
-						var table = $(this)
-							.closest('.dataTable')
-							.DataTable();
-						var concepts = table.rows({
-								search: 'applied'
-							})
-							.data();
-						var selectedConcepts = sharedState.selectedConcepts();
-
-						for (var i = 0; i < concepts.length; i++) {
-							var concept = concepts[i];
-							if (sharedState.selectedConceptsIndex[concept.CONCEPT_ID]) {
-								// ignore if already selected
-							} else {
-								var conceptSetItem = self.pageModel.createConceptSetItem(concept);
-								sharedState.selectedConceptsIndex[concept.CONCEPT_ID] = 1;
-								selectedConcepts.push(conceptSetItem)
-							}
-						}
-						sharedState.selectedConcepts(selectedConcepts);
-						ko.contextFor(this)
-							.$component.reference.valueHasMutated();
-					});
-
-				// handling concept set selections
-				$(document)
-					.on('click', 'td i.fa.fa-shopping-cart, .asset-heading i.fa.fa-shopping-cart', function () {
-						if (self.pageModel.currentConceptSet() == undefined) {
-							var newConceptSet = {
-								name: ko.observable("New Concept Set"),
-								id: 0
-							}
-							self.pageModel.currentConceptSet({
-								name: ko.observable('New Concept Set'),
-								id: 0
-							});
-							self.pageModel.currentConceptSetSource('repository');
-						}
-
-						$(this)
-							.toggleClass('selected');
-						var concept = ko.contextFor(this)
-							.$data;
-
-						if ($(this)
-							.hasClass('selected')) {
-							var conceptSetItem = self.pageModel.createConceptSetItem(concept);
-							sharedState.selectedConceptsIndex[concept.CONCEPT_ID] = 1;
-							sharedState.selectedConcepts.push(conceptSetItem);
-						} else {
-							delete sharedState.selectedConceptsIndex[concept.CONCEPT_ID];
-							sharedState.selectedConcepts.remove(function (i) {
-								return i.concept.CONCEPT_ID === concept.CONCEPT_ID;
-							});
-						}
-
-						// If we are updating a concept set that is part of a cohort definition
-						// then we need to notify any dependent observables about this change in the concept set
-						if (self.pageModel.currentCohortDefinition() && self.pageModel.currentConceptSetSource() === "cohort") {
-							var conceptSet = self.pageModel.currentCohortDefinition()
-								.expression()
-								.ConceptSets()
-								.find(function (item) {
-									return item.id === self.pageModel.currentConceptSet().id;
-								});
-							if (!$(this).hasClass("selected")) {
-								conceptSet.expression.items.remove(function (i) {
-									return i.concept.CONCEPT_ID === concept.CONCEPT_ID;
-								});
-							}
-							conceptSet.expression.items.valueHasMutated();
-							self.pageModel.resolveConceptSetExpressionSimple(conceptSet.expression)
-								.then(res => self.pageModel.loadIncluded(res.data))
-								.then(res => self.pageModel.loadSourcecodes());
-						}
-					});
-
-				// concept set selector handling
-				$(document)
-					.on('click', '.conceptSetTable i.fa.fa-shopping-cart', function () {
-						$(this)
-							.toggleClass('selected');
-						var conceptSetItem = ko.contextFor(this)
-							.$data;
-
-						delete sharedState.selectedConceptsIndex[conceptSetItem.concept.CONCEPT_ID];
-						sharedState.selectedConcepts.remove(function (i) {
-							return i.concept.CONCEPT_ID == conceptSetItem.concept.CONCEPT_ID;
-						});
-
-						self.pageModel.resolveConceptSetExpression();
-					});
-
 				$(window)
 					.bind('beforeunload', function () {
-						if (self.pageModel.hasUnsavedChanges())
+						if (self.hasUnsavedChanges())
 							return "Changes will be lost if you do not save.";
 					});
 			}
@@ -214,7 +171,7 @@ define(
 
 					if (cachedService && cachedService.sources) {
 						console.info('cached service');
-						config.api = cachedService;
+						config.api.sources = cachedService;
 						sourceApi.setSharedStateSources(cachedService.sources);
 						resolve();
 					} else {

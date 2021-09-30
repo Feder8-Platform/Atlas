@@ -1,6 +1,7 @@
 define(function (require, exports) {
 
 	var ko = require('knockout');
+	const constants = require('const');
 
 	// require depedent datatypes here
 	const observeName = function (cohortLink) {
@@ -15,7 +16,7 @@ define(function (require, exports) {
 
 			Object.assign(this, data);
 
-			this.name = ko.observable(data.name || 'New Cohort Pathway');
+			this.name = ko.observable(data.name || ko.unwrap(constants.newEntityNames.pathway));
 			this.targetCohorts = ko.observableArray(data.targetCohorts && data.targetCohorts.map(observeName));
 			this.eventCohorts = ko.observableArray(data.eventCohorts && data.eventCohorts.map(observeName));
 			
@@ -27,6 +28,8 @@ define(function (require, exports) {
 			
 			this.maxDepth = ko.observable(data.maxDepth||5);
 			this.maxDepth.numericValue = this.maxDepth.numeric();
+
+			this.allowRepeats = ko.observable(data.allowRepeats||false);
 		}
 
 	}

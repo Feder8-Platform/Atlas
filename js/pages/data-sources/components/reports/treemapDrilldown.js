@@ -44,6 +44,7 @@ define([
 			this.byValueAsConcept = false;
 			this.byOperator = false;
 			this.byQualifier = false;
+			this.byLengthOfEra = false;
 
 			// data
 			this.prevalenceByMonthData = ko.observable();
@@ -59,6 +60,7 @@ define([
 			this.upperLimitDistributionData = ko.observable();
 			this.recordsByUnitData = ko.observable();
 			this.valuesRelativeToNormData = ko.observable();
+			this.lengthOfEra = ko.observable();
 
 			this.commonBoxplotChartOptions = {
 				yMax: 0,
@@ -71,8 +73,8 @@ define([
 					xScale: null,
 					xFormat: d3.timeFormat("%m/%Y"),
 					tickFormat: d3.timeFormat("%Y"),
-					xLabel: "Date",
-					yLabel: "Prevalence per 1000 People",
+					xLabel: ko.i18n('dataSources.drilldown.chartFormat.date', 'Date'),
+					yLabel: ko.i18n('dataSources.drilldown.chartFormat.prevalencePer1000People', 'Prevalence per 1000 People'),
 				},
 				prevalenceByType: {
 					margin: {
@@ -83,8 +85,8 @@ define([
 					}
 				},
 				age: {
-					xLabel: 'Gender',
-					yLabel: 'Age at First Occurrence',
+					xLabel: ko.i18n('dataSources.drilldown.chartFormat.gender', 'Gender'),
+					yLabel: ko.i18n('dataSources.drilldown.chartFormat.ageAtFirstOccurrence', 'Age at First Occurrence'),
 					yFormat: d3.format(',.1s'),
 				},
 				frequencyDistribution: {
@@ -94,7 +96,7 @@ define([
 					yScale: d3.scaleLinear().domain([0, 100]),
 					yMax: 0,
 					xLabel: 'xLabel',
-					yLabel: '% of total number of persons',
+					yLabel: ko.i18n('dataSources.drilldown.chartFormat.percentOfTotalNumberOfPersons', '% of total number of persons'),
 					xValue: 'x',
 					yValue: 'y',
 					getTooltipBuilder: options => d => {
@@ -107,9 +109,9 @@ define([
 				},
 				prevalenceByGenderAgeYear: {
 					trellisSet: [],
-					trellisLabel: "Age Decile",
-					seriesLabel: "Year of Observation",
-					yLabel: "Prevalence Per 1000 People",
+					trellisLabel: ko.i18n('dataSources.drilldown.chartFormat.ageDecile', 'Age Decile'),
+					seriesLabel: ko.i18n('dataSources.drilldown.chartFormat.yearOfObservation', 'Year of Observation'),
+					yLabel: ko.i18n('dataSources.drilldown.chartFormat.prevalencePer1000People', 'Prevalence Per 1000 People'),
 					xFormat: d3.timeFormat("%Y"),
 					yFormat: d3.format("0.2f"),
 					tickPadding: 20,
@@ -137,6 +139,10 @@ define([
 						bottom: 5
 					}
 				},
+				lengthOfEra: {
+					yLabel: ko.i18n('dataSources.dashboardReport.days', 'Days'),
+					yFormat: d3.format('d')
+				},
 			};
 
 			this.scrollTo = function (s) {
@@ -153,17 +159,18 @@ define([
 			this.byValueAsConcept = params.byValueAsConcept;
 			this.byOperator = params.byOperator;
 			this.byQualifier = params.byQualifier;
+			this.byLengthOfEra = params.byLengthOfEra;
 			this.context = params.context;
-			this.currentConceptSubscription = params.currentConcept.subscribe(this.loadData.bind(this));
+			this.subscriptions.push(params.currentConcept.subscribe(this.loadData.bind(this)));
 			this.loadData(params.currentConcept());
-		}
-
-		dispose() {
-			this.currentConceptSubscription.dispose();
 		}
 
 		parseAgeData(rawAgeData) {
 			this.ageData(this.parseBoxplotData(rawAgeData).data);
+		}
+
+		parseLengthOfEra(rawLengthOfEra) {
+			this.lengthOfEra(this.parseBoxplotData(rawLengthOfEra).data);
 		}
 
 		parsePrevalenceByMonth(rawPrevalenceByMonth) {
@@ -213,7 +220,11 @@ define([
 					frequencyHistogram.INTERVAL_SIZE = 1;
 					const yScaleMax = (Math.floor((Math.max.apply(null, freqData.yNumPersons) + 5) / 10) + 1) * 10;
 					this.chartFormats.frequencyDistribution.yMax = yScaleMax;
-					this.chartFormats.frequencyDistribution.xLabel = `Count ('x' or more ${report}s)`;
+					this.chartFormats.frequencyDistribution.xLabel = ko.pureComputed(function () {
+						return ko.i18n('dataSources.drilldown.chartFormat.frequencyDistribution.xLabel1', 'Count ("x" or more ')() +
+							report() +
+							ko.i18n('dataSources.drilldown.chartFormat.frequencyDistribution.xLabel2', 's)')();
+					});
 					this.chartFormats.frequencyDistribution.ticks = Math.min(5, frequencyHistogram.INTERVALS);
 					const freqHistData = atlascharts.histogram.mapHistogram(frequencyHistogram);
 					this.frequencyDistributionData(freqHistData);
@@ -276,7 +287,7 @@ define([
 			this.parsePrevalenceByType(data.byType);
 			this.parsePrevalenceByGenderAgeYear(data.prevalenceByGenderAgeYear);
 			if (this.byFrequency) {
-				this.parseFrequencyDistribution(data.frequencyDistribution, this.currentReport.path);
+				this.parseFrequencyDistribution(data.frequencyDistribution, this.currentReport.name);
 			}
 
 			if (this.byValueAsConcept) {
@@ -289,6 +300,10 @@ define([
 
 			if (this.byOperator) {
 				this.prevalenceByOperatorData(this.parseDonutData(data.byOperator));
+			}
+
+			if (this.byLengthOfEra) {
+				this.parseLengthOfEra(data.lengthOfEra);
 			}
 
 			if (this.byUnit) {
@@ -336,7 +351,7 @@ define([
 					console.error(er);
 				})
 				.finally(() => {
-					this.context.model.loadingReportDrilldown(false);
+					this.context.loadingReportDrilldown(false);
 					this.scrollTo("#datasourceReportDrilldownTitle");
 				});
 		}
