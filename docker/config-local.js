@@ -25,22 +25,14 @@ define([], function () {
                     "isUseCredentialsForm": false
                 }];
         } else {
-            configLocal.authProviders = [{
-                'name': 'Login with database credentials',
-                'url': 'user/login/db',
-                'ajax': true,
-                'icon': 'fa fa-database',
-                'isUseCredentialsForm': true
-            }];
-            if(configLocal.isLdapEnabled) {
-                configLocal.authProviders.push({
-                    'name': 'Login with LDAP credentials',
-                    'url': 'user/login/ldap',
-                    'ajax': true,
-                    'icon': 'fa fa-cubes',
-                    'isUseCredentialsForm': true
-                });
-            }
+            configLocal.authProviders = [
+                {
+                    "name": "Login with SSO",
+                    "url": "user/login/openid",
+                    "ajax": false,
+                    "icon": "",
+                    "isUseCredentialsForm": false
+                }];
         }
     }
 
