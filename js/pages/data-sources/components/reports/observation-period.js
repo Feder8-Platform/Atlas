@@ -6,7 +6,7 @@ define([
     "utils/CommonUtils",
     "utils/ChartUtils",
     "const",
-    "pages/data-sources/classes/Report",
+    'components/reports/classes/Report',
     "components/Component",
     "components/charts/histogram",
     "components/charts/boxplot",
@@ -18,6 +18,7 @@ define([
         constructor(params) {
             super(params);
 
+            this.name = 'ObservationPeriod';
             // plots
             this.ageAtFirstObservationData = ko.observable();
             this.ageByGenderData = ko.observable();

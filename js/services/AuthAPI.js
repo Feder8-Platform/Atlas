@@ -34,8 +34,8 @@ define(function(require, exports) {
     var token = ko.observable(getBearerToken());
     var authClient = ko.computed({
         owner: ko.observable(localStorage.getItem("auth-client")),
-        read: function() { 
-            return this(); 
+        read: function() {
+            return this();
         },
         write: function( newValue ) {
             localStorage.setItem("auth-client", newValue);
@@ -53,6 +53,7 @@ define(function(require, exports) {
         beforeSend: function(xhr, settings) {
             if (!authProviders[settings.url] && settings.url.startsWith(config.api.url)) {
                 xhr.setRequestHeader('Authorization', getAuthorizationHeader());
+                xhr.setRequestHeader('Action-Location', location);
             }
         }
     });
@@ -87,6 +88,9 @@ define(function(require, exports) {
                 if (err.status === 401) {
                     console.log('User is not authed');
                     subject(null);
+                    if (config.enableSkipLogin) {
+                        signInOpened(true);
+                    }
                     resolve();
                 } else {
                     reject('Cannot retrieve user info');
@@ -250,6 +254,10 @@ define(function(require, exports) {
     }
     var refreshToken = function() {
 
+        if (!config.userAuthenticationEnabled) {
+            return Promise.resolve(true); // no-op if userAuthenticationEnabled == false
+        }
+
         if (!isPromisePending(refreshTokenPromise)) {
           refreshTokenPromise = httpService.doGet(getServiceUrl() + "user/refresh");
           refreshTokenPromise.then(({ data, headers }) => {
@@ -403,6 +411,10 @@ define(function(require, exports) {
         return isPermitted('source:post');
     }
 
+    var isPermittedAccessSource = function(key) {
+        return isPermitted('source:' + key + ':access');
+    }
+
     var isPermittedReadSource = function(key) {
         return isPermitted('source:' + key + ':get');
     }
@@ -474,6 +486,10 @@ define(function(require, exports) {
         return isPermitted(`cache:clear:get`);
     };
 
+    const isPermittedTagsManagement = function () {
+        return isPermitted(`tag:management`);
+    };
+
     const isPermittedRunAs = () => isPermitted('user:runas:post');
 
     const isPermittedViewDataSourceReport = sourceKey => isPermitted(`cdmresults:${sourceKey}:*:get`);
@@ -502,6 +518,12 @@ define(function(require, exports) {
           error,
         });
     };
+
+    const executeWithRefresh = async function(httpPromise) {
+        const result = await httpPromise;
+        await refreshToken();
+        return result;
+    }
 
     var api = {
         AUTH_PROVIDERS: AUTH_PROVIDERS,
@@ -578,6 +600,7 @@ define(function(require, exports) {
         isPermittedViewProfiles: isPermittedViewProfiles,
         isPermittedViewProfileDates: isPermittedViewProfileDates,
 
+        isPermittedAccessSource: isPermittedAccessSource,
         isPermittedReadSource: isPermittedReadSource,
         isPermittedCreateSource: isPermittedCreateSource,
         isPermittedEditSource: isPermittedEditSource,
@@ -590,6 +613,7 @@ define(function(require, exports) {
         isPermittedImportUsers,
         hasSourceAccess,
         isPermittedRunAs,
+        isPermittedTagsManagement,
         isPermittedClearServerCache,
         isPermittedViewDataSourceReport,
         isPermittedViewDataSourceReportDetails,
@@ -597,6 +621,7 @@ define(function(require, exports) {
         loadUserInfo,
         TOKEN_HEADER,
         runAs,
+        executeWithRefresh,
     };
 
     return api;

@@ -4,12 +4,13 @@ define(function (require, exports) {
 	var config = require('appConfig');
 	var d3 = require('d3');
 
-	function getConceptRecordCountWithResultsUrl(resultsUrl, conceptIds, results, isCamelCaseProps = true) {
+	function getConceptRecordCountWithResultsUrl(resultsUrl, conceptIds, results, isCamelCaseProps = true, formatter = d3.format(',')) {
 
 		const getConceptId = (concept) => isCamelCaseProps ? concept.conceptId : concept.CONCEPT_ID;
 		const setRecordCount = (concept, val) => isCamelCaseProps ? (concept.recordCount = val) : (concept.RECORD_COUNT = val);
 		const setDescendantRecordCount = (concept, val) => isCamelCaseProps ? (concept.descendantRecordCount = val) : (concept.DESCENDANT_RECORD_COUNT = val);
-		const setPersonRecordCount = (concept, val) => isCamelCaseProps ? (concept.personRecordCount = val) : (concept.PERSON_RECORD_COUNT = val);
+		const setPersonCount = (concept, val) => isCamelCaseProps ? (concept.personCount = val) : (concept.PERSON_COUNT = val);
+		const setDescendantPersonCount = (concept, val) => isCamelCaseProps ? (concept.descendantPersonCount = val) : (concept.DESCENDANT_PERSON_COUNT = val);
 
 		var densityPromise = $.Deferred();
 		var densityIndex = {};
@@ -17,7 +18,8 @@ define(function (require, exports) {
 		for (c = 0; c < results.length; c++) {
 			setRecordCount(results[c], 'loading');
 			setDescendantRecordCount(results[c], 'loading');
-			setPersonRecordCount(results[c], 'loading');
+			setPersonCount(results[c], 'loading');
+			setDescendantPersonCount(results[c], 'loading');
 		}
 
 		$.ajax({
@@ -26,8 +28,6 @@ define(function (require, exports) {
 			contentType: 'application/json',
 			data: JSON.stringify(conceptIds),
 			success: function (entries) {
-				var formatComma = d3.format(',');
-
 				for (var e = 0; e < entries.length; e++) {
 					densityIndex[Object.keys(entries[e])[0]] = Object.values(entries[e])[0];
 				}
@@ -35,13 +35,15 @@ define(function (require, exports) {
 				for (var c = 0; c < results.length; c++) {
 					var concept = results[c];
 					if (densityIndex[getConceptId(concept)] != undefined) {
-						setRecordCount(concept, formatComma(densityIndex[getConceptId(concept)][0]));
-						setDescendantRecordCount(concept, formatComma(densityIndex[getConceptId(concept)][1]));
-						setPersonRecordCount(concept, formatComma(densityIndex[getConceptId(concept)][2]));
+						setRecordCount(concept, formatter(densityIndex[getConceptId(concept)][0]));
+						setDescendantRecordCount(concept, formatter(densityIndex[getConceptId(concept)][1]));
+						setPersonCount(concept, formatter(densityIndex[getConceptId(concept)][2]));
+						setDescendantPersonCount(concept, formatter(densityIndex[getConceptId(concept)][3]));
 					} else {
 						setRecordCount(concept, 0);
 						setDescendantRecordCount(concept, 0);
-						setPersonRecordCount(concept, 0);
+						setPersonCount(concept, 0);
+						setDescendantPersonCount(concept, 0);
 					}
 				}
 
@@ -52,7 +54,8 @@ define(function (require, exports) {
 					var concept = results[c];
 					setRecordCount(concept, 'timeout');
 					setDescendantRecordCount(concept, 'timeout');
-					setPersonRecordCount(concept, 'timeout');
+					setPersonCount(concept, 'timeout');
+					setDescendantPersonCount(concept, 'timeout');
 				}
 
 				densityPromise.resolve();
@@ -62,8 +65,8 @@ define(function (require, exports) {
 		return densityPromise;
 	}
 
-	function getConceptRecordCount(sourceKey, conceptIds, results) {
-		return getConceptRecordCountWithResultsUrl(config.webAPIRoot + 'cdmresults/' + sourceKey + '/', conceptIds, results);
+	function getConceptRecordCount(sourceKey, conceptIds, results, isCamelCaseProps = true, formatter = d3.format(',')) {
+		return getConceptRecordCountWithResultsUrl(config.webAPIRoot + 'cdmresults/' + sourceKey + '/', conceptIds, results, isCamelCaseProps, formatter);
 	}
 
 	var api = {

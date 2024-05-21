@@ -15,7 +15,7 @@
 		</ul>
 		<div id='content' class="tab-content">
 			<div role="tabpanel" class="tab-pane active drilldown-enabled" id="treemap-panel">
-				<treemap params="data: treeData, format: chartFormats.treemap, aggProperty: aggProperty"></treemap>
+				<treemap params="data: treeData, format: chartFormats.treemap, aggProperty: aggProperty, reportName: name, chartName: 'Treemap'"></treemap>
 				<div class="treemap_legend">
 					<span data-bind="text: ko.i18n('dataSources.treemap.legend.boxSize', 'Box Size:')"></span>
 					<span data-bind="text: ko.i18n('dataSources.prevalence', 'Prevalence')"></span>,
@@ -42,8 +42,8 @@
 	</div>
 </div>
 <atlas-modal params="{
-		showModal: context.loadingReportDrilldown,
-		iconClass: 'fa fa-chart',
+		showModal: context.showLoadingDrilldownModal,
+		iconClass: 'fa fa-chart-area',
 		title: ko.i18n('dataSources.loadingDrilldownReport', 'Loading Drilldown Report'),
 		backdropClosable: false,
 		fade: ko.observable(false)
@@ -51,17 +51,17 @@
 	<loading params="status: ko.i18n('dataSources.loadingDrilldownReport', 'Loading Drilldown Report')"></loading>
 </atlas-modal>
 <!-- ko if: currentConcept() -->
-<report-treemap-drilldown params="
-	context: context, 
-	currentReport: currentReport, 
-	currentConcept: currentConcept, 
-	byFrequency: byFrequency, 
-	byUnit: byUnit, 
-	byType: byType, 
-	byValueAsConcept: byValueAsConcept, 
-	byQualifier: byQualifier, 
-	byOperator: byOperator, 
+<report-drilldown params="
+	context: context,
+	currentReport: currentReport,
+	currentConcept: currentConcept,
+	byFrequency: byFrequency,
+	byUnit: byUnit,
+	byType: byType,
+	byValueAsConcept: byValueAsConcept,
+	byQualifier: byQualifier,
+	byOperator: byOperator,
 	byLengthOfEra: byLengthOfEra">
-</report-treemap-drilldown>
+</report-drilldown>
 <!-- /ko -->
 <!--/ko-->

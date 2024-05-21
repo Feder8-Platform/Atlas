@@ -37,7 +37,7 @@
 								lengthMenu: tableOptions.lengthMenu,
 								orderClasses: false,
 								ordering: true,
-								order: [[ 6, 'desc' ]],
+								order: [[ 8, 'desc' ]],
 								columns: relatedConceptsColumns,
 								options: hierarchyConceptsOptions,
 								reference: $component.metarchy.parents,
@@ -51,7 +51,8 @@
 							<div class="panel-footer">
 								<concept-add-box params="{
 									canSelectSource: true,
-									onSubmit: (options, source) => $component.addConcepts(options, source)($component.metarchy.parents),
+									isActive: () => metarchy.parents().filter(c => c.isSelected()).length > 0,
+									concepts: () => getSelectedConcepts($component.metarchy.parents),
 								}"></concept-add-box>
 							</div>
 							<!-- /ko -->
@@ -80,7 +81,8 @@
 						<div class="panel-footer">
 							<concept-add-box params="{
 								canSelectSource: true,
-								onSubmit: (options, source) => $component.addConcepts(options, source)([$component.currentConcept()], true),
+								isActive: () => currentConceptArray().filter(c => c.isSelected()).length > 0,
+								concepts: ko.observableArray([$component.currentConcept()]),
 							}"></concept-add-box>
 						</div>
 					</div>
@@ -113,7 +115,8 @@
 							<div class="panel-footer">
 								<concept-add-box params="{
 									canSelectSource: true,
-									onSubmit: (options, source) => $component.addConcepts(options, source)($component.metarchy.children),
+									isActive: () => metarchy.children().filter(c => c.isSelected()).length > 0,
+									concepts: () => getSelectedConcepts($component.metarchy.children),
 								}"></concept-add-box>
 							</div>
 							<!-- /ko -->

@@ -4,6 +4,12 @@ define(function (require, exports) {
 	
 	var expressionEditor = require('./components/CohortExpressionEditor');
 	ko.components.register('cohort-expression-editor', expressionEditor);
+
+	var initialCriteriaEditor = require('./components/InitialCriteriaEditor');
+	ko.components.register('initial-criteria-editor', initialCriteriaEditor);
+
+	var censoringCriteriaEditor = require('./components/CensoringCriteriaEditor');
+	ko.components.register('censoring-criteria-editor', censoringCriteriaEditor);
 	
 	var inclusionEditor = require('./components/InclusionRuleEditor');
 	ko.components.register('inclusion-rule-editor', inclusionEditor);
@@ -37,6 +43,9 @@ define(function (require, exports) {
 	
 	var visitOccurrence = require('./components/VisitOccurrence');
 	ko.components.register('visit-occurrence-criteria', visitOccurrence);
+
+	var visitDetail = require('./components/VisitDetail');
+	ko.components.register('visit-detail-criteria', visitDetail);
 	
 	var deviceExposure = require('./components/DeviceExposure');
 	ko.components.register('device-exposure-criteria', deviceExposure);
@@ -62,6 +71,9 @@ define(function (require, exports) {
 	var dateRange = require('./components/DateRange');
 	ko.components.register('date-range', dateRange);
 	
+	var dateAdjustment = require('./components/DateAdjustment');
+	ko.components.register('date-adjustment', dateAdjustment);
+
 	var windowInput = require('./components/WindowInput');
 	ko.components.register('window-input',windowInput);
 	

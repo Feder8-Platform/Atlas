@@ -1,12 +1,14 @@
 define([
 	'knockout',
 	'appConfig',
-	'utils/Renderers'
+	'utils/Renderers',
+	'services/MomentAPI'
 	],
 	(
 		ko,
 		config,
-		renderers) => {
+		renderers,
+		MomentApi) => {
 
 	  const maxEntityNameLength = 100;
 		const minChartHeight = 300;
@@ -110,13 +112,15 @@ define([
 			];
 		};
 
-		const getRelatedSourcecodesColumns = (sharedState, context) => [
+		const getRelatedSourcecodesColumns = (sharedState, context, selectAllFn) => [
 			{
 				title: '',
 				orderable: false,
 				searchable: false,
 				className: 'text-center',
 				render: () => renderers.renderCheckbox('isSelected', context.canEditCurrentConceptSet()),
+				renderSelectAll: context.canEditCurrentConceptSet(),
+				selectAll: selectAllFn
 			},
 			{
 				title: ko.i18n('columns.id', 'Id'),
@@ -142,6 +146,38 @@ define([
 				title: ko.i18n('columns.standardConceptCaption', 'Standard Concept Caption'),
 				data: 'STANDARD_CONCEPT_CAPTION',
 				visible: false
+			},
+			{
+				title: ko.i18n('columns.validStartDate', 'Valid Start Date'),
+				render: (s, type, d) => type === "sort" ? +d['VALID_START_DATE'] :
+					MomentApi.formatDateTimeWithFormat(d['VALID_START_DATE'], MomentApi.DATE_FORMAT),
+				visible: false
+			},
+			{
+				title: ko.i18n('columns.validEndDate', 'Valid End Date'),
+				render: (s, type, d) => type === "sort" ? +d['VALID_END_DATE'] :
+					MomentApi.formatDateTimeWithFormat(d['VALID_END_DATE'], MomentApi.DATE_FORMAT),
+				visible: false
+			},
+			{
+				title: ko.i18n('columns.rc', 'RC'),
+				data: 'RECORD_COUNT',
+				className: 'numeric'
+			},
+			{
+				title: ko.i18n('columns.drc', 'DRC'),
+				data: 'DESCENDANT_RECORD_COUNT',
+				className: 'numeric'
+			},
+			{
+				title: ko.i18n('columns.pc', 'PC'),
+				data: 'PERSON_COUNT',
+				className: 'numeric',
+			},
+			{
+				title: ko.i18n('columns.dpc', 'DPC'),
+				data: 'DESCENDANT_PERSON_COUNT',
+				className: 'numeric',
 			},
 			{
 				title: ko.i18n('columns.domain', 'Domain'),
@@ -204,6 +240,7 @@ define([
 			ple: ko.i18n('const.newEntityNames.ple', 'New Population Level Estimation Analysis'),
 			conceptSet: ko.i18n('const.newEntityNames.conceptSet', 'New Concept Set'),
 			plp: ko.i18n('const.newEntityNames.plp', 'New Patient Level Prediction Analysis'),
+			reusable: ko.i18n('const.newEntityNames.reusable', 'New Reusable'),
 		};
 
 		const pluginTypes = {
@@ -248,6 +285,18 @@ define([
 				title: "Apache Hive",
 				dialect: "hive",
 			},
+			SPARK: {
+				title: "Spark",
+				dialect: "spark",
+			},
+			SNOWFLAKE: {
+				title: "Snowflake",
+				dialect: "snowflake",
+      },
+			SYNAPSE: {
+				title: "Azure Synapse",
+				dialect: "synapse",
+			},
 		};
 
 		const eventTypes = {
@@ -276,6 +325,11 @@ define([
 			EMPTY_INITIAL_EVENT: ko.i18n('const.disabledReason.emptyInitionEvent', 'Initial event is not set')
 		};
 
+		const reusableTypes = {
+			INITIAL_EVENT: ko.i18n('const.reusableTypes.initialEvent', 'Initial/Censoring Event'),
+			CRITERIA_GROUP: ko.i18n('const.reusableTypes.censoringEvent', 'Criteria Group')
+		};
+
 		return {
 			maxEntityNameLength,
 			minChartHeight,
@@ -296,8 +350,9 @@ define([
 			executionResultModes,
 			sqlDialects,
 			eventTypes,
-			disabledReasons,
 			jobTypes,
+			disabledReasons,
+			reusableTypes,
     };
   }
 );

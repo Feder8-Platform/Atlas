@@ -74,13 +74,14 @@ define([
       });
 
       this.canImport = ko.pureComputed(() => this.isAuthenticated() && authApi.isPermittedImportUsers());
+      this.canManageTags = ko.pureComputed(() => this.isAuthenticated() && authApi.isPermittedTagsManagement());
       this.canClearServerCache = ko.pureComputed(() => {
         return config.userAuthenticationEnabled && this.isAuthenticated() && authApi.isPermittedClearServerCache()
       });
 
       this.intervalId = PollService.add({
         callback: () => this.checkJobs(),
-        interval: 5000
+        interval: config.pollInterval
       });
     }
 
@@ -251,7 +252,7 @@ define([
           break;
         case sourceApi.buttonCheckState.checking:
           buttonClass = 'btn-warning';
-          iconClass = 'fa-circle-o-notch fa-spin';
+          iconClass = 'fa-circle-notch fa-spin';
           break;
       }
       return {

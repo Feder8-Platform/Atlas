@@ -7,10 +7,13 @@ define(
       EXPRESSION: conceptSetConstants.ViewMode.EXPRESSION,
       INCLUDED: conceptSetConstants.ViewMode.INCLUDED,
       SOURCECODES: conceptSetConstants.ViewMode.SOURCECODES,
+      RECOMMEND: conceptSetConstants.ViewMode.RECOMMEND,
       EXPORT: conceptSetConstants.ViewMode.EXPORT,
       IMPORT: conceptSetConstants.ViewMode.IMPORT,
       EXPLORE: 'explore',
       COMPARE: 'compare',
+      VERSIONS: 'versions',
+      MESSAGES: 'messages',
     };
 		
     const pageTitle = 'Concept Sets';

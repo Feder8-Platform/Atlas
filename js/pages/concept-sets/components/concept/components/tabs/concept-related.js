@@ -3,6 +3,7 @@ define([
 	'text!./concept-related.html',
 	'components/Component',
 	'services/Vocabulary',
+	'services/MomentAPI',
 	'utils/CommonUtils',
 	'utils/Renderers',
 	'atlas-state',
@@ -15,6 +16,7 @@ define([
 	view,
 	Component,
 	vocabularyProvider,
+	MomentApi,
 	commonUtils,
 	renderers,
 	sharedState,
@@ -79,11 +81,6 @@ define([
 						return parseInt(o.DESCENDANT_RECORD_COUNT) > 0;
 					}
 				}, {
-					'caption': ko.i18n('facets.caption.hasPersonRecords', 'Has Person Records'),
-					'binding': function (o) {
-						return parseInt(o.PERSON_RECORD_COUNT) > 0;
-					}
-				}, {
 					'caption': ko.i18n('facets.caption.distance', 'Distance'),
 					'binding': function (o) {
 						return Math.max.apply(Math, o.RELATIONSHIPS.map(function (d) {
@@ -117,16 +114,22 @@ define([
 				data: 'STANDARD_CONCEPT_CAPTION',
 				visible: false
 			}, {
+				title: ko.i18n('columns.validStartDate', 'Valid Start Date'),
+				render: (s, type, d) => type === "sort" ? +d['VALID_START_DATE'] :
+					MomentApi.formatDateTimeWithFormat(d['VALID_START_DATE'], MomentApi.DATE_FORMAT),
+				visible: false
+			}, {
+				title: ko.i18n('columns.validEndDate', 'Valid End Date'),
+				render: (s, type, d) => type === "sort" ? +d['VALID_END_DATE'] :
+					MomentApi.formatDateTimeWithFormat(d['VALID_END_DATE'], MomentApi.DATE_FORMAT),
+				visible: false
+			}, {
 				title: ko.i18n('columns.rc', 'RC'),
 				data: 'RECORD_COUNT',
 				className: 'numeric'
 			}, {
 				title: ko.i18n('columns.drc', 'DRC'),
 				data: 'DESCENDANT_RECORD_COUNT',
-				className: 'numeric'
-			}, {
-				title: ko.i18n('columns.prc', 'PRC'),
-				data: 'PERSON_RECORD_COUNT',
 				className: 'numeric'
 			}, {
 				title: ko.i18n('columns.distance', 'Distance'),
@@ -148,6 +151,10 @@ define([
 			}];
 
 			this.loadRelatedConcepts();
+		}
+
+		getSelectedConcepts(concepts) {
+			return commonUtils.getSelectedConcepts(concepts);
 		}
 
 		enhanceConcept(concept) {

@@ -3,6 +3,7 @@ define([
 	'text!./heading.html',
 	'components/Component',
 	'utils/CommonUtils',
+	'components/tags/badges-list/tags-badges-list',
 	'less!./heading.less'
 ], function (
 	ko,
@@ -20,6 +21,7 @@ define([
 				return this.icon != null;
 			});
 			this.description = params.description;
+			this.tags = params.tags;
 		}
 	}
 

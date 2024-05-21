@@ -71,16 +71,6 @@ define(["knockout"], function (ko) {
       descriptionGroup: 'const.eventsList.addDrugExposure.desc_group',
       defaultDescriptionGroup: 'Find patients with exposure to specific drugs or drug classes.',
     },
-    addTreatmentLine: {
-      title: 'const.eventsList.addTreatmentLine.title',
-      defaultTitle: 'Add Treatment Line',
-      descriptionInitial: 'const.eventsList.addTreatmentLine.desc_initial',
-      defaultDescriptionInitial: 'Find patients with exposure to specific treatment line.',
-      descriptionCensoring: 'const.eventsList.addTreatmentLine.desc_censoring',
-      defaultDescriptionCensoring: 'Exit cohort based on exposure to specific treatment line.',
-      descriptionGroup: 'const.eventsList.addTreatmentLine.desc_group',
-      defaultDescriptionGroup: 'Find patients with exposure to specific treatment lines.',
-    },
     addMeasurement: {
       title: 'const.eventsList.addMeasurement.title',
       defaultTitle: 'Add Measurement',
@@ -141,7 +131,7 @@ define(["knockout"], function (ko) {
     },
     addVisit: {
       title: 'const.eventsList.addVisit.title',
-      defaultTitle: 'Add Visit',
+      defaultTitle: 'Add Visit occurrence',
       descriptionInitial: 'const.eventsList.addVisit.desc_initial',
       defaultDescriptionInitial: 'Find patients based on visit information.',
       descriptionCensoring: 'const.eventsList.addVisit.desc_censoring',
@@ -149,7 +139,7 @@ define(["knockout"], function (ko) {
       descriptionGroup: 'const.eventsList.addVisit.desc_group',
       defaultDescriptionGroup: 'Find patients based on visit information.',
       titleOccurrence: 'const.eventsList.addVisit.title_occurrence',
-      defaultTitleOccurrence: 'Add Visit',
+      defaultTitleOccurrence: 'Add Visit Occurrence',
       descriptionOccurrence: 'const.eventsList.addVisit.desc_occurrence',
       defaultDescriptionOccurrence: 'Filter Condition Occurrences based on visit occurrence of diagnosis.',
       titleDevice: 'const.eventsList.addVisit.title_deviceexposure',
@@ -160,10 +150,6 @@ define(["knockout"], function (ko) {
       defaultTitleDrugexposure: 'Add Visit Criteria',
       descriptionDrugexposure: 'const.eventsList.addVisit.desc_drugexposure',
       defaultDescriptionDrugexposure: 'Filter Drug Exposures based on visit occurrence of drug exposure.',
-      titleTreatmentline: 'const.eventsList.addVisit.title_treatmentline',
-      defaultTitleTreatmentline: 'Add Visit Criteria',
-      descriptionTreatmentline: 'const.eventsList.addVisit.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line based on visit occurrence of treatment line.',
       titleMeasurement: 'const.eventsList.addVisit.title_measurement',
       defaultTitleMeasurement: 'Add Visit Criteria',
       descriptionMeasurement: 'const.eventsList.addVisit.desc_measurement',
@@ -176,6 +162,40 @@ define(["knockout"], function (ko) {
       defaultTitleProcedureoccurrence: 'Add Visit Criteria',
       descriptionProcedureoccurrence: 'const.eventsList.addVisit.desc_procedureoccurrence',
       defaultDescriptionProcedureoccurrence: 'Filter Procedure Occurrences based on visit occurrence of procedure.',
+    },
+    addVisitDetail: {
+      title: 'const.eventsList.addVisitDetail.title',
+      defaultTitle: 'Add Visit Detail',
+      descriptionInitial: 'const.eventsList.addVisitDetail.desc_initial',
+      defaultDescriptionInitial: 'Find patients based on visit detail information.',
+      descriptionCensoring: 'const.eventsList.addVisitDetail.desc_censoring',
+      defaultDescriptionCensoring: 'Exit cohort based on visit detail information.',
+      descriptionGroup: 'const.eventsList.addVisitDetail.desc_group',
+      defaultDescriptionGroup: 'Find patients based on visit detail information.',
+      titleVisitDetails: 'const.eventsList.addVisitDetail.title_visit_detail',
+      defaultTitleVisitDetails: 'Add Visit Detail',
+      descriptionVisitDetails: 'const.eventsList.addVisitDetail.desc_occurrence',
+      defaultDescriptionOccurrence: 'Filter Condition Occurrences based on visit detail of diagnosis.',
+      titleDevice: 'const.eventsList.addVisitDetail.title_deviceexposure',
+      defaultTitleDevice: 'Add Visit Detail Criteria',
+      descriptionDevice: 'const.eventsList.addVisitDetail.desc_deviceexposure',
+      defaultDescriptionDevice: 'Filter Device Exposures based on visit detail of exposure.',
+      titleDrugexposure: 'const.eventsList.addVisit.title_drugexposure',
+      defaultTitleDrugexposure: 'Add Visit Detail Criteria',
+      descriptionDrugexposure: 'const.eventsList.addVisitDetail.desc_drugexposure',
+      defaultDescriptionDrugexposure: 'Filter Drug Exposures based on visit detail of drug exposure.',
+      titleMeasurement: 'const.eventsList.addVisitDetail.title_measurement',
+      defaultTitleMeasurement: 'Add Visit Detail Criteria',
+      descriptionMeasurement: 'const.eventsList.addVisitDetail.desc_measurement',
+      defaultDescriptionMeasurement: 'Filter Measurements based on visit detail of measurement.',
+      titleObservation: 'const.eventsList.addVisitDetail.title_observation',
+      defaultTitleObservation: 'Add Visit Detail Criteria',
+      descriptionObservation: 'const.eventsList.addVisitDetail.desc_observation',
+      defaultDescriptionObservation: 'Filter Observations based on visit detail of observation.',
+      titleProcedureoccurrence: 'const.eventsList.addVisitDetail.title_procedureoccurrence',
+      defaultTitleProcedureoccurrence: 'Add Visit Detail Criteria',
+      descriptionProcedureoccurrence: 'const.eventsList.addVisitDetail.desc_procedureoccurrence',
+      defaultDescriptionProcedureoccurrence: 'Filter Procedure Occurrences based on visit detail of procedure.',
     },
     // attributes
     addFirstDiagnosis: {
@@ -203,10 +223,6 @@ define(["knockout"], function (ko) {
       defaultTitleDrugexposure: 'Add First Exposure Criteria',
       descriptionDrugexposure: 'const.eventsList.addFirstDiagnosis.desc_drugexposure',
       defaultDescriptionDrugexposure: 'Limit Drug Exposures to the first exposure in history.',
-      titleTreatmentline: 'const.eventsList.addFirstDiagnosis.title_treatmentline',
-      defaultTitleTreatmentline: 'Add First Treatment Criteria',
-      descriptionTreatmentline: 'const.eventsList.addFirstDiagnosis.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Limit Treatment Line to the first exposure in history.',
       titleMeasurement: 'const.eventsList.addFirstDiagnosis.title_measurement',
       defaultTitleMeasurement: 'Add First Measure Criteria',
       descriptionMeasurement: 'const.eventsList.addFirstDiagnosis.desc_measurement',
@@ -235,6 +251,10 @@ define(["knockout"], function (ko) {
       defaultTitleVisit: 'Add First Visit Criteria',
       descriptionVisit: 'const.eventsList.addFirstDiagnosis.desc_visit',
       defaultDescriptionVisit: 'Limit Visit Occurrences to the first visit.',
+      titleVisitdetail: 'const.eventsList.addFirstDiagnosis.title_visitDetail',
+      defaultTitleVisitdetail: 'Add First Visit Detail Criteria',
+      descriptionVisitdetail: 'const.eventsList.addFirstDiagnosis.desc_visitDetail',
+      defaultDescriptionVisitdetail: 'Limit Visit Detail to the first visit.',
     },
     addAge: {
       titleOccurrence: 'const.eventsList.addAge.title_occurrence',
@@ -253,10 +273,6 @@ define(["knockout"], function (ko) {
       defaultTitleDrugexposure: 'Add Age at Occurrence Criteria',
       descriptionDrugexposure: 'const.eventsList.addAge.desc_drugexposure',
       defaultDescriptionDrugexposure: 'Filter Drug Exposures by age at occurrence.',
-      titleTreatmentline: 'const.eventsList.addAge.title_treatmentline',
-      defaultTitleTreatmentline: 'Add Age at Occurrence Criteria',
-      descriptionTreatmentline: 'const.eventsList.addAge.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line by age at occurrence.',
       titleMeasurement: 'const.eventsList.addAge.title_measurement',
       defaultTitleMeasurement: 'Add Age at Occurrence Criteria',
       descriptionMeasurement: 'const.eventsList.addAge.desc_measurement',
@@ -277,6 +293,10 @@ define(["knockout"], function (ko) {
       defaultTitleVisit: 'Add Age at Occurrence Criteria',
       descriptionVisit: 'const.eventsList.addAge.desc_visit',
       defaultDescriptionVisit: 'Filter Visit Occurrences by age at occurrence.',
+      titleVisitdetail: 'const.eventsList.addAge.title_visitDetail',
+      defaultTitleVisitdetail: 'Add Age at Visit detail Criteria',
+      descriptionVisitdetail: 'const.eventsList.addAge.desc_visitDetail',
+      defaultDescriptionVisitdetail: 'Filter Visit Detail by age at occurrence.',
       titleDemographic: 'const.eventsList.addAge.title_demographic',
       defaultTitleDemographic: 'Add Age Criteria',
       descriptionDemographic: 'const.eventsList.addAge.desc_demographic',
@@ -355,10 +375,6 @@ define(["knockout"], function (ko) {
       defaultTitleDrugexposure: 'Add Gender Criteria',
       descriptionDrugexposure: 'const.eventsList.addGender.desc_drugexposure',
       defaultDescriptionDrugexposure: 'Filter Drug Exposures based on Gender.',
-      titleTreatmentline: 'const.eventsList.addGender.title_treatmentline',
-      defaultTitleTreatmentline: 'Add Gender Criteria',
-      descriptionTreatmentline: 'const.eventsList.addGender.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line based on Gender.',
       titleMeasurement: 'const.eventsList.addGender.title_measurement',
       defaultTitleMeasurement: 'Add Gender Criteria',
       descriptionMeasurement: 'const.eventsList.addGender.desc_measurement',
@@ -383,7 +399,10 @@ define(["knockout"], function (ko) {
       defaultTitleVisit: 'Add Gender Criteria',
       descriptionVisit: 'const.eventsList.addGender.desc_visit',
       defaultDescriptionVisit: 'Filter Visit Occurrences based on Gender.',
-
+      titleVisitdetail: 'const.eventsList.addGender.title_visitDetail',
+      defaultTitleVisitdetail: 'Add Gender Criteria',
+      descriptionVisitdetail: 'const.eventsList.addGender.desc_visitDetail',
+      defaultDescriptionVisitdetail: 'Filter Visit Detail based on Gender.',
       titleDemographic: 'const.eventsList.addGender.title_demographic',
       defaultTitleDemographic: 'Add Gender Criteria',
       descriptionDemographic: 'const.eventsList.addGender.desc_demographic',
@@ -436,10 +455,6 @@ define(["knockout"], function (ko) {
       defaultTitleDrugexposure: 'Add Start Date Criteria',
       descriptionDrugexposure: 'const.eventsList.addStartDate.desc_drugexposure',
       defaultDescriptionDrugexposure: 'Filter Drug Exposures by the Drug Exposure Start Date.',
-      titleTreatmentline: 'const.eventsList.addStartDate.title_treatmentline',
-      defaultTitleTreatmentline: 'Add Start Date Criteria',
-      descriptionTreatmentline: 'const.eventsList.addStartDate.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line by the Treatment Line Start Date.',
       titleObservationperiod: 'const.eventsList.addStartDate.title_observationperiod',
       defaultTitleObservationperiod: 'Add Period Start Date Criteria',
       descriptionObservationperiod: 'const.eventsList.addStartDate.desc_observationperiod',
@@ -452,6 +467,10 @@ define(["knockout"], function (ko) {
       defaultTitleVisit: 'Add Start Date Criteria',
       descriptionVisit: 'const.eventsList.addStartDate.desc_visit',
       defaultDescriptionVisit: 'Filter Visit Occurrences by the Condition Start Date.',
+      titleVisitdetail: 'const.eventsList.addStartDate.title_visitDetail',
+      defaultTitleVisitdetail: 'Add Start Date Criteria',
+      descriptionVisitdetail: 'const.eventsList.addStartDate.desc_visitDetail',
+      defaultDescriptionVisitdetail: 'Filter Visit details by the Start Date.',
       titleDemographic: 'const.eventsList.addStartDate.title_demographic',
       defaultTitleDemographic: 'Add Start Date Criteria',
       descriptionDemographic: 'const.eventsList.addStartDate.desc_demographic',
@@ -482,10 +501,6 @@ define(["knockout"], function (ko) {
       defaultTitleDrugexposure: 'Add End Date Criteria',
       descriptionDrugexposure: 'const.eventsList.addEndDate.desc_drugexposure',
       defaultDescriptionDrugexposure: 'Filter Drug Exposures  by the Drug Exposure End Date.',
-      titleTreatmentline: 'const.eventsList.addEndDate.title_treatmentline',
-      defaultTitleTreatmentline: 'Add End Date Criteria',
-      descriptionTreatmentline: 'const.eventsList.addEndDate.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line by the Treatment Line End Date.',
       titleObservationperiod: 'const.eventsList.addEndDate.title_observationperiod',
       defaultTitleObservationperiod: 'Add Period End Date Criteria',
       descriptionObservationperiod: 'const.eventsList.addEndDate.desc_observationperiod',
@@ -498,10 +513,20 @@ define(["knockout"], function (ko) {
       defaultTitleVisit: 'Add End Date Criteria',
       descriptionVisit: 'const.eventsList.addEndDate.desc_visit',
       defaultDescriptionVisit: 'Filter Visit Occurrences  by the Condition End Date.',
+      titleVisitdetail: 'const.eventsList.addEndDate.title_visitDetail',
+      defaultTitleVisitdetail: 'Add End Date Criteria',
+      descriptionVisitdetail: 'const.eventsList.addEndDate.desc_visitDetail',
+      defaultDescriptionVisitdetail: 'Filter Visit details  by the End Date.',
       titleDemographic: 'const.eventsList.addEndDate.title_demographic',
       defaultTitleDemographic: 'Add Event End Date Criteria',
       descriptionDemographic: 'const.eventsList.addEndDate.desc_demographic',
       defaultDescriptionDemographic: 'Filter events based by End Date.',
+    },
+    addDateAdjustment: {
+      title: 'const.eventsList.addDateAdjust.title',
+      defaultTitle: "Modify Event Start/End",
+      description: "const.eventsList.addDateAdjust.description",
+      defaultDescription: 'Modify the start and end date of the event by a specified offset.'
     },
     addUnit: {
       titleDose: 'const.eventsList.addUnit.title_dose',
@@ -512,10 +537,6 @@ define(["knockout"], function (ko) {
       defaultTitleDrugexposure: 'Add Dose Unit Criteria',
       descriptionDrugexposure: 'const.eventsList.addUnit.desc_drugexposure',
       defaultDescriptionDrugexposure: 'Filter Drug Exposures by Dose Unit.',
-      titleTreatmentline: 'const.eventsList.addUnit.title_treatmentline',
-      defaultTitleTreatmentline: 'Add Dose Unit Criteria',
-      descriptionTreatmentline: 'const.eventsList.addUnit.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line by Dose Unit.',
       titleMeasurement: 'const.eventsList.addUnit.title_measurement',
       defaultTitleMeasurement: 'Add Unit Criteria',
       descriptionMeasurement: 'const.eventsList.addUnit.desc_measurement',
@@ -564,6 +585,10 @@ define(["knockout"], function (ko) {
       defaultTitleVisit: 'Add Visit Length Criteria',
       descriptionVisit: 'const.eventsList.addLength.desc_visit',
       defaultDescriptionVisit: 'Filter Visit Occurrences by duration.',
+      titleVisitdetail: 'const.eventsList.addLength.title_visitDetail',
+      defaultTitleVisitdetail: 'Add Visit detail Length Criteria',
+      descriptionVisitdetail: 'const.eventsList.addLength.desc_visitDetail',
+      defaultDescriptionVisitdetail: 'Filter Visit detail by duration.',
     },
     addValue: {
       titleDose: 'const.eventsList.addValue.title_dose',
@@ -596,9 +621,9 @@ define(["knockout"], function (ko) {
       defaultTitleDevice: 'Add Nested Criteria...',
       descriptionDevice: 'const.eventsList.addNested.desc_deviceexposure',
       defaultDescriptionDevice: 'Apply criteria using the device exposure as the index event.',
-      titleDose: 'const.eventsList.addValue.title_dose',
+      titleDose: 'const.eventsList.addNested.title_dose',
       defaultTitleDose: 'Add Nested Criteria...',
-      descriptionDose: 'const.eventsList.addValue.desc_dose',
+      descriptionDose: 'const.eventsList.addNested.desc_dose',
       defaultDescriptionDose: 'Apply criteria using the dose era as the index event.',
       titleDrug: 'const.eventsList.addNested.title_drug',
       defaultTitleDrug: 'Add Nested Criteria...',
@@ -608,17 +633,13 @@ define(["knockout"], function (ko) {
       defaultTitleDrugexposure: 'Add Nested Criteria...',
       descriptionDrugexposure: 'const.eventsList.addNested.desc_drugexposure',
       defaultDescriptionDrugexposure: 'Filter Drug Exposures based on provider specialty.',
-      titleTreatmentline: 'const.eventsList.addNested.title_treatmentline',
-      defaultTitleTreatmentline: 'Add Nested Criteria...',
-      descriptionTreatmentline: 'const.eventsList.addNested.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line based on provider specialty.',
       titleMeasurement: 'const.eventsList.addNested.title_measurement',
       defaultTitleMeasurement: 'Add Nested Criteria...',
       descriptionMeasurement: 'const.eventsList.addNested.desc_measurement',
       defaultDescriptionMeasurement: 'Apply criteria using the measurement as the index event.',
-      titleObservation: 'const.eventsList.addGender.title_observation',
+      titleObservation: 'const.eventsList.addNested.title_observation',
       defaultTitleObservation: 'Add Nested Criteria...',
-      descriptionObservation: 'const.eventsList.addGender.desc_observation',
+      descriptionObservation: 'const.eventsList.addNested.desc_observation',
       defaultDescriptionObservation: 'Apply criteria using the observation as the index event.',
       titleObservationperiod: 'const.eventsList.addNested.title_observationperiod',
       defaultTitleObservationperiod: 'Add Nested Criteria...',
@@ -640,6 +661,10 @@ define(["knockout"], function (ko) {
       defaultTitleVisit: 'Add Nested Criteria...',
       descriptionVisit: 'const.eventsList.addNested.desc_visit',
       defaultDescriptionVisit: 'Apply criteria using the visit occurrence as the index event',
+      titleVisitdetail: 'const.eventsList.addNested.title_visitDetail',
+      defaultTitleVisitdetail: 'Add Nested Criteria...',
+      descriptionVisitdetail: 'const.eventsList.addNested.desc_visitDetail',
+      defaultDescriptionVisitdetail: 'Apply criteria using the visit detail as the index event',
     },
     addType: {
       titleOccurrence: 'const.eventsList.addType.title_occurrence',
@@ -658,10 +683,6 @@ define(["knockout"], function (ko) {
       defaultTitleDrugexposure: 'Add Drug Type Criteria',
       descriptionDrugexposure: 'const.eventsList.addType.desc_drugexposure',
       defaultDescriptionDrugexposure: 'Filter Drug Exposures by the Drug Type.',
-      titleTreatmentline: 'const.eventsList.addType.title_treatmentline',
-      defaultTitleTreatmentline: 'Add Treatment Line Type Criteria',
-      descriptionTreatmentline: 'const.eventsList.addType.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line by the Treatment Line Type.',
       titleMeasurement: 'const.eventsList.addType.title_measurement',
       defaultTitleMeasurement: 'Add Measurement Type Criteria',
       descriptionMeasurement: 'const.eventsList.addType.desc_measurement',
@@ -686,6 +707,10 @@ define(["knockout"], function (ko) {
       defaultTitleVisit: 'Add Visit Type Criteria',
       descriptionVisit: 'const.eventsList.addType.desc_visit',
       defaultDescriptionVisit: 'Filter Condition Occurrences  by the Condition Type.',
+      titleVisitdetail: 'const.eventsList.addType.title_visitDetail',
+      defaultTitleVisitdetail: 'Add Visit detail Type Criteria',
+      descriptionVisitdetail: 'const.eventsList.addType.desc_visitDetail',
+      defaultDescriptionVisitdetail: 'Filter Visit details  by the Visit Type.',
     },
     addUserDefined: {
       titleObservationperiod: 'const.eventsList.addUserDefined.title_observationperiod',
@@ -701,11 +726,7 @@ define(["knockout"], function (ko) {
       titleDrugexposure: 'const.eventsList.addStopReason.title_drugexposure',
       defaultTitleDrugexposure: 'Add Stop Reason Criteria',
       descriptionDrugexposure: 'const.eventsList.addStopReason.desc_drugexposure',
-      defaultDescriptionDrugexposure: 'Filter Drug Exposures by the Stop Reason.',
-      titleTreatmentline: 'const.eventsList.addStopReason.title_treatmentline',
-      defaultTitleTreatmentline: 'Add Stop Reason Criteria',
-      descriptionTreatmentline: 'const.eventsList.addStopReason.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Drug Exposures by the Stop Reason.'
+      defaultDescriptionDrugexposure: 'Filter Drug Exposures by the Stop Reason.'
     },
     addSourceConcept: {
       titleOccurrence: 'const.eventsList.addSourceConcept.title_occurrence',
@@ -736,6 +757,10 @@ define(["knockout"], function (ko) {
       defaultTitleVisit: 'Add Visit Source Concept Criteria',
       descriptionVisit: 'const.eventsList.addSourceConcept.desc_visit',
       defaultDescriptionVisit: 'Filter Visit Occurrences by the Visit Source Concept.',
+      titleVisitdetail: 'const.eventsList.addSourceConcept.title_visitDetail',
+      defaultTitleVisitdetail: 'Add Visit detail Source Concept Criteria',
+      descriptionVisitdetail: 'const.eventsList.addSourceConcept.desc_visitDetail',
+      defaultDescriptionVisitdetail: 'Filter Visit detail by the Visit detail  Source Concept.',
     },
     addProviderSpecialty: {
       titleOccurrence: 'const.eventsList.addProviderSpecialty.title_occurrence',
@@ -750,10 +775,6 @@ define(["knockout"], function (ko) {
       defaultTitleDrugexposure: 'Add Provider Specialty Criteria',
       descriptionDrugexposure: 'const.eventsList.addProviderSpecialty.desc_drugexposure',
       defaultDescriptionDrugexposure: 'Filter Drug Exposures based on provider specialty.',
-      titleTreatmentline: 'const.eventsList.addProviderSpecialty.title_treatmentline',
-      defaultTitleTreatmentline: 'Add Provider Specialty Criteria',
-      descriptionTreatmentline: 'const.eventsList.addProviderSpecialty.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line based on provider specialty.',
       titleMeasurement: 'const.eventsList.addProviderSpecialty.title_measurement',
       defaultTitleMeasurement: 'Add Provider Specialty Criteria',
       descriptionMeasurement: 'const.eventsList.addProviderSpecialty.desc_measurement',
@@ -770,24 +791,46 @@ define(["knockout"], function (ko) {
       defaultTitleVisit: 'Add Provider Specialty Criteria',
       descriptionVisit: 'const.eventsList.addProviderSpecialty.desc_visit',
       defaultDescriptionVisit: 'Filter Visit Occurrences based on provider specialty.',
+      titleVisitdetail: 'const.eventsList.addProviderSpecialty.title_visitDetail',
+      defaultTitleVisitdetail: 'Add Provider Specialty Criteria',
+      descriptionVisitdetail: 'const.eventsList.addProviderSpecialty.desc_visitDetail',
+      defaultDescriptionVisitdetail: 'Filter Visit detail based on provider specialty.',
+    },
+    addConditionStatus: {
+      titleOccurrence: 'const.eventsList.addConditionStatus.title_occurrence',
+      defaultTitleOccurrence: 'Add Condition Status',
+      descriptionOccurrence: 'const.eventsList.addConditionStatus.desc_occurrence',
+      defaultDescriptionOccurrence: 'Filter Condition Occurrences based on condition status.',
     },
     addPlaceService: {
       titleVisit: 'const.eventsList.addPlaceService.title_visit',
       defaultTitleVisit: 'Add Place of Service Criteria',
       descriptionVisit: 'const.eventsList.addPlaceService.desc_visit',
       defaultDescriptionVisit: 'Filter Visit Occurrences based on Place of Service.',
+      titleVisitdetail: 'const.eventsList.addPlaceService.title_visitDetail',
+      defaultTitleVisitdetail: 'Add Place of Service Criteria',
+      descriptionVisitdetail: 'const.eventsList.addPlaceService.desc_visitDetail',
+      defaultDescriptionVisitdetail: 'Filter Visit detail based on Place of Service.',
     },
     addPlaceServiceLocation: {
       titleVisit: 'const.eventsList.addPlaceServiceLocation.title_visit',
       defaultTitleVisit: 'Add Place of Service Location Criteria',
       descriptionVisit: 'const.eventsList.addPlaceServiceLocation.desc_visit',
       defaultDescriptionVisit: 'Filter Visit Occurrences based on where Place of Service is located.',
+      titleVisitdetail: 'const.eventsList.addPlaceServiceLocation.title_visitDetail',
+      defaultTitleVisitdetail: 'Add Place of Service Location Criteria',
+      descriptionVisitdetail: 'const.eventsList.addPlaceServiceLocation.desc_visitDetail',
+      defaultDescriptionVisitdetail: 'Filter Visit detail based on where Place of Service is located.',
     },
     addPlaceServiceDistance: {
       titleVisit: 'const.eventsList.addPlaceServiceDistance.title_visit',
       defaultTitleVisit: 'Add Place of Service Location Criteria',
       descriptionVisit: 'const.eventsList.addPlaceServiceDistance.desc_visit',
       defaultDescriptionVisit: 'Filter Visit Occurrences based on distance from Place of Service to Patient.',
+      titleVisitdetail: 'const.eventsList.addPlaceServiceDistance.title_visitDetail',
+      defaultTitleVisitdetail: 'Add Place of Service Location Criteria',
+      descriptionVisitdetail: 'const.eventsList.addPlaceServiceDistance.desc_visitDetail',
+      defaultDescriptionVisitdetail: 'Filter Visit Detail based on distance from Place of Service to Patient.',
     },
     addUniqueId: {
       titleDevice: 'const.eventsList.addUniqueId.title_deviceexposure',
@@ -804,8 +847,6 @@ define(["knockout"], function (ko) {
       defaultTitleDrugexposure: 'Add Quantity Criteria',
       descriptionDrugexposure: 'const.eventsList.addQuantity.desc_drugexposure',
       defaultDescriptionDrugexposure: 'Filter Drug Exposures by Quantity.',
-      descriptionTreatmentline: 'const.eventsList.addQuantity.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line by Quantity.',
       titleProcedureoccurrence: 'const.eventsList.addQuantity.title_procedureoccurrence',
       defaultTitleProcedureoccurrence: 'Add Quantity Criteria',
       descriptionProcedureoccurrence: 'const.eventsList.addQuantity.desc_procedureoccurrence',
@@ -849,7 +890,7 @@ define(["knockout"], function (ko) {
       titleDrugexposure: 'const.eventsList.addSource.title_drugexposure',
       defaultTitleDrugexposure: 'Add Drug Source Concept Criteria',
       descriptionDrugexposure: 'const.eventsList.addSource.desc_drugexposure',
-      defaultDescriptionDrugexposure: 'Filter Drug Exposures by the Drug Source Concept.',
+      defaultDescriptionDrugexposure: 'Filter Drug Exposures by the Drug Source Concept.'
     },
     addOperator: {
       titleMeasurement: 'const.eventsList.addOperator.title_measurement',
@@ -999,6 +1040,16 @@ define(["knockout"], function (ko) {
       descriptionGroup: 'const.eventsList.addGroup.desc_group',
       defaultDescriptionGroup: 'Add a group to combine criteria using and/or relationships.',
     },
+    fromReusable: {
+      title: 'const.eventsList.fromReusable.title',
+      defaultTitle: 'From Reusable',
+      descriptionGroup: 'const.eventsList.fromReusable.desc_group',
+      defaultDescriptionGroup: 'Add a group from list of reusables',
+      descriptionInitial: 'const.eventsList.fromReusable.desc_initial',
+      defaultDescriptionInitial: 'Add criteria from list of reusables',
+      descriptionCensoring: 'const.eventsList.fromReusable.desc_censoring',
+      defaultDescriptionCensoring: 'Exit cohort from list of reusables',
+    },
     addDemographic: {
       title: 'const.eventsList.addDemographic.title',
       defaultTitle: 'Add Demographic',
@@ -1011,37 +1062,8 @@ define(["knockout"], function (ko) {
       descriptionGroup: 'const.eventsList.addLocationRegion.desc_group',
       defaultDescriptionGroup: 'Find patients within geographical area.',
     },
-    addDrugEraStartDate: {
-      titleTreatmentline: 'const.eventsList.addDrugEraStartDate.title_treatmentline',
-      defaultTitleTreatmentline: 'Add Drug Era Start Date Criteria',
-      descriptionTreatmentline: 'const.eventsList.addDrugEraStartDate.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line by the Drug Era Start Date.'
-    },
-    addDrugEraEndDate: {
-      titleTreatmentline: 'const.eventsList.addDrugEraEndDate.title_treatmentline',
-      defaultTitleTreatmentline: 'Add Drug Era End Date Criteria',
-      descriptionTreatmentline: 'const.eventsList.addDrugEraEndDate.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line by the Drug Era End Date.'
-    },
-    addLineNumber: {
-      titleTreatmentline: 'const.eventsList.addLineNumber.title_treatmentline',
-      defaultTitleTreatmentline: 'Add Treatment Line Number Criteria',
-      descriptionTreatmentline: 'const.eventsList.addLineNumber.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line by the Treatment Line Numbers.',
-    },
-    addNumberOfCycles: {
-      titleTreatmentline: 'const.eventsList.addNumberOfCycles.title_treatmentline',
-      defaultTitleTreatmentline: 'Add Total Number of Cycles Criteria',
-      descriptionTreatmentline: 'const.eventsList.addNumberOfCycles.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line by the Total Number of Cycles.',
-    },
-    addNumberOfDrugExposures: {
-      titleTreatmentline: 'const.eventsList.addNumberOfDrugExposures.title_treatmentline',
-      defaultTitleTreatmentline: 'Add Total Number of Drug Exposures Criteria',
-      descriptionTreatmentline: 'const.eventsList.addNumberOfDrugExposures.desc_treatmentline',
-      defaultDescriptionTreatmentline: 'Filter Treatment Line by the Total Number of Drug Exposures.',
-    }
-  }
+
+  };
 
   function setCriteria(criteria) {
     return (list = [], descriptionAttr = '', titleAttr = '') => {
@@ -1051,10 +1073,10 @@ define(["knockout"], function (ko) {
         let attrT = titleAttr.toLowerCase().replace(titleAttr.charAt(0), titleAttr.charAt(0).toUpperCase());
         let attrD = descriptionAttr.toLowerCase().replace(descriptionAttr.charAt(0), descriptionAttr.charAt(0).toUpperCase());
         flatList[elem] = {
-          title: criteriaItem[`title${attrT ? attrT : ''}`],
-          defaultTitle: criteriaItem[`defaultTitle${attrT ? attrT : ''}`],
-          description: criteriaItem[`description${attrD ? attrD : ''}`],
-          defaultDescription: criteriaItem[`defaultDescription${attrD ? attrD : ''}`]
+          title: criteriaItem[`title${attrT ? attrT : ''}`] || criteriaItem["title"],
+          defaultTitle: criteriaItem[`defaultTitle${attrT ? attrT : ''}`] || criteriaItem["defaultTitle"],
+          description: criteriaItem[`description${attrD ? attrD : ''}`] || criteriaItem["description"],
+          defaultDescription: criteriaItem[`defaultDescription${attrD ? attrD : ''}`] || criteriaItem["defaultDescription"]
         };
       });
   
@@ -1070,14 +1092,15 @@ define(["knockout"], function (ko) {
     'addDoseEra',
     'addDrugEra',
     'addDrugExposure',
-    'addTreatmentLine',
     'addMeasurement',
     'addObservation',
     'addObservationPeriod',
     'addPayerPlanPeriod',
     'addProcedureOccurrence',
     'addSpecimen',
-    'addVisit'
+    'addVisit',
+    'addVisitDetail',
+    'fromReusable',
   ];
   const censoringEventList = [
     'addConditionEra',
@@ -1087,13 +1110,14 @@ define(["knockout"], function (ko) {
     'addDoseEra',
     'addDrugEra',
     'addDrugExposure',
-    'addTreatmentLine',
     'addMeasurement',
     'addObservation',
     'addPayerPlanPeriod',
     'addProcedureOccurrence',
     'addSpecimen',
-    'addVisit'
+    'addVisit',
+    'addVisitDetail',
+    'fromReusable',
   ];
   const groupAttributesList = [
     'addDemographic',
@@ -1104,7 +1128,6 @@ define(["knockout"], function (ko) {
     'addDoseEra',
     'addDrugEra',
     'addDrugExposure',
-    'addTreatmentLine',
     'addLocationRegion',
     'addMeasurement',
     'addObservation',
@@ -1113,12 +1136,15 @@ define(["knockout"], function (ko) {
     'addProcedureOccurrence',
     'addSpecimen',
     'addVisit',
+    'addVisitDetail',
     'addGroup',
+    'fromReusable',
   ];
   const eraAttributesList = [
     'addFirstDiagnosis',
     'addAgeAtStart',
     'addAgeAtEnd',
+    "addDateAdjustment",
     'addGender',
     'addStartDate',
     'addEndDate',
@@ -1130,8 +1156,10 @@ define(["knockout"], function (ko) {
     'addFirstDiagnosis',
     'addAge',
     'addGender',
+    'addConditionStatus',
     'addStartDate',
     'addEndDate',
+    'addDateAdjustment',
     'addType',
     'addVisit',
     'addStopReason',
@@ -1140,6 +1168,7 @@ define(["knockout"], function (ko) {
     'addNested',
   ];
   const deathAttributesList = [
+    'addDateAdjustment',
     'addAge',
     'addGender',
     'addDate',
@@ -1148,6 +1177,7 @@ define(["knockout"], function (ko) {
     'addNested',
   ];
   const deviceAttributesList = [
+    'addDateAdjustment',
     'addFirstDiagnosis',
     'addAge',
     'addGender',
@@ -1162,6 +1192,7 @@ define(["knockout"], function (ko) {
     'addNested',
   ];
   const doseAttributesList = [
+    'addDateAdjustment',
     'addFirstDiagnosis',
     'addAgeAtStart',
     'addAgeAtEnd',
@@ -1174,6 +1205,7 @@ define(["knockout"], function (ko) {
     'addNested',
   ];
   const drugAttributesList = [
+    'addDateAdjustment',
     'addFirstDiagnosis',
     'addAgeAtStart',
     'addAgeAtEnd',
@@ -1185,6 +1217,7 @@ define(["knockout"], function (ko) {
     'addNested',
   ];
   const measurementAttributesList = [
+    'addDateAdjustment',
     'addFirstDiagnosis',
     'addAge',
     'addGender',
@@ -1205,6 +1238,7 @@ define(["knockout"], function (ko) {
     'addNested'
   ];
   const drugexposureAttributesList = [
+    'addDateAdjustment',
     'addFirstDiagnosis',
     'addAge',
     'addGender',
@@ -1224,23 +1258,8 @@ define(["knockout"], function (ko) {
     'addProviderSpecialty',
     'addNested',
   ];
-  const treatmentlineAttributesList = [
-    'addFirstDiagnosis',
-    'addAge',
-    'addGender',
-    'addStartDate',
-    'addEndDate',
-    'addDrugEraStartDate',
-    'addDrugEraEndDate',
-    'addLineNumber',
-    'addNumberOfCycles',
-    'addNumberOfDrugExposures',
-    'addType',
-    'addVisit',
-    'addProviderSpecialty',
-    'addNested',
-  ];
   const observationAttributesList = [
+    'addDateAdjustment',
     'addFirstDiagnosis',
     'addAge',
     'addGender',
@@ -1257,6 +1276,7 @@ define(["knockout"], function (ko) {
     'addNested',
   ];
   const observationPeriodAttributesList = [
+    'addDateAdjustment',
     'addFirstDiagnosis',
     'addAgeAtStart',
     'addAgeAtEnd',
@@ -1268,6 +1288,7 @@ define(["knockout"], function (ko) {
     'addNested',
   ];
   const payerPlanAttributesList = [
+    'addDateAdjustment',
     'addFirstDiagnosis',
     'addAgeAtStart',
     'addAgeAtEnd',
@@ -1287,6 +1308,7 @@ define(["knockout"], function (ko) {
     'addNested',
   ];
   const procedureOccurrenceAttributesList = [
+    'addDateAdjustment',
     'addFirstDiagnosis',
     'addVisit',
     'addGender',
@@ -1300,6 +1322,7 @@ define(["knockout"], function (ko) {
     'addNested',
   ];
   const specimenAttributesList = [
+    'addDateAdjustment',
     'addFirstDiagnosis',
     'addGender',
     'addNested',
@@ -1313,6 +1336,23 @@ define(["knockout"], function (ko) {
     'addSourceId',
   ];
   const visitAttributesList = [
+    'addDateAdjustment',
+    'addFirstDiagnosis',
+    'addGender',
+    'addStartDate',
+    'addEndDate',
+    'addLength',
+    'addAge',
+    'addType',
+    'addSourceConcept',
+    'addProviderSpecialty',
+    'addPlaceService',
+    'addPlaceServiceLocation',
+    'addPlaceServiceDistance',
+    'addNested',
+  ];
+  const visitDetailAttributesList = [
+    'addDateAdjustment',
     'addFirstDiagnosis',
     'addGender',
     'addStartDate',
@@ -1344,7 +1384,6 @@ define(["knockout"], function (ko) {
     'addDoseEra',
     'addDrugEra',
     'addDrugExposure',
-    'addTreatmentLine',
     'addLocationRegion',
     'addMeasurement',
     'addObservation',
@@ -1364,7 +1403,6 @@ define(["knockout"], function (ko) {
     addDoseEra: "DoseEra",
     addDrugEra: "DrugEra",
     addDrugExposure: "DrugExposure",
-    addTreatmentLine: "TreatmentLine",
     addLocationRegion: "LocationRegion",
     addMeasurement: "Measurement",
     addObservation: "Observation",
@@ -1373,6 +1411,7 @@ define(["knockout"], function (ko) {
     addProcedureOccurrence: "ProcedureOccurrence",
     addSpecimen: "Specimen",
     addVisit: "VisitOccurrence",
+    addVisitDetail: "VisitDetail",
     addGroup: "Group",
   };
 
@@ -1391,7 +1430,6 @@ define(["knockout"], function (ko) {
     doseAttributes: getListCriteria(doseAttributesList, 'dose', 'dose'),
     drugAttributes: getListCriteria(drugAttributesList, 'drug', 'drug'),
     drugexposureAttributes: getListCriteria(drugexposureAttributesList, 'drugexposure', 'drugexposure'),
-    treatmentlineAttributes: getListCriteria(treatmentlineAttributesList, 'treatmentline', 'treatmentline'),
     measurementAttributes: getListCriteria(measurementAttributesList, 'measurement', 'measurement'),
     observationAttributes: getListCriteria(observationAttributesList, 'observation', 'observation'),
     observationPeriodAttributes: getListCriteria(observationPeriodAttributesList, 'observationperiod', 'observationperiod'),
@@ -1399,6 +1437,7 @@ define(["knockout"], function (ko) {
     procedureOccurrenceAttributes: getListCriteria(procedureOccurrenceAttributesList, 'procedureoccurrence', 'procedureoccurrence'),
     specimenAttributes: getListCriteria(specimenAttributesList, 'specimen', 'specimen'),
     visitAttributes: getListCriteria(visitAttributesList, 'visit', 'visit'),
+    visitDetailAttributes: getListCriteria(visitDetailAttributesList, 'visitdetail', 'visitdetail'),
     demographicAttributes: getListCriteria(demographicAttributesList, 'demographic', 'demographic'),
   };
 });

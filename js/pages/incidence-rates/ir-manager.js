@@ -16,6 +16,7 @@ define([
 	'services/JobPollService',
 	'./PermissionService',
 	'services/Permission',
+	'services/Tags',
 	'components/security/access/const',
 	'pages/Page',
 	'utils/AutoBind',
@@ -36,9 +37,11 @@ define([
 	'utilities/export',
 	'utilities/sql',
 	'components/security/access/configure-access-modal',
+	'components/tags/modal/tags-modal',
 	'components/name-validation',
 	'less!./ir-manager.less',
 	'components/authorship',
+	'components/versions/versions'
 ], function (
 	ko,
 	view,
@@ -57,6 +60,7 @@ define([
 	JobPollService,
 	{ isPermittedExportSQL },
 	GlobalPermissionService,
+	TagsService,
 	{ entityType },
 	Page,
 	AutoBind,
@@ -79,7 +83,9 @@ define([
 			this.tabs = constants.tabs;
 			this.selectedAnalysis = sharedState.IRAnalysis.current;
 			this.selectedAnalysisId = sharedState.IRAnalysis.selectedId;
+			this.previewVersion = sharedState.IRAnalysis.previewVersion;
 			this.dirtyFlag = sharedState.IRAnalysis.dirtyFlag;
+			this.enablePermissionManagement = config.enablePermissionManagement;	 
 			this.exporting = ko.observable();
 			this.isAuthenticated = ko.pureComputed(() => {
 				return authAPI.isAuthenticated();
@@ -161,7 +167,11 @@ define([
 			};
 			this.incidenceRateCaption = ko.computed(() => {
 				if (this.selectedAnalysis() && this.selectedAnalysisId() !== null && this.selectedAnalysisId() !== 0) {
-					return ko.i18nformat('ir.caption', 'Incidence Rate Analysis #<%=id%>', {id: this.selectedAnalysisId()})();
+					if (this.previewVersion()) {
+						return ko.i18nformat('ir.captionPreview', 'Incidence Rate Analysis #<%=id%> - Version <%=number%> Preview', {id: this.selectedAnalysisId(), number: this.previewVersion().version})();
+					} else {
+						return ko.i18nformat('ir.caption', 'Incidence Rate Analysis #<%=id%>', {id: this.selectedAnalysisId()})();
+					}
 				}
 				return this.defaultName;
 			});
@@ -193,7 +203,7 @@ define([
 			this.canSave = ko.pureComputed(() => {
 				return this.isEditable()
 					&& this.isNameCorrect()
-					&& this.dirtyFlag().isDirty()
+					&& (this.dirtyFlag().isDirty() || this.previewVersion())
 					&& !this.isRunning();
 			});
 			this.error = ko.observable();
@@ -219,7 +229,7 @@ define([
 				changeFlag: ko.pureComputed(() => this.dirtyFlag().isChanged()),
 				isDiagnosticsRunning: this.isDiagnosticsRunning,
 				onDiagnoseCallback: this.diagnose.bind(this),
-				checkOnInit: true,
+				checkOnInit: !this.selectedAnalysis(),
 			});
 
 			this.isDesignCorrect = ko.pureComputed(() => this.criticalCount() === 0);
@@ -229,6 +239,61 @@ define([
 				entityIdGetter: () => this.selectedAnalysisId(),
 				createdByUsernameGetter: () => this.selectedAnalysis() && this.selectedAnalysis().createdBy()
 					&& this.selectedAnalysis().createdBy().login
+			});
+
+			this.tags = ko.observableArray();
+			TagsService.decorateComponent(this, {
+				assetTypeGetter: () => TagsService.ASSET_TYPE.INCIDENCE_RATE,
+				assetGetter: () => this.selectedAnalysis(),
+				addTagToAsset: (tag) => {
+					const isDirty = this.dirtyFlag().isDirty();
+					this.selectedAnalysis().tags.push(tag);
+					this.tags(this.selectedAnalysis().tags());
+					if (!isDirty) {
+						this.dirtyFlag().reset();
+						this.warningParams.valueHasMutated();
+					}
+				},
+				removeTagFromAsset: (tag) => {
+					const isDirty = this.dirtyFlag().isDirty();
+					this.selectedAnalysis().tags(this.selectedAnalysis().tags()
+						.filter(t => t.id !== tag.id && tag.groups.filter(tg => tg.id === t.id).length === 0));
+					this.tags(this.selectedAnalysis().tags());
+					if (!isDirty) {
+						this.dirtyFlag().reset();
+						this.warningParams.valueHasMutated();
+					}
+				}
+			});
+
+			this.versionsParams = ko.observable({
+				versionPreviewUrl: (versionNumber) => `/iranalysis/${this.selectedAnalysisId()}/version/${versionNumber}`,
+				currentVersion: () => {
+					return {
+						...this.selectedAnalysis(),
+						createdBy: this.selectedAnalysis().createdBy(),
+						createdDate: this.selectedAnalysis().createdDate(),
+						modifiedBy: this.selectedAnalysis().modifiedBy(),
+						modifiedDate: this.selectedAnalysis().modifiedDate(),
+					}
+				},
+				previewVersion: () => this.previewVersion(),
+				getList: () => this.selectedAnalysisId() ? IRAnalysisService.getVersions(this.selectedAnalysisId()) : [],
+				updateVersion: (version) => IRAnalysisService.updateVersion(version),
+				copyVersion: async (version) => {
+					this.isCopying(true);
+					try {
+						const result = await IRAnalysisService.copyVersion(this.selectedAnalysisId(), version.version);
+						this.previewVersion(null);
+						commonUtils.routeTo(`/iranalysis/${result.id}/definition`);
+					} catch(ex) {
+						alert(exceptionUtils.extractServerMessage(ex));
+					} finally {
+						this.isCopying(false);
+					}
+				},
+				isAssetDirty: () => this.dirtyFlag().isDirty(),
+				canAddComments: () => this.isEditable()
 			});
 
 			// startup actions
@@ -339,42 +404,72 @@ define([
 			this.sources().forEach(source => source.info(null));
 		}
 
-		onAnalysisSelected() {
+		async loadAnalysis(version) {
+			if (this.selectedAnalysis() && (this.selectedAnalysis().id() === this.selectedAnalysisId()) && !version) {
+				this.startPolling();
+				return;
+			}
+
 			this.loading(true);
 			this.refreshDefs();
 			this.clearResults();
-			IRAnalysisService.getAnalysis(this.selectedAnalysisId()).then((analysis) => {
+			try {
+				let analysis;
+				if (version && version !== 'current') {
+					const analysisVersion = await IRAnalysisService.getVersion(this.selectedAnalysisId(), version);
+					analysis = analysisVersion.entityDTO;
+					analysis.expression = JSON.parse(analysis.expression);
+					this.previewVersion(analysisVersion.versionDTO);
+				} else {
+					analysis = await IRAnalysisService.getAnalysis(this.selectedAnalysisId());
+					this.previewVersion(null);
+				}
 				this.selectedAnalysis(new IRAnalysisDefinition(analysis));
 				this.dirtyFlag(new ohdsiUtil.dirtyFlag(this.selectedAnalysis()));
+				this.tags(analysis.tags);
+				this.versionsParams.valueHasMutated();
 				this.loading(false);
 				this.startPolling();
-			});
+			} catch (ex) {
+				alert(exceptionUtils.extractServerMessage(ex));
+			} finally {
+				this.loading(false);
+			}
 		}
 
 		selectTab(tab) {
 			commonUtils.routeTo(`${this.constants.apiPaths.analysis(this.selectedAnalysisId())}/${tab}`);
 		}
 
-		onRouterParamsChanged(params = {}) {
-			const { analysisId, activeTab } = params;
+		onRouterParamsChanged(params, newParams) {
+			const { analysisId, activeTab, version } = Object.assign({}, params, newParams);
 			if (activeTab) {
 				if (Object.values(this.constants.tabs).includes(activeTab)) {
 					this.activeTab(activeTab);
 				}
 			}
-			if (analysisId && parseInt(analysisId) !== (this.selectedAnalysis() && this.selectedAnalysis().id())) {
-				this.onAnalysisSelected();
+			if (analysisId) {
+				this.loadAnalysis(version);
 			} else if (this.selectedAnalysis() && this.selectedAnalysis().id() && !this.pollId) {
 				this.startPolling();
 			}
 		}
 
+		backToCurrentVersion() {
+			if (this.dirtyFlag().isDirty() && !confirm(ko.i18n('common.unsavedWarning', 'Unsaved changes will be lost. Proceed?')())) {
+				return;
+			}
+			commonUtils.routeTo(`/iranalysis/${this.selectedAnalysisId()}/version/current`);
+		}
+
 		startPolling() {
-			this.pollId = JobPollService.add({
-				callback: silently => this.pollForInfo({ silently }),
-				interval: 10000,
-				isSilentAfterFirstCall: true,
-			});
+			if (!this.pollId) {
+				this.pollId = JobPollService.add({
+					callback: silently => this.pollForInfo({ silently }),
+					interval: config.pollInterval,
+					isSilentAfterFirstCall: true,
+				});
+			}
 		}
 
 		handleConceptSetImport(item) {
@@ -414,6 +509,7 @@ define([
 			this.selectedAnalysisId(analysis.id);
 			this.dirtyFlag(new ohdsiUtil.dirtyFlag(this.selectedAnalysis()));
 			this.clearResults();
+			this.versionsParams.valueHasMutated();
 			this.isCopying(false);
 			this.loading(false);
 			commonUtils.routeTo(constants.apiPaths.analysis(analysis.id));
@@ -422,6 +518,7 @@ define([
 		close() {
 			this.selectedAnalysis(null);
 			this.selectedAnalysisId(null);
+			this.previewVersion(null);
 			this.dirtyFlag(new ohdsiUtil.dirtyFlag(this.selectedAnalysis()));
 			this.conceptSetStore.clear();
 
@@ -439,6 +536,9 @@ define([
 		}
 
 		async save() {
+			if (this.previewVersion() && !confirm(ko.i18n('common.savePreviewWarning', 'Save as current version?')())) {
+				return;
+			}
 			this.isSaving(true);
 			this.loading(true);
 
@@ -453,8 +553,11 @@ define([
 					alert(ko.i18n('ir.nameConflict', 'An incidence rate with this name already exists. Please choose a different name.')());
 				} else {
 					const savedIR = await IRAnalysisService.saveAnalysis(this.selectedAnalysis());
+					this.selectedAnalysisId(savedIR.id);
 					this.selectedAnalysis(new IRAnalysisDefinition(savedIR));
 					this.dirtyFlag(new ohdsiUtil.dirtyFlag(this.selectedAnalysis()));
+					this.previewVersion(null);
+					this.versionsParams.valueHasMutated();
 					commonUtils.routeTo(constants.apiPaths.analysis(savedIR.id));
 				}
 			} catch (e) {
@@ -479,7 +582,11 @@ define([
 
 		removeResult(analysisResult) {
 			if (confirm(ko.i18nformat('ir.deleteResultConfirmation', 'Do you really want to remove result of <%=name%>?', {name:analysisResult.source.sourceName})())) {
-				IRAnalysisService.deleteInfo(this.selectedAnalysisId(), analysisResult.source.sourceKey).then(() => {
+				IRAnalysisService.deleteInfo(this.selectedAnalysisId(), analysisResult.source.sourceKey).then((response) => {
+					if (response.status === 403) {
+						alert(ko.i18n('ir.deleteResult403Error', 'Only Moderator role can delete generation results. Please check your role.')());
+						return;
+					}
 					const source = this.sources().find(s => s.source.sourceId === analysisResult.source.sourceId);
 					source.info(null);
 				});
@@ -534,7 +641,6 @@ define([
 				this.refreshDefs();
 				this.activeTab(this.tabs.DEFINITION);
 				this.close();
-				this.warningParams().checkOnInit = false;
 				commonUtils.routeTo(constants.apiPaths.analysis(res.id));
 			} catch (e) {
 				alert('An error occurred while attempting to import an incidence rate.');
@@ -586,14 +692,31 @@ define([
 		}
 
 		getAuthorship() {
-			const createdDate = commonUtils.formatDateForAuthorship(this.selectedAnalysis().createdDate);
-			const modifiedDate = commonUtils.formatDateForAuthorship(this.selectedAnalysis().modifiedDate);
+			const analysis = this.selectedAnalysis();
+
+			let createdText, createdBy, createdDate, modifiedBy, modifiedDate;
+
+			if (this.previewVersion()) {
+				createdText = ko.i18n('components.authorship.versionCreated', 'version created');
+				createdBy = this.previewVersion().createdBy ? this.previewVersion().createdBy.name : ko.i18n('common.anonymous', 'anonymous');
+				createdDate = commonUtils.formatDateForAuthorship(this.previewVersion().createdDate);
+				modifiedBy = null;
+				modifiedDate = null;
+			} else {
+				createdText = ko.i18n('components.authorship.created', 'created');
+				createdBy = analysis.createdBy() ? analysis.createdBy().name : ko.i18n('common.anonymous', 'anonymous');
+				createdDate = commonUtils.formatDateForAuthorship(analysis.createdDate);
+				modifiedBy = analysis.modifiedBy() ? analysis.modifiedBy().name : ko.i18n('common.anonymous', 'anonymous');
+				modifiedDate = commonUtils.formatDateForAuthorship(analysis.modifiedDate);
+			}
+
 			return {
-                createdBy: this.selectedAnalysis().createdBy() ? this.selectedAnalysis().createdBy().name : '',
-                createdDate: createdDate,
-                modifiedBy: this.selectedAnalysis().modifiedBy() ? this.selectedAnalysis().modifiedBy().name : '',
-                modifiedDate: modifiedDate,
-			};
+				createdText: createdText,
+				createdBy: createdBy,
+				createdDate: createdDate,
+				modifiedBy: modifiedBy,
+				modifiedDate: modifiedDate,
+			}
 		}
 
 		// cleanup
