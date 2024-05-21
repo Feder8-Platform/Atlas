@@ -15,7 +15,7 @@ docker run \
 --name atlas \
 -p 8081:8080 \
 --env-file atlas.env \
---network honeur-net \
+--network feder8-net \
 feder8/atlas:$TAG
 
 rm -rf atlas.env
