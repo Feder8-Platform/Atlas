@@ -8,7 +8,7 @@ define([
 	'atlas-state',
 	'services/ConceptSet',
 	'./utils',
-	'conceptsetbuilder/InputTypes/ConceptSet',
+	'./InputTypes/ConceptSet',
 	'./const',
 	'utils/ExceptionUtils',
 	'const',
@@ -17,6 +17,7 @@ define([
 	'./included',
 	'./included-badge',
 	'./included-sourcecodes',
+	'./recommend',
 	'./export',
 	'./import',
 	'less!./conceptset-list.less',
@@ -45,6 +46,7 @@ define([
 			this.conceptSets = params.conceptSets;
 			this.exportCSV = typeof params.exportCSV !== 'undefined' ? params.exportCSV : true;
 			this.conceptSetStore = params.conceptSetStore;
+			this.selectedSource = ko.observable();
 			this.canEdit = params.canEdit || (() => false);
 			this.exportConceptSets = params.exportConceptSets || (() => false);
 			this.currentConceptSet = this.conceptSetStore.current;
@@ -84,11 +86,13 @@ define([
 				...params,
 				tableOptions,
 				conceptSetStore: this.conceptSetStore,
+				selectedSource: this.selectedSource,
 				activeConceptSet: ko.observable(this.conceptSetStore), // addConceptBox expectes an observable for activeConceptSet
 				currentConceptSet: this.conceptSetStore.current,
 				loadConceptSet: this.loadConceptSet,
 				importing: this.importing,
 				selectedTabKey: this.selectedTabKey,
+				canEdit: this.canEdit,
 			};
 			this.tabs = [
 				{
@@ -109,6 +113,14 @@ define([
 					key: ViewMode.SOURCECODES,
 					componentName: 'conceptset-list-included-sourcecodes',
 					componentParams: {...tabParams, loading: ko.pureComputed(() => (this.conceptSetStore.loadingSourceCodes() || this.loading()))}
+				},
+				{
+					title: ko.i18n('cs.manager.tabs.recommend', 'Recommend'),
+					key: ViewMode.RECOMMEND,
+					componentName: 'conceptset-recommend',
+					componentParams: {
+						...tabParams, loading: ko.pureComputed(() => (this.conceptSetStore.loadingRecommended() || this.loading()))
+					}
 				},
 				{
 					title: ko.i18n('common.export', 'Export'),

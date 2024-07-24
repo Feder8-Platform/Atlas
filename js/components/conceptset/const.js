@@ -11,6 +11,7 @@ define([
 		EXPRESSION: 'expression',
 		INCLUDED: 'included',
 		SOURCECODES: 'included-sourcecodes',
+		RECOMMEND: 'recommend',
 		EXPORT: 'conceptset-export',
 		IMPORT: 'conceptset-import',
 	};
@@ -21,6 +22,7 @@ define([
 		cohortDefinition: 'cohortDefinition',
 		characterization: 'characterization',
 		incidenceRates: 'incidenceRates',
+		reusables: 'reusables'
 	};
 	
 	const RESOLVE_OUT_OF_ORDER = 'resolveConceptSetExpression() resolved out of order';

@@ -3,7 +3,7 @@ define([
 	'text!./ConceptSetBrowserTemplate.html',
 	'services/VocabularyProvider',
 	'appConfig',
-	'conceptsetbuilder/InputTypes/ConceptSet',
+	'components/conceptset/InputTypes/ConceptSet',
 	'services/AuthAPI',
 	'utils/DatatableUtils',
 	'utils/CommonUtils',
@@ -100,6 +100,8 @@ define([
 			VocabularyProvider.getConceptSetList(url)
 				.done(function (results) {
 					datatableUtils.coalesceField(results, 'modifiedDate', 'createdDate');
+					datatableUtils.addTagGroupsToFacets(results, self.options.Facets);
+					datatableUtils.addTagGroupsToColumns(results, self.columns);
 					self.repositoryConceptSets(results);
 					self.loading(false);
 				})
@@ -124,8 +126,7 @@ define([
 		// dispose subscriptions
 
 		// startup actions
-		self.loadConceptSetsFromRepository(self.selectedSource()
-			.url);
+		self.loadConceptSetsFromRepository(self.selectedSource().url);
 
 		this.options = {
 			Facets: [
@@ -148,7 +149,7 @@ define([
 			]
 		};
 
-		this.columns = [
+		this.columns = ko.observableArray([
 			{
 				title: ko.i18n('columns.id', 'Id'),
 				data: 'id'
@@ -172,8 +173,8 @@ define([
 				title: ko.i18n('columns.author', 'Author'),
 				render: datatableUtils.getCreatedByFormatter(),
 			}
-		];
-
+		]);
+		
 		const { pageLength, lengthMenu } = commonUtils.getTableOptions('M');
 		this.pageLength = params.pageLength || pageLength;
 		this.lengthMenu = params.lengthMenu || lengthMenu;

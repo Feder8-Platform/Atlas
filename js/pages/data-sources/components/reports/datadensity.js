@@ -4,7 +4,7 @@ define([
 	'd3',
 	'utils/CommonUtils',
 	'utils/ChartUtils',
-	'pages/data-sources/classes/Report',
+	'components/reports/classes/Report',
 	'components/Component',
 	'components/heading',
 	'components/charts/boxplot',
@@ -15,13 +15,13 @@ define([
 	d3,
 	commonUtils,
 	ChartUtils,
-	Report,
-	Component
+	Report
 ) {
 	class datadensity extends Report {
 		constructor(params) {
 			super(params);
 
+			this.name = 'DataDensity';
 			this.totalLineData = ko.observable();
 			this.recordsperpersonLineData = ko.observable();
 			this.conceptsPerPersonData = ko.observable();

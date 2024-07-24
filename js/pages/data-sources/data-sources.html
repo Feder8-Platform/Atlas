@@ -1,4 +1,5 @@
-<heading-title params="name: ko.i18n('dataSources.headingTitle', 'Data Sources'), icon: 'area-chart', theme: 'dark'"></heading-title>
+<div id="dataSourcesTop"></div>
+<heading-title params="name: ko.i18n('dataSources.headingTitle', 'Data Sources'), icon: 'chart-area', theme: 'dark'"></heading-title>
 
 <access-denied params="isAuthenticated: $component.isAuthenticated, isPermitted: canViewCdmResults"></access-denied>
 
@@ -33,7 +34,7 @@
 		<div class="row pad-10 report">
 			<!-- ko component: {
 				name: $component.currentReport().component,
-				params: { context: $component, report: currentReport() }
+				params: { context: $component, report: currentReport }
 			} -->
 			<!-- /ko -->
 		</div>

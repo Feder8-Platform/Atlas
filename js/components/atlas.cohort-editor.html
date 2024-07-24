@@ -1,6 +1,6 @@
 <div class="paddedWrapper">
 	<!-- contenteditableSwitch must be placed AFTER contentEditable to override 'contenteditable' attribute -->
-	<div class="divtext cohort-description" data-bind="contentEditable: $component.currentCohortDefinition().description, contenteditableSwitch: canEdit(), placeholder: ko.i18n('components.atlasCohortEditor.enterCohortPlaceholder', 'Enter a cohort definition description here')"></div>
+	<div class="divtext cohort-description" data-bind="contentEditable: currentCohortDefinition().description, contenteditableSwitch: canEdit(), placeholder: ko.i18n('components.atlasCohortEditor.enterCohortPlaceholder', 'Enter the cohort definition description here')"></div>
 	<div data-bind="eventListener: [
 									{ event: 'click', selector: '.conceptset_import', callback: handleConceptSetImport},
 									{ event: 'click', selector: '.conceptset_edit', callback: handleEditConceptSet}
@@ -12,6 +12,7 @@
 		<cohort-expression-viewer params="expression: $component.currentCohortDefinition().expression"></cohort-expression-viewer>
 		<!-- /ko -->
 		<div class="modal fade" data-bind="modal: showModal" tabindex="-1" role="dialog">
+			<!-- ko if:showModal-->
 			<div class="modal-dialog modal-lg">
 				<div class="modal-content">
 					<div class="modal-header" data-bind="text: ko.i18n('components.atlasCohortEditor.importConceptSet', 'Import Concept Set From Repository...')"></div>
@@ -27,6 +28,7 @@
 					</div>
 				</div>
 			</div>
+			<!-- /ko -->
 		</div>
 	</div>
 </div>

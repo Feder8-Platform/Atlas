@@ -32,6 +32,7 @@ define([
     'components/visualizations/line-chart',
     'components/charts/scatterplot',
     'components/charts/splitBoxplot',
+    'components/charts/horizontalBoxplot',
     'd3-scale-chromatic',
 ], function (
     ko,
@@ -81,10 +82,12 @@ define([
 
             this.design = ko.observable({});
             this.executionId = params.executionId;
+            this.loadedExecutionId = null;
             this.data = ko.observable([]);
             this.domains = ko.observableArray();
             this.filterList = ko.observableArray([]);
             this.selectedItems = ko.pureComputed(() => filterUtils.getSelectedFilterValues(this.filterList()));
+            this.selectedItems.subscribe(this.updateData);
             this.analysisList = ko.observableArray([]);
             this.canExportAll = ko.pureComputed(() => this.data().analyses && this.data().analyses.length > 0);
 
@@ -226,59 +229,45 @@ define([
             }
         }
 
-        loadData() {
+        async loadData() {
             this.loading(true);
 
-            let {cohorts, analyses, domains} = filterUtils.getSelectedFilterValues(this.filterList());
-            let params = {
-                cohortIds: cohorts,
-                analysisIds: analyses,
-                domainIds: domains,
-                thresholdValuePct: this.thresholdValuePct() / 100,
-                showEmptyResults: !!this.showEmptyResults(),
+            let sourceList,
+                domains,
+                design,
+                execution,
+                totalCount;
+            
+            [ 
+                sourceList,
+                domains,
+                design,
+                execution,
+                totalCount
+            ] = await Promise.all([
+                    SourceService.loadSourceList(),
+                    FeatureAnalysisService.loadFeatureAnalysisDomains(),
+                    CharacterizationService.loadExportDesignByGeneration(this.executionId()),
+                    CharacterizationService.loadCharacterizationExecution(this.executionId()),
+                    CharacterizationService.loadCharacterizationResultsCount(this.executionId()),
+            ])
+            this.design(design);
+            this.domains(domains);
+            this.totalResultsCount(totalCount);
+            this.newThresholdValuePct(this.thresholdValuePct());
+
+            const source = sourceList.find(s => s.sourceKey === execution.sourceKey);
+
+            const result = {
+                sourceId: source.sourceId,
+                sourceKey: source.sourceKey,
+                sourceName: source.sourceName,
+                date: execution.endTime,
+                designHash: execution.hashCode,
             };
 
-            Promise.all([
-                SourceService.loadSourceList(),
-                FeatureAnalysisService.loadFeatureAnalysisDomains(),
-                CharacterizationService.loadExportDesignByGeneration(this.executionId()),
-                CharacterizationService.loadCharacterizationExecution(this.executionId()),
-                CharacterizationService.loadCharacterizationResults(this.executionId(), params),
-                CharacterizationService.loadCharacterizationResultsCount(this.executionId()),
-            ]).then(([
-                 sourceList,
-                 domains,
-                 design,
-                 execution,
-                 generationResults,
-                 totalCount,
-            ]) => {
-                this.design(design);
-                this.domains(domains);
-                this.totalResultsCount(totalCount);
-                this.thresholdValuePct(generationResults.prevalenceThreshold * 100);
-                this.newThresholdValuePct(this.thresholdValuePct());
-                this.showEmptyResults(generationResults.showEmptyResults);
-                this.resultsCountFiltered(generationResults.count);
-
-                const source = sourceList.find(s => s.sourceKey === execution.sourceKey);
-
-                const result = {
-                    sourceId: source.sourceId,
-                    sourceKey: source.sourceKey,
-                    sourceName: source.sourceName,
-                    date: execution.endTime,
-                    designHash: execution.hashCode,
-                };
-                
-                this.data(result);
-
-                this.getData(generationResults.reports);
-                this.loading(false);
-
-                this.filterList(this.getFilterList(this.data().analyses));
-                this.selectedItems.subscribe(this.updateData);
-            });
+            this.data(result);
+            this.filterList(this.getFilterList());
         }
 
         toggleEmptyResults() {
@@ -289,12 +278,12 @@ define([
         updateData() {
             this.loading(true);
 
-            let {cohorts, analyses, domains} = filterUtils.getSelectedFilterValues(this.filterList());
+            let {cohorts, analyses, domains} = this.selectedItems();
             let params = {
                 cohortIds: cohorts,
                 analysisIds: analyses,
                 domainIds: domains,
-                thresholdValuePct: this.thresholdValuePct() / 100,
+                thresholdValuePct: this.newThresholdValuePct() / 100,
                 showEmptyResults: !!this.showEmptyResults(),
             };
 
@@ -303,6 +292,8 @@ define([
             ]).then(([
                 generationResults
             ]) => {
+                this.thresholdValuePct(generationResults.prevalenceThreshold * 100);
+                this.showEmptyResults(generationResults.showEmptyResults);
                 this.resultsCountFiltered(generationResults.count);
                 this.getData(generationResults.reports);
                 this.loading(false);
@@ -318,6 +309,7 @@ define([
                             analysisId: r.analysisId,
                             domainId: this.design() && this.design().featureAnalyses && !r.isSummary ?
 															(this.design().featureAnalyses.find(fa => fa.id === r.id) || { })[ 'domain' ] : null,
+                            rawAnalysisName: r.analysisName,
                             analysisName: this.getAnalysisName(r.analysisName, { faType: r.faType, statType: r.resultType }),
                             cohorts: r.cohorts,
                             domainIds: r.domainIds,
@@ -338,7 +330,7 @@ define([
 
         getAnalysisName(rawName, { faType, statType }) {
 
-            return rawName + ((faType === 'PRESET' && statType.toLowerCase() === TYPE_PREVALENCE) ? ` (prevalence > ${this.thresholdValuePct()}%)` : '');
+            return rawName + ((faType === 'PRESET' && statType.toLowerCase() === TYPE_PREVALENCE) ? ` (prevalence > ${this.newThresholdValuePct()}%)` : '');
         }
 
         async exportAllCSV() {
@@ -390,35 +382,24 @@ define([
             return domain || {name: 'Unknown'};
         }
 
-        getFilterList(data) {
-            const cohorts = lodash.uniqBy(
-                lodash.flatten(
-                    lodash.flatten(
-                       data.map(a => a.cohorts.map(c => ({label: c.cohortName, value: parseInt(c.cohortId)})))
-                    )
-                ),
-                'value'
-            );
-
+        getFilterList() {
+            const cohorts = this.design().cohorts.map(c => ({label: c.name, value: parseInt(c.id)}));
             const domains = lodash.uniqBy(
-                lodash.flatten(
-                    data.map(a => a.domainIds.map(d => ({label: this.findDomainById(d).name, value: d})))
-                ),
+                this.design().featureAnalyses.map(fa => ({label: this.findDomainById(fa.domain).name, value: fa.domain})),
                 "value"
             );
-
             const analyses = lodash.uniqBy(
-                data.filter(a => a.analysisId).map(a => ({label: a.analysisName, value: a.analysisId})),
+                this.design().featureAnalyses.map(fa => ({label: fa.name, value: fa.id})),
                 "value"
-            );
-
+            );                    
+            
             return [
                 {
                     type: 'multiselect',
                     label: ko.i18n('cc.viewEdit.results.filters.cohorts', 'Cohorts'),
                     name: 'cohorts',
                     options: ko.observable(cohorts),
-                    selectedValues: ko.observable(cohorts.map(c => c.value)),
+                    selectedValues: ko.observable(cohorts.length > 0 ? [cohorts.map(c => c.value).find(i => true)]:[]), // select first cohort
                 },
                 {
                     type: 'multiselect',
@@ -490,23 +471,44 @@ define([
             }));
         }
 
+        getBoxplotStruct(cohort, stat) {
+            return {
+            Category: cohort.cohortName,
+            min: stat.min[0][cohort.cohortId],
+            max: stat.max[0][cohort.cohortId],
+            median: stat.median[0][cohort.cohortId],
+            LIF: stat.p10[0][cohort.cohortId],
+            q1: stat.p25[0][cohort.cohortId],
+            q3: stat.p75[0][cohort.cohortId],
+            UIF: stat.p90[0][cohort.cohortId]
+            };
+        }
+
         convertBoxplotData(analysis) {
-
-            const getBoxplotStruct = (cohort, stat) => ({
-                Category: cohort.cohortName,
-                min: stat.min[0][cohort.cohortId],
-                max: stat.max[0][cohort.cohortId],
-                median: stat.median[0][cohort.cohortId],
-                LIF: stat.p10[0][cohort.cohortId],
-                q1: stat.p25[0][cohort.cohortId],
-                q3: stat.p75[0][cohort.cohortId],
-                UIF: stat.p90[0][cohort.cohortId]
-            });
-
             return [{
-                target: getBoxplotStruct(analysis.cohorts[0], analysis.data[0]),
-                compare: getBoxplotStruct(analysis.cohorts[1],  analysis.data[0]),
-            }]
+                target: this.getBoxplotStruct(analysis.cohorts[0], analysis.data[0]),
+                compare: this.getBoxplotStruct(analysis.cohorts[1],  analysis.data[0]),
+            }];
+        }
+
+        convertHorizontalBoxplotData(analysis) {
+            return analysis.cohorts.map(cohort => {
+                return this.getBoxplotStruct(cohort, analysis.data[0]);
+            });
+        }
+
+        prepareLegendBoxplotData (analysis) {
+            const cohortNames = analysis.cohorts.map(d => d.cohortName);
+            const legendColorsSchema = d3.scaleOrdinal().domain(cohortNames)
+                .range(utils.colorHorizontalBoxplot);
+
+            const legendColors = cohortNames.map(cohort => {
+                return {
+                    cohortName: cohort,
+                    cohortColor: legendColorsSchema(cohort)
+                };
+            });
+            return legendColors.reverse();
         }
 
         analysisTitle(data) {

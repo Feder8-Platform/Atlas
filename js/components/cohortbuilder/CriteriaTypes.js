@@ -3,13 +3,13 @@ define(function (require, exports) {
 	var ConditionOccurrence = require("./CriteriaTypes/ConditionOccurrence");
 	var ConditionEra = require("./CriteriaTypes/ConditionEra");
 	var DrugExposure = require("./CriteriaTypes/DrugExposure");
-	var TreatmentLine = require("./CriteriaTypes/TreatmentLine");
 	var DrugEra = require("./CriteriaTypes/DrugEra");
 	var DoseEra = require("./CriteriaTypes/DoseEra");
 	var Observation = require("./CriteriaTypes/Observation");
 	var ProcedureOccurrence = require("./CriteriaTypes/ProcedureOccurrence");
 	var Specimen = require("./CriteriaTypes/Specimen");
 	var VisitOccurrence = require("./CriteriaTypes/VisitOccurrence");
+	var VisitDetail = require("./CriteriaTypes/VisitDetail");
 	var DeviceExposure = require("./CriteriaTypes/DeviceExposure");
 	var Measurement = require("./CriteriaTypes/Measurement");
 	var ObservationPeriod = require("./CriteriaTypes/ObservationPeriod");	
@@ -34,10 +34,6 @@ define(function (require, exports) {
 			return {
 				DrugExposure: new exports.DrugExposure(data.DrugExposure, conceptSets)
 			};
-		} else if (data.hasOwnProperty("TreatmentLine")) {
-            return {
-                TreatmentLine: new exports.TreatmentLine(data.TreatmentLine, conceptSets)
-            };
 		} else if (data.hasOwnProperty("DrugEra")) {
 			return {
 				DrugEra: new exports.DrugEra(data.DrugEra, conceptSets)
@@ -61,7 +57,11 @@ define(function (require, exports) {
 		} else if (data.hasOwnProperty("VisitOccurrence")) {
 			return {
 				VisitOccurrence: new exports.VisitOccurrence(data.VisitOccurrence, conceptSets)
-			};	
+			};
+		} else if (data.hasOwnProperty("VisitDetail")) {
+			return {
+				VisitDetail: new exports.VisitDetail(data.VisitDetail, conceptSets)
+			};
 		} else if (data.hasOwnProperty("DeviceExposure")) {
 			return {
 				DeviceExposure: new exports.DeviceExposure(data.DeviceExposure, conceptSets)
@@ -96,13 +96,13 @@ define(function (require, exports) {
 	exports.ConditionOccurrence = ConditionOccurrence;
 	exports.ConditionEra = ConditionEra;
 	exports.DrugExposure = DrugExposure;
-	exports.TreatmentLine = TreatmentLine;
 	exports.DrugEra = DrugEra;
 	exports.DoseEra = DoseEra;
 	exports.Observation = Observation;
 	exports.Specimen = Specimen;	
 	exports.ProcedureOccurrence = ProcedureOccurrence;
 	exports.VisitOccurrence = VisitOccurrence;
+	exports.VisitDetail = VisitDetail;
 	exports.DeviceExposure = DeviceExposure;
 	exports.Measurement = Measurement;
 	exports.ObservationPeriod = ObservationPeriod;

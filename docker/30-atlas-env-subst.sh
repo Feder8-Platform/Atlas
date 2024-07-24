@@ -2,48 +2,31 @@
 
 set -e
 
-if [ -n "${FEDER8_WEBAPI_URL}" ]; then
+CONFIG_PATH=${CONFIG_PATH:-/etc/atlas/config-local.js}
+CONFIG_TARGET_PATH="/usr/share/nginx/html/atlas/js/config-local.js"
+
+# Copy mounted configuration file if present
+if [ -f "${CONFIG_PATH}" ]; then
+  echo "Using config-local.js from ${CONFIG_PATH}"
+  # Don't copy but rewrite so that permissions are not changed.
+  cat "${CONFIG_PATH}" > "${CONFIG_TARGET_PATH}"
+fi
+
+if [ -n "${WEBAPI_URL}" ]; then
   # make sure the WebAPI URL ends with a slash
-  case $FEDER8_WEBAPI_URL in
+  case $WEBAPI_URL in
     # correct, no action
     */)
       ;;
     # otherwise, add slash
     *)
-      FEDER8_WEBAPI_URL="$FEDER8_WEBAPI_URL/"
+      WEBAPI_URL="$WEBAPI_URL/"
       ;;
   esac
-  CONFIG_LOCAL="/usr/share/nginx/html/js/config-local.js"
   TFILE=`mktemp`
   trap "rm -f $TFILE" 0 1 2 3 15
-  envsubst '$FEDER8_WEBAPI_URL' < "$CONFIG_LOCAL" > "$TFILE"
-  cat "$TFILE" > "$CONFIG_LOCAL"
-  rm -f "$TFILE"
-fi
-
-if [ -n "${FEDER8_ATLAS_SECURE}" ]; then
-  CONFIG_LOCAL="/usr/share/nginx/html/js/config-local.js"
-  TFILE=`mktemp`
-  trap "rm -f $TFILE" 0 1 2 3 15
-  envsubst '$FEDER8_ATLAS_SECURE' < "$CONFIG_LOCAL" > "$TFILE"
-  cat "$TFILE" > "$CONFIG_LOCAL"
-  rm -f "$TFILE"
-fi
-
-if [ -n "${FEDER8_ATLAS_CENTRAL}" ]; then
-  CONFIG_LOCAL="/usr/share/nginx/html/js/config-local.js"
-  TFILE=`mktemp`
-  trap "rm -f $TFILE" 0 1 2 3 15
-  envsubst '$FEDER8_ATLAS_CENTRAL' < "$CONFIG_LOCAL" > "$TFILE"
-  cat "$TFILE" > "$CONFIG_LOCAL"
-  rm -f "$TFILE"
-fi
-
-if [ -n "${FEDER8_ATLAS_LDAP_ENABLED}" ]; then
-  CONFIG_LOCAL="/usr/share/nginx/html/js/config-local.js"
-  TFILE=`mktemp`
-  trap "rm -f $TFILE" 0 1 2 3 15
-  envsubst '$FEDER8_ATLAS_LDAP_ENABLED' < "$CONFIG_LOCAL" > "$TFILE"
-  cat "$TFILE" > "$CONFIG_LOCAL"
+  # Don't copy but rewrite so that permissions are not changed.
+  envsubst '$WEBAPI_URL' < "$CONFIG_TARGET_PATH" > "$TFILE"
+  cat "$TFILE" > "$CONFIG_TARGET_PATH"
   rm -f "$TFILE"
 fi

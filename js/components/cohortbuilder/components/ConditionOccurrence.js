@@ -4,6 +4,7 @@ define([
   "../utils",
   "../InputTypes/Range",
   "../InputTypes/Text",
+  "../InputTypes/DateAdjustment",
   "../CriteriaGroup",
   "text!./ConditionOccurrenceTemplate.html",
   "../const",
@@ -14,6 +15,7 @@ define([
   utils,
   Range,
   Text,
+  DateAdjustment,
   CriteriaGroup,
   template,
   constants
@@ -58,15 +60,14 @@ define([
             self.Criteria.Gender(ko.observableArray());
         },
       },
-			{
-				text: "Add Condition Status",
-				selected: false,
-				description: "Filter Condition Occurrences based on condition status.",
-				action: function () {
-					if (self.Criteria.ConditionStatus() == null)
-						self.Criteria.ConditionStatus(ko.observableArray());
-				}
-			},
+      {
+        ...constants.occurrenceAttributes.addConditionStatus,
+        selected: false,
+        action: function () {
+            if (self.Criteria.ConditionStatus() == null)
+                self.Criteria.ConditionStatus(ko.observableArray());
+        }
+      },
       {
         ...constants.occurrenceAttributes.addStartDate,
         selected: false,
@@ -89,6 +90,13 @@ define([
                 Op: "lt",
               })
             );
+        },
+      },
+      {
+        ...constants.occurrenceAttributes.addDateAdjustment,
+        selected: false,
+        action: function () {
+          if (self.Criteria.DateAdjustment() == null) self.Criteria.DateAdjustment(new DateAdjustment());
         },
       },
       {
@@ -155,11 +163,11 @@ define([
       'components.conditionOccurrence.indexDataText',
       'The index date refers to the condition occurrence of <%= conceptSetName %>.',
       {
-        conceptSetName: utils.getConceptSetName(
+        conceptSetName: ko.pureComputed(() => utils.getConceptSetName(
           self.Criteria.CodesetId,
           self.expression.ConceptSets,
           ko.i18n('components.conditionOccurrence.anyCondition', 'Any Condition')
-        ),
+        )),
       }
     );
   }

@@ -1,11 +1,13 @@
 define([
     'services/http',
     'appConfig',
-    'utils/ExecutionUtils'
+    'utils/ExecutionUtils',
+		'services/AuthAPI',
 ], function (
 	httpService,
 	config,
-    executionUtils,
+  executionUtils,
+	authApi
 ) {
 	const servicePath = config.webAPIRoot + 'pathway-analysis';
 
@@ -15,22 +17,22 @@ define([
 			.then(res => res.data);
 	}
 
-	function create(design) {
-		return request = httpService.doPost(servicePath, design).then(res => res.data);
+	async function create(design) {
+		return authApi.executeWithRefresh(httpService.doPost(servicePath, design).then(res => res.data));
 	}
 
-	function load(id) {
-		return httpService
+	async function load(id) {
+		return authApi.executeWithRefresh(httpService
 			.doGet(`${servicePath}/${id}`)
-			.then(res => res.data);
+			.then(res => res.data));
 	}
 
 	function save(id, design) {
 		return httpService.doPut(`${servicePath}/${id}`, design).then(res => res.data);
 	}
 
-	function copy(id) {
-		return httpService.doPost(`${servicePath}/${id}`).then(res => res.data);
+	async function copy(id) {
+		return authApi.executeWithRefresh(httpService.doPost(`${servicePath}/${id}`).then(res => res.data));
 	}
 
 	function del(id) {
@@ -57,10 +59,10 @@ define([
 			.then(res => res.data);
 	}
 
-	function generate(id, sourcekey) {
-		return httpService
+	async function generate(id, sourcekey) {
+		return authApi.executeWithRefresh(httpService
 			.doPost(`${servicePath}/${id}/generation/${sourcekey}`)
-			.then(res => res.data);
+			.then(res => res.data));
 	}
 
 	function cancelGeneration(id, sourceKey) {
@@ -81,10 +83,10 @@ define([
 			.then(res => res.data);
 	}
 	
-	function importPathwayDesign(design) {
-		return httpService
+	async function importPathwayDesign(design) {
+		return authApi.executeWithRefresh(httpService
 			.doPost(`${servicePath}/import`, design)
-			.then(res => res.data);
+			.then(res => res.data));
 	}
 
 	function exists(name, id) {
@@ -97,6 +99,28 @@ define([
         return httpService
             .doPost(`${servicePath}/check`, design)
             .then(res => res.data);
+	}
+
+	function getVersions(id) {
+		return httpService.doGet(`${servicePath}/${id}/version/`)
+			.then(res => res.data);
+	}
+
+	function getVersion(id, versionNumber) {
+		return httpService.doGet(`${servicePath}/${id}/version/${versionNumber}`)
+			.then(res => res.data);
+	}
+
+	async function copyVersion(id, versionNumber) {
+		return authApi.executeWithRefresh(httpService.doPut(`${servicePath}/${id}/version/${versionNumber}/createAsset`)
+			.then(res => res.data));
+	}
+
+	function updateVersion(version) {
+		return httpService.doPut(`${servicePath}/${version.assetId}/version/${version.version}`, {
+			comment: version.comment,
+			archived: version.archived
+		}).then(res => res.data);
 	}
 	
 	return {
@@ -116,5 +140,9 @@ define([
 		importPathwayDesign,
 		exists,
         runDiagnostics,
+		getVersions,
+		getVersion,
+		updateVersion,
+		copyVersion
 	};
 });

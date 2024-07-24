@@ -5,7 +5,7 @@ define([
 	'pages/Router',
 	'utils/CommonUtils',
 	'assets/ohdsi.util',
-    'appConfig',
+        'appConfig',
 	'./const',
 	'const',
 	'atlas-state',
@@ -25,7 +25,7 @@ define([
 	'services/FeatureExtraction',
 	'featureextraction/components/covariate-settings-editor',
 	'featureextraction/components/temporal-covariate-settings-editor',
-	'components/cohort-definition-browser',
+	'components/entityBrowsers/cohort-definition-browser',
 	'faceted-datatable',
     'components/tabs',
 	'./components/prediction-specification-view-edit',
@@ -81,6 +81,7 @@ define([
 
 			this.options = constants.options;
 			this.config = config;
+			this.enablePermissionManagement = config.enablePermissionManagement;
 			this.loading = ko.observable(true);
 			this.patientLevelPredictionAnalysis = sharedState.predictionAnalysis.current;
 			this.selectedAnalysisId = sharedState.predictionAnalysis.selectedId;
@@ -202,7 +203,7 @@ define([
 			GlobalPermissionService.decorateComponent(this, {
 				entityTypeGetter: () => entityType.PREDICTION,
 				entityIdGetter: () => this.selectedAnalysisId(),
-				createdByUsernameGetter: () => this.patientLevelPredictionAnalysis() && lodash.get(this.patientLevelPredictionAnalysis(), 'createdBy')
+				createdByUsernameGetter: () => this.patientLevelPredictionAnalysis() && lodash.get(this.patientLevelPredictionAnalysis(), 'createdBy.login')
 			});
 		}
 
@@ -329,6 +330,11 @@ define([
 
 		prepForSave() {
 			const specification = ko.toJS(this.patientLevelPredictionAnalysis());
+
+			// createdBy/modifiedBy INSIDE the spec should not be objects, just a string
+			specification.createdBy = this.patientLevelPredictionAnalysis().createdBy ? this.patientLevelPredictionAnalysis().createdBy.login : null;
+			specification.modifiedBy = this.patientLevelPredictionAnalysis().modifiedBy ? this.patientLevelPredictionAnalysis().modifiedBy.login : null;
+
 			specification.targetIds = [];
 			specification.outcomeIds = [];
 			specification.cohortDefinitions = [];
@@ -414,12 +420,9 @@ define([
 		}
 
 		loadParsedAnalysisFromServer(header, specification) {
-			const { createdBy, modifiedBy, ...props } = header;
 			this.patientLevelPredictionAnalysis(new PatientLevelPredictionAnalysis({
 				...specification,
-				...props,
-				createdBy: createdBy ? createdBy.name : null,
-				modifiedBy: modifiedBy ? modifiedBy.name : null
+				...header,
 			}));
 			this.packageName(header.packageName);
 			this.setUserInterfaceDependencies();
@@ -480,9 +483,9 @@ define([
 			const createdDate = commonUtils.formatDateForAuthorship(this.patientLevelPredictionAnalysis().createdDate);
 			const modifiedDate = commonUtils.formatDateForAuthorship(this.patientLevelPredictionAnalysis().modifiedDate);
 			return {
-					createdBy: lodash.get(this.patientLevelPredictionAnalysis(), 'createdBy'),
+					createdBy: lodash.get(this.patientLevelPredictionAnalysis(), 'createdBy.name'),
 					createdDate,
-					modifiedBy: lodash.get(this.patientLevelPredictionAnalysis(), 'modifiedBy'),
+					modifiedBy: lodash.get(this.patientLevelPredictionAnalysis(), 'modifiedBy.name'),
 					modifiedDate,
 			}
 		}

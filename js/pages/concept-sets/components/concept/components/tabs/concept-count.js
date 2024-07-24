@@ -45,8 +45,7 @@ define([
 							sourceData.push({
 								sourceName,
 								recordCount: recordCountObject[0],
-								descendantRecordCount: recordCountObject[1],
-								personRecordCount: recordCountObject[2]
+								descendantRecordCount: recordCountObject[1]
 							});
 						}
 					}).catch(err => {
@@ -55,7 +54,6 @@ define([
 							sourceName,
 							recordCount: failedMsg,
 							descendantRecordCount: failedMsg,
-							personRecordCount: failedMsg
 						});
 					});
 					promises.push(promise);

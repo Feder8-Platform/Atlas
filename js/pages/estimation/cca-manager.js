@@ -72,6 +72,7 @@ define([
 			this.defaultCovariateSettings = ko.observable();
 			this.options = constants.options;
 			this.config = config;
+			this.enablePermissionManagement = config.enablePermissionManagement;	    
 			this.loading = ko.observable(true);
 			this.isAuthenticated = ko.pureComputed(() => {
 				return authApi.isAuthenticated();
@@ -206,7 +207,7 @@ define([
 			GlobalPermissionService.decorateComponent(this, {
 				entityTypeGetter: () => entityType.ESTIMATION,
 				entityIdGetter: () => this.selectedAnalysisId(),
-				createdByUsernameGetter: () => this.estimationAnalysis() && lodash.get(this.estimationAnalysis(), 'createdBy')
+				createdByUsernameGetter: () => this.estimationAnalysis() && lodash.get(this.estimationAnalysis(), 'createdBy.login')
 			});
 		}
 
@@ -264,6 +265,11 @@ define([
 
 		prepForSave() {
 			const specification = ko.toJS(this.estimationAnalysis());
+
+			// createdBy/modifiedBy INSIDE the spec should not be objects, just a string
+			specification.createdBy = this.estimationAnalysis().createdBy ? this.estimationAnalysis().createdBy.login : null;
+			specification.modifiedBy = this.estimationAnalysis().modifiedBy ? this.estimationAnalysis().modifiedBy.login : null;
+
 			specification.cohortDefinitions = [];
 			specification.conceptSets = [];
 			specification.conceptSetCrossReference = [];
@@ -402,14 +408,10 @@ define([
 		}
 
 		setParsedAnalysis(header, specification) {
-			// ignore createdBy and modifiedBy
-			const { createdBy, modifiedBy, ...props } = header;
 			this.selectedAnalysisId(header.id);
 			this.estimationAnalysis(new EstimationAnalysis({
 				...specification,
-				...props,
-				createdBy: createdBy ? createdBy.name : null,
-				modifiedBy: modifiedBy ? modifiedBy.name : null
+				...header,
 			}, this.estimationType, this.defaultCovariateSettings()));
 			this.estimationAnalysis().id(header.id);
 			this.estimationAnalysis().name(header.name);
@@ -582,9 +584,9 @@ define([
 			const createdDate = commonUtils.formatDateForAuthorship(this.estimationAnalysis().createdDate);
 			const modifiedDate = commonUtils.formatDateForAuthorship(this.estimationAnalysis().modifiedDate);
 			return {
-					createdBy: lodash.get(this.estimationAnalysis(), 'createdBy'),
+					createdBy: lodash.get(this.estimationAnalysis(), 'createdBy.name'),
 					createdDate,
-					modifiedBy: lodash.get(this.estimationAnalysis(), 'modifiedBy'),
+					modifiedBy: lodash.get(this.estimationAnalysis(), 'modifiedBy.name'),
 					modifiedDate,
 			}
 		}

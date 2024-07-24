@@ -20,7 +20,6 @@ define([
 	'./components/reports/measurement',
 	'./components/reports/observation',
 	'./components/reports/death',
-	'./components/reports/achillesHeel',
 	'./components/reports/observation-period',
 	'less!./data-sources.less'
 ], function (
@@ -101,24 +100,21 @@ define([
 					name: ko.i18n('dataSources.reports.death', 'Death'),
 					path: "death",
 					component: "report-death",
-				},
-				{
-					name: ko.i18n('dataSources.reports.achillesHeel', 'Achilles Heel'),
-					path: "achillesheel",
-					component: "report-achilles-heel",
 				}
 			];
 
 			this.sources = ko.computed(() => sharedState.sources().filter(function (s) {
 				return s.hasResults && s.hasVocabulary && authApi.isPermittedViewDataSourceReport(s.sourceKey);
 			}));
+			sharedState.sources.subscribe(() => this.currentSource(this.sources().find(s => s.sourceKey === params.router.routerParams().sourceKey) || null));
 
 			this.loadingReport = ko.observable(false);
 			this.hasError = ko.observable(false);
 			this.errorMessage = ko.observable();
-			this.loadingReportDrilldown = ko.observable(false);
+			this.showLoadingDrilldownModal = ko.observable(false);
+			this.loadingDrilldownDone = ko.observable(false);
 			this.isReportLoading = ko.pureComputed(function () {
-				return this.loadingReport() && !this.hasError() && !this.loadingReportDrilldown();
+				return this.loadingReport() && !this.hasError() && !this.showLoadingDrilldownModal();
 			}, this);
 
 			this.isAuthenticated = authApi.isAuthenticated;
