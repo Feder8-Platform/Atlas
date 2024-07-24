@@ -34,8 +34,8 @@ define(function(require, exports) {
     var token = ko.observable(getBearerToken());
     var authClient = ko.computed({
         owner: ko.observable(localStorage.getItem("auth-client")),
-        read: function() {
-            return this();
+        read: function() { 
+            return this(); 
         },
         write: function( newValue ) {
             localStorage.setItem("auth-client", newValue);

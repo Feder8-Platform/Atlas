@@ -4,12 +4,22 @@ define([], function () {
 	// WebAPI
 	configLocal.api = {
 		name: 'OHDSI',
-		url: '${WEBAPI_URL}'
+		url: '/webapi/'
 	};
 
 	configLocal.cohortComparisonResultsEnabled = false;
-	configLocal.userAuthenticationEnabled = false;
+	configLocal.userAuthenticationEnabled = true;
 	configLocal.plpResultsEnabled = false;
+
+	configLocal.authProviders = [
+		{
+			"name": "Login with Central",
+			"url": "user/login/openid",
+			"ajax": false,
+			"icon": "",
+			"isUseCredentialsForm": false
+		}
+	];
 
 	return configLocal;
 });

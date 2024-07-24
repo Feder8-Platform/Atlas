@@ -97,19 +97,6 @@ define(function (require, exports) {
 			.then(res => res.data);
 	}
 
-	function exists(name, id) {
-		return httpService
-			.doGet(`${config.webAPIRoot}${estimationEndpoint}${id}/exists?name=${name}`)
-			.then(res => res.data)
-			.catch(error => authApi.handleAccessDenied(error));
-	}
-
-	function runDiagnostics(design) {
-		return httpService
-			.doPost(`${config.webAPIRoot}${estimationEndpoint}check`, design)
-			.then(res => res.data);
-	}
-
     var api = {
 		getEstimationList: getEstimationList,
 		saveEstimation: saveEstimation,

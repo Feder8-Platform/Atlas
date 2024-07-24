@@ -12,8 +12,6 @@ function(
 			return "condition-era-criteria";
 		else if (data.hasOwnProperty("DrugExposure"))
 			return "drug-exposure-criteria";
-		else if (data.hasOwnProperty("TreatmentLine"))
-			return "treatment-line-criteria";
 		else if (data.hasOwnProperty("DrugEra"))
 			return "drug-era-criteria";
 		else if (data.hasOwnProperty("DoseEra"))

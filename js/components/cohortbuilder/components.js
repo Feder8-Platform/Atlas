@@ -26,9 +26,6 @@ define(function (require, exports) {
 	var drugExposure = require('./components/DrugExposure');
 	ko.components.register('drug-exposure-criteria', drugExposure);
 
-	var treatmentLine = require('./components/TreatmentLine');
-    ko.components.register('treatment-line-criteria', treatmentLine);
-
 	var drugEra = require('./components/DrugEra');
 	ko.components.register('drug-era-criteria', drugEra);	
 	
