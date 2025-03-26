@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -eux
 
-docker build --pull --rm -f "Dockerfile" -t feder8/atlas:latest "."
+docker build --pull --rm -f "Dockerfile" -t feder8/atlas:testing "."
